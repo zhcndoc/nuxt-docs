@@ -1,50 +1,50 @@
 ---
 title: 'useNuxtData'
-description: 'Access the current cached value of data fetching composables.'
+description: '访问数据获取组合组件的当前缓存值。'
 links:
-  - label: Source
+  - label: 源代码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/asyncData.ts
     size: xs
 ---
 
 ::note
-`useNuxtData` gives you access to the current cached value of [`useAsyncData`](/docs/api/composables/use-async-data) , `useLazyAsyncData`, [`useFetch`](/docs/api/composables/use-fetch) and [`useLazyFetch`](/docs/api/composables/use-lazy-fetch) with explicitly provided key.
+`useNuxtData` 提供了访问 [`useAsyncData`](/docs/api/composables/use-async-data) 、 `useLazyAsyncData` 、 [`useFetch`](/docs/api/composables/use-fetch) 和 [`useLazyFetch`](/docs/api/composables/use-lazy-fetch) 的当前缓存值的便捷方式，并且需要提供显式的键。
 ::
 
-## Usage
+## 使用
 
-The example below shows how you can use cached data as a placeholder while the most recent data is being fetched from the server.
+以下例子展示了如何使用缓存数据作为占位符，同时从服务器获取最新的数据。
 
 ```vue [pages/posts.vue]
 <script setup lang="ts">
-// We can access same data later using 'posts' key
+// 我们稍后可以使用 'posts' 键访问相同的数据
 const { data } = await useFetch('/api/posts', { key: 'posts' })
 </script>
 ```
 
 ```vue [pages/posts/[id\\].vue]
 <script setup lang="ts">
-// Access to the cached value of useFetch in posts.vue (parent route)
+// 访问 posts.vue（父路由）中 useFetch 的缓存值
 const { id } = useRoute().params
 const { data: posts } = useNuxtData('posts')
 const { data } = useLazyFetch(`/api/posts/${id}`, {
   key: `post-${id}`,
   default() {
-    // Find the individual post from the cache and set it as the default value.
+    // 从缓存中找到单个帖子并将其作为默认值。
     return posts.value.find(post => post.id === id)
   }
 })
 </script>
 ```
 
-## Optimistic Updates
+## 乐观更新
 
-We can leverage the cache to update the UI after a mutation, while the data is being invalidated in the background.
+我们可以利用缓存来在后台数据失效时更新 UI。
 
 ```vue [pages/todos.vue]
 <script setup lang="ts">
-// We can access same data later using 'todos' key
+// 我们可以使用 'todos' 键稍后访问相同的数据
 const { data } = await useAsyncData('todos', () => $fetch('/api/todos'))
 </script>
 ```
@@ -54,7 +54,7 @@ const { data } = await useAsyncData('todos', () => $fetch('/api/todos'))
 const newTodo = ref('')
 const previousTodos = ref([])
 
-// Access to the cached value of useFetch in todos.vue
+// 访问 todos.vue 中的 useFetch 缓存值
 const { data: todos } = useNuxtData('todos')
 
 const { data } = await useFetch('/api/addTodo', {
@@ -63,21 +63,21 @@ const { data } = await useFetch('/api/addTodo', {
     todo: newTodo.value
   },
   onRequest () {
-    previousTodos.value = todos.value // Store the previously cached value to restore if fetch fails.
+    previousTodos.value = todos.value // 存储先前缓存的值以在请求失败时恢复。
 
-    todos.value.push(newTodo.value) // Optimistically update the todos.
+    todos.value.push(newTodo.value) // 乐观地更新待办事项。
   },
   onRequestError () {
-    todos.value = previousTodos.value // Rollback the data if the request failed.
+    todos.value = previousTodos.value // 如果请求失败，回滚数据。
   },
   async onResponse () {
-    await refreshNuxtData('todos') // Invalidate todos in the background if the request succeeded.
+    await refreshNuxtData('todos') // 如果请求成功，在后台使待办事项失效。
   }
 })
 </script>
 ```
 
-## Type
+## 类型
 
 ```ts
 useNuxtData<DataT = any> (key: string): { data: Ref<DataT | null> }

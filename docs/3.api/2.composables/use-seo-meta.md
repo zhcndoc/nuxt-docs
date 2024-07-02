@@ -1,22 +1,22 @@
 ---
 title: 'useSeoMeta'
-description: The useSeoMeta composable lets you define your site's SEO meta tags as a flat object with full TypeScript support.
+description: useSeoMeta 组件允许您将网站的 SEO 元标签定义为一个带有完整 TypeScript 支持的平坦对象。
 links:
-  - label: Source
+  - label: 源代码
     icon: i-simple-icons-github
     to: https://github.com/unjs/unhead/blob/main/packages/unhead/src/composables/useSeoMeta.ts
     size: xs
 ---
 
-This helps you avoid common mistakes, such as using `name` instead of `property`, as well as typos - with over 100+ meta tags fully typed.
+这有助于您避免常见的错误，例如使用 `name` 而不是 `property`，以及拼写错误 - 拥有超过 100 个完全类型化的元标签。
 
 ::important
-This is the recommended way to add meta tags to your site as it is XSS safe and has full TypeScript support.
+这是向您的网站添加元标签推荐的方式，因为它是 XSS 安全的，并且具有完整的 TypeScript 支持。
 ::
 
 :read-more{to="/docs/getting-started/seo-meta"}
 
-## Usage
+## 使用方法
 
 ```vue [app.vue]
 <script setup lang="ts">
@@ -31,11 +31,11 @@ useSeoMeta({
 </script>
 ```
 
-When inserting tags that are reactive, you should use the computed getter syntax (`() => value`):
+当插入可响应的标签时，您应该使用计算获取器语法 (`() => value`):
 
 ```vue [app.vue]
 <script setup lang="ts">
-const title = ref('My title')
+const title = ref('我的标题')
 
 useSeoMeta({
   title,
@@ -44,8 +44,8 @@ useSeoMeta({
 </script>
 ```
 
-## Parameters
+## 参数
 
-There are over 100 parameters. See the [full list of parameters in the source code](https://github.com/harlan-zw/zhead/blob/main/packages/zhead/src/metaFlat.ts#L1035).
+有超过 100 个参数。请查看 [源代码中的完整参数列表](https://github.com/harlan-zw/zhead/blob/main/packages/zhead/src/metaFlat.ts#L1035)。
 
 :read-more{to="/docs/getting-started/seo-meta"}

@@ -1,21 +1,20 @@
 ---
 title: 'useFetch'
-description: 'Fetch data from an API endpoint with an SSR-friendly composable.'
+description: '使用一个支持 SSR 的组合式函数从 API 端点获取数据。'
 links:
-  - label: Source
+  - label: 源代码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/fetch.ts
     size: xs
 ---
 
-This composable provides a convenient wrapper around [`useAsyncData`](/docs/api/composables/use-async-data) and [`$fetch`](/docs/api/utils/dollarfetch).
-It automatically generates a key based on URL and fetch options, provides type hints for request url based on server routes, and infers API response type.
+这个组合式函数为 [`useAsyncData`](/docs/api/composables/use-async-data) 和 [`$fetch`](/docs/api/utils/dollarfetch) 提供了一个方便的包装器。它根据 URL 和获取选项自动生成一个键，为基于服务端路由的请求 URL 提供类型提示，并推断 API 响应类型。
 
 ::note
-`useFetch` is a composable meant to be called directly in a setup function, plugin, or route middleware. It returns reactive composables and handles adding responses to the Nuxt payload so they can be passed from server to client without re-fetching the data on client side when the page hydrates.
+`useFetch` 是一个组合式函数，它应该在设置函数、插件或路由中间件中直接调用。它返回响应式的组合式对象，并处理将响应添加到 Nuxt 的 payload 中，这样它们就可以在没有客户端重取数据的情况下从服务器传递到客户端，当页面进行 hydrate 时。
 ::
 
-## Usage
+## 使用
 
 ```vue [pages/modules.vue]
 <script setup lang="ts">
@@ -26,14 +25,14 @@ const { data, pending, error, refresh, clear } = await useFetch('/api/modules', 
 ```
 
 ::warning
-If you're using a custom useFetch wrapper, do not await it in the composable, as that can cause unexpected behavior. Please follow [this recipe](/docs/guide/recipes/custom-usefetch#custom-usefetch) for more information on how to make a custom async data fetcher.
+如果您使用的是自定义 `useFetch` 包装器，请不要在组合式函数中等待它，因为这可能会导致意外的行为。请遵循[这个配方](/docs/guide/recipes/custom-usefetch#custom-usefetch)获取更多关于如何创建自定义异步数据获取器的信息。
 ::
 
 ::note
-`data`, `pending`, `status` and `error` are Vue refs and they should be accessed with `.value` when used within the `<script setup>`, while `refresh`/`execute` and `clear` are plain functions..
+`data`、 `pending`、 `status` 和 `error` 是 Vue Ref 对象，并且在 `<script setup>` 中使用时应该使用 `.value` 进行访问，而 `refresh`/`execute` 和 `clear` 则是普通的函数。
 ::
 
-Using the `query` option, you can add search parameters to your query. This option is extended from [unjs/ofetch](https://github.com/unjs/ofetch) and is using [unjs/ufo](https://github.com/unjs/ufo) to create the URL. Objects are automatically stringified.
+使用 `query` 选项，您可以在查询中添加搜索参数。这个选项由 [unjs/ofetch](https://github.com/unjs/ofetch) 扩展，并使用 [unjs/ufo](https://github.com/unjs/ufo) 创建 URL，对象会自动字符串化。
 
 ```ts
 const param1 = ref('value1')
@@ -42,36 +41,36 @@ const { data, pending, error, refresh } = await useFetch('/api/modules', {
 })
 ```
 
-The above example results in `https://api.nuxt.com/modules?param1=value1&param2=value2`.
+上面的例子结果是 `https://api.nuxt.com/modules?param1=value1&param2=value2`。
 
-You can also use [interceptors](https://github.com/unjs/ofetch#%EF%B8%8F-interceptors):
+您也可以使用 [interceptors](https://github.com/unjs/ofetch#%EF%B8%8F-interceptors)：
 
 ```ts
 const { data, pending, error, refresh, clear } = await useFetch('/api/auth/login', {
   onRequest({ request, options }) {
-    // Set the request headers
+    // 设置请求头
     options.headers = options.headers || {}
     options.headers.authorization = '...'
   },
   onRequestError({ request, options, error }) {
-    // Handle the request errors
+    // 处理请求错误
   },
   onResponse({ request, response, options }) {
-    // Process the response data
+    // 处理响应数据
     localStorage.setItem('token', response._data.token)
   },
   onResponseError({ request, response, options }) {
-    // Handle the response errors
+    // 处理响应错误
   }
 })
 ```
 
 ::warning
-`useFetch` is a reserved function name transformed by the compiler, so you should not name your own function `useFetch`.
+`useFetch` 是一个由编译器转换的保留函数名，所以您不应该将您的函数命名为 `useFetch`。
 ::
 
 ::tip{icon="i-ph-video-duotone" to="https://www.youtube.com/watch?v=njsGVmcWviY" target="_blank"}
-Watch the video from Alexander Lichter to avoid using `useFetch` the wrong way!
+观看 Alexander Lichter 的视频，以避免错误地使用 `useFetch`！
 ::
 
 :link-example{to="/docs/examples/advanced/use-custom-fetch-composable"}
@@ -80,67 +79,67 @@ Watch the video from Alexander Lichter to avoid using `useFetch` the wrong way!
 
 :link-example{to="/docs/examples/features/data-fetching"}
 
-## Params
+## 参数
 
-- `URL`: The URL to fetch.
-- `Options` (extends [unjs/ofetch](https://github.com/unjs/ofetch) options & [AsyncDataOptions](/docs/api/composables/use-async-data#params)):
-  - `method`: Request method.
-  - `query`: Adds query search params to URL using [ufo](https://github.com/unjs/ufo)
-  - `params`: Alias for `query`
-  - `body`: Request body - automatically stringified (if an object is passed).
-  - `headers`: Request headers.
-  - `baseURL`: Base URL for the request.
-  - `timeout`: Milliseconds to automatically abort request
-  - `cache`: Handles cache control according to [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/fetch#cache)
-    - You can pass boolean to disable the cache or you can pass one of the following values: `default`, `no-store`, `reload`, `no-cache`, `force-cache`, and `only-if-cached`.
+- `URL`: 要获取的 URL。
+- `Options` (扩展自 [unjs/ofetch](https://github.com/unjs/ofetch) 选项及 [AsyncDataOptions](/docs/api/composables/use-async-data#params)):
+  - `method`: 请求方法。
+  - `query`: 使用 [ufo](https://github.com/unjs/ufo) 将查询搜索参数添加到URL。
+  - `params`: `query` 的别名。
+  - `body`: 请求体 - 如果传递的是一个对象，则会自动字符串化。
+  - `headers`: 请求头。
+  - `baseURL`: 请求的基础 URL。
+  - `timeout`: 自动取消请求前的毫秒数。
+  - `cache`: 根据 [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/fetch#cache) 处理缓存控制。
+    - 您可以通过传递布尔值来禁用缓存，或者可以传递以下值之一：`default`、`no-store`、`reload`、`no-cache`、`force-cache` 和 `only-if-cached`。
 
 ::note
-All fetch options can be given a `computed` or `ref` value. These will be watched and new requests made automatically with any new values if they are updated.
+所有获取选项都可以被赋予一个 `computed` 或 `ref` 值。这些值会被监听，如果有新的值，将自动生成新的请求。
 ::
 
-- `Options` (from [`useAsyncData`](/docs/api/composables/use-async-data)):
-  - `key`: a unique key to ensure that data fetching can be properly de-duplicated across requests, if not provided, it will be automatically generated based on URL and fetch options
-  - `server`: whether to fetch the data on the server (defaults to `true`)
-  - `lazy`: whether to resolve the async function after loading the route, instead of blocking client-side navigation (defaults to `false`)
-  - `immediate`: when set to `false`, will prevent the request from firing immediately. (defaults to `true`)
-  - `default`: a factory function to set the default value of the `data`, before the async function resolves - useful with the `lazy: true` or `immediate: false` option
-  - `transform`: a function that can be used to alter `handler` function result after resolving
-  - `getCachedData`: Provide a function which returns cached data. A _null_ or _undefined_ return value will trigger a fetch. By default, this is: `key => nuxt.isHydrating ? nuxt.payload.data[key] : nuxt.static.data[key]`, which only caches data when `payloadExtraction` is enabled.
-  - `pick`: only pick specified keys in this array from the `handler` function result
-  - `watch`: watch an array of reactive sources and auto-refresh the fetch result when they change. Fetch options and URL are watched by default. You can completely ignore reactive sources by using `watch: false`. Together with `immediate: false`, this allows for a fully-manual `useFetch`. (You can [see an example here](/docs/getting-started/data-fetching#watch) of using `watch`.)
-  - `deep`: return data in a deep ref object (it is `true` by default). It can be set to `false` to return data in a shallow ref object, which can improve performance if your data does not need to be deeply reactive.
-  - `dedupe`: avoid fetching same key more than once at a time (defaults to `cancel`). Possible options:
-    - `cancel` - cancels existing requests when a new one is made
-    - `defer` - does not make new requests at all if there is a pending request
+- `Options` (来自 [`useAsyncData`](/docs/api/composables/use-async-data)):
+  - `key`: 一个唯一的键，以确保数据获取可以跨请求正确地去重，如果不提供，它将根据 URL 和获取选项自动生成。
+  - `server`: 是否在服务器上获取数据（默认为 `true`）。
+  - `lazy`: 是否在加载路由后解析异步函数，而不是阻塞客户端的导航（默认为 `false`）。
+  - `immediate`: 当设置为 `false` 时，将阻止请求立即发起。（默认为 `true`）。
+  - `default`: 一个工厂函数，用于设置异步函数解决之前 `data` 的默认值。当 `lazy: true` 或 `immediate: false` 时，这个选项非常有用。（您可以在[这里](/docs/getting-started/data-fetching#watch)看到使用 `watch` 的一个例子）
+  - `transform`: 一个函数，用于在异步函数解决后更改 `handler` 函数的结果。
+  - `getCachedData`: 提供一个函数，返回缓存的数。返回 `null` 或 `undefined` 值将触发获取。默认情况下，这是一个：`key => nuxt.isHydrating ? nuxt.payload.data[key] : nuxt.static.data[key]`，它仅在启用 `payloadExtraction` 时缓存数据。
+  - `pick`: 从 `handler` 函数结果中仅选择此数组中的键。
+  - `watch`: 监听一系列响应源，并在它们改变时自动刷新获取结果。默认情况下，请求选项和 URL 被监听。您可以使用 `watch: false` 完全忽略响应源。与 `immediate: false` 一起，这允许您完全手动使用 `useFetch`。
+  - `deep`: 返回一个深层 ref 对象中的数据（默认情况下是 `true`）。您可以通过将其设置为 `false` 来返回一个浅层 ref 对象，这可以提高性能，如果您的数据不需要是深层次的响应性。
+  - `dedupe`: 避免在一次时间内对同一键进行更多的请求（默认为 `cancel`）。可能的选项：
+    - `cancel` - 当有新请求时，取消现有请求。
+    - `defer` - 如果当前有一个待处理的请求，不会做出新的请求。
 
 ::note
-If you provide a function or ref as the `url` parameter, or if you provide functions as arguments to the `options` parameter, then the `useFetch` call will not match other `useFetch` calls elsewhere in your codebase, even if the options seem to be identical. If you wish to force a match, you may provide your own key in `options`.
+如果您为 `url` 参数提供了一个函数或 `ref`，或者为 `options` 参数的参数提供了函数，那么 `useFetch` 调用将不会与其他地方代码库中相同的 `useFetch` 调用匹配，即使选项看起来是相同的。如果您希望强制匹配，您可以在 `options` 中提供一个自己的键。
 ::
 
 ::note
-If you use `useFetch` to call an (external) HTTPS URL with a self-signed certificate in development, you will need to set `NODE_TLS_REJECT_UNAUTHORIZED=0` in your environment.
+如果您在开发中使用 `useFetch` 来调用一个带有自签名证书的外部 HTTPS URL，您需要将 `NODE_TLS_REJECT_UNAUTHORIZED` 设置为 0。
 ::
 
 ::tip{icon="i-simple-icons-youtube" color="gray" to="https://www.youtube.com/watch?v=aQPR0xn-MMk" target="_blank"}
-Learn how to use `transform` and `getCachedData` to avoid superfluous calls to an API and cache data for visitors on the client.
+学习如何使用 `transform` 和 `getCachedData` 来避免对 API 的额外调用，并为客户端上的访客缓存数据。
 ::
 
-## Return Values
+## 返回值
 
-- `data`: the result of the asynchronous function that is passed in.
-- `pending`: a boolean indicating whether the data is still being fetched.
-- `refresh`/`execute`: a function that can be used to refresh the data returned by the `handler` function.
-- `error`: an error object if the data fetching failed.
-- `status`: a string indicating the status of the data request (`"idle"`, `"pending"`, `"success"`, `"error"`).
-- `clear`: a function which will set `data` to `undefined`, set `error` to `null`, set `pending` to `false`, set `status` to `'idle'`, and mark any currently pending requests as cancelled.
+- `data`: 异步函数传递的结果。
+- `pending`: 一个布尔值，指示数据是否还在被获取。
+- `refresh`/`execute`: 一个用于刷新由 `handler` 函数返回的数据的函数。
+- `error`: 一个错误对象，如果数据获取失败。
+- `status`: 一个字符串，指示数据请求的状态（`"idle"`、`"pending"`、`"success"`、`"error"`）。
+- `clear`: 一个函数，将 `data` 设置为 `undefined`，将 `error` 设置为 `null`，将 `pending` 设置为 `false`，将 `status` 设置为 `'idle'`，并将任何当前待处理的请求标记为取消。
 
-By default, Nuxt waits until a `refresh` is finished before it can be executed again.
+默认情况下，Nuxt 会在 `refresh` 执行完毕之前才能再次执行。
 
 ::note
-If you have not fetched data on the server (for example, with `server: false`), then the data _will not_ be fetched until hydration completes. This means even if you await `useFetch` on client-side, `data` will remain null within `<script setup>`.
+如果您没有在服务器上获取数据（例如，使用 `server: false`），那么数据_将不会_在 hydrate 完成后被获取。这意味着即使在客户端上等待 `useFetch`，`data` 在 `<script setup>` 中仍然为 null。
 ::
 
-## Type
+## 类型
 
 ```ts [Signature]
 function useFetch<DataT, ErrorT>(

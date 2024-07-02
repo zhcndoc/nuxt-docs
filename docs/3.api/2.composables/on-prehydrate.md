@@ -1,7 +1,6 @@
 ---
 title: "onPrehydrate"
-description: "Use onPrehydrate to run a callback on the client immediately before
-Nuxt hydrates the page."
+description: "在 Nuxt 页面预填充之前，使用 onPrehydrate 在客户端立即运行回调。"
 links:
   - label: Source
     icon: i-simple-icons-github
@@ -10,46 +9,43 @@ links:
 ---
 
 ::important
-This composable is available in Nuxt v3.12+.
+这个组合函数在 Nuxt v3.12+ 中可用。
 ::
 
-`onPrehydrate` is a composable lifecycle hook that allows you to run a callback on the client immediately before
-Nuxt hydrates the page.
+`onPrehydrate` 是一个组合钩子生命周期，它允许你在 Nuxt 页面预填充之前在客户端立即运行回调。
 
 ::note
-This is an advanced utility and should be used with care. For example, [`nuxt-time`](https://github.com/danielroe/nuxt-time/pull/251) and [`@nuxtjs/color-mode`](https://github.com/nuxt-modules/color-mode/blob/main/src/script.js) manipulate the DOM to avoid hydration mismatches.
+这是一个高级工具，应该谨慎使用。例如，[`nuxt-time`](https://github.com/danielroe/nuxt-time/pull/251) 和 [`@nuxtjs/color-mode`](https://github.com/nuxt-modules/color-mode/blob/main/src/script.js) 通过操纵 DOM 来避免预填充不匹配。
 ::
 
-## Usage
+## 使用
 
-`onPrehydrate` can be called directly in the setup function of a Vue component (for example, in `<script setup>`), or in a plugin.
-It will only have an effect when it is called on the server, and it will not be included in your client build.
+`onPrehydrate` 可以直接在 Vue 组件的设置函数（例如，在 `<script setup>` 中）或插件中调用。
+它只有在服务器上调用时才会生效，并且它不会包含在您的客户端构建中。
 
-## Parameters
+## 参数
 
-- `callback`: A function that will be stringified and inlined in the HTML. It should not have any external
-dependencies (such as auto-imports) or refer to variables defined outside the callback. The callback will run
-before Nuxt runtime initializes so it should not rely on the Nuxt or Vue context.
+- `callback`: 一个将被字符串化和内联在 HTML 中的函数。它不应该有任何外部依赖（如自动导入）或引用回调外部定义的变量。回调将在 Nuxt 运行时初始化之前运行，因此它不应该依赖于 Nuxt 或 Vue 上下文。
 
-## Example
+## 示例
 
 ```vue twoslash [app.vue]
 <script setup lang="ts">
 declare const window: Window
 // ---cut---
-// onPrehydrate is guaranteed to run before Nuxt hydrates
+// onPrehydrate 保证在 Nuxt 预填充之前运行
 onPrehydrate(() => {
   console.log(window)
 })
 
-// As long as it only has one root node, you can access the element
+// 只要它只有一个根节点，你就可以访问元素
 onPrehydrate((el) => {
   console.log(el.outerHTML)
   // <div data-v-inspector="app.vue:15:3" data-prehydrate-id=":b3qlvSiBeH:"> Hi there </div>
 })
 
-// For _very_ advanced use cases (such as not having a single root node) you
-// can access/set `data-prehydrate-id` yourself
+// 对于非常高级的使用情况（例如，没有单一的根节点）你
+// 可以自己访问/设置 `data-prehydrate-id`
 const prehydrateId = onPrehydrate((el) => {})
 </script>
 

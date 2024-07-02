@@ -1,18 +1,18 @@
 ---
 title: useHeadSafe
-description: The recommended way to provide head data with user input.
+description: 推荐的提供包含用户输入的 head 数据的方法。
 links:
-  - label: Source
+  - label: 源代码
     icon: i-simple-icons-github
     to: https://github.com/unjs/unhead/blob/main/packages/unhead/src/composables/useHeadSafe.ts
     size: xs
 ---
 
-The `useHeadSafe` composable is a wrapper around the [`useHead`](/docs/api/composables/use-head) composable that restricts the input to only allow safe values.
+`useHeadSafe` 组合函数是 [`useHead`](/docs/api/composables/use-head) 组合函数的包装器，它限制了输入，只允许安全值。
 
-## Usage
+## 使用方法
 
-You can pass all the same values as [`useHead`](/docs/api/composables/use-head)
+你可以传递与 [`useHead`](/docs/api/composables/use-head) 相同的值
 
 ```ts
 useHeadSafe({
@@ -23,22 +23,22 @@ useHeadSafe({
     { 'http-equiv': 'refresh', content: '0;javascript:alert(1)' }
   ]
 })
-// Will safely generate
+// 将安全地生成
 // <script id="xss-script"></script>
 // <meta content="0;javascript:alert(1)">
 ```
 
 ::read-more{to="https://unhead.unjs.io/usage/composables/use-head-safe" target="_blank"}
-Read more on `unhead` documentation.
+在`unhead`文档中阅读更多内容。
 ::
 
-## Type
+## 类型
 
 ```ts
 useHeadSafe(input: MaybeComputedRef<HeadSafe>): void
 ```
 
-The whitelist of safe values is:
+安全值的允许列表是：
 
 ```ts
 export default {
@@ -51,4 +51,4 @@ export default {
 }
 ```
 
-See [@unhead/schema](https://github.com/unjs/unhead/blob/main/packages/schema/src/safeSchema.ts) for more detailed types.
+查看 [@unhead/schema](https://github.com/unjs/unhead/blob/main/packages/schema/src/safeSchema.ts) 以获取更详细的类型。

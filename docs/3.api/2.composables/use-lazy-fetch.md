@@ -1,51 +1,51 @@
 ---
 title: 'useLazyFetch'
-description: This wrapper around useFetch triggers navigation immediately.
+description: 这个围绕 useFetch 的包装器会立即触发导航。
 links:
-  - label: Source
+  - label: 源代码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/fetch.ts
     size: xs
 ---
 
-## Description
+## 描述
 
-By default, [`useFetch`](/docs/api/composables/use-fetch) blocks navigation until its async handler is resolved. `useLazyFetch` provides a wrapper around [`useFetch`](/docs/api/composables/use-fetch) that triggers navigation before the handler is resolved by setting the `lazy` option to `true`.
+默认情况下，[`useFetch`](/docs/api/composables/use-fetch) 直到其异步处理函数被解析后才会阻塞导航。`useLazyFetch` 提供一个包装器，它通过将 `lazy` 选项设置为 `true` 来在处理函数被解析之前触发导航，它是对 [`useFetch`](/docs/api/composables/use-fetch) 的包装。
 
 ::note
-`useLazyFetch` has the same signature as [`useFetch`](/docs/api/composables/use-fetch).
+`useLazyFetch` 具有与 [`useFetch`](/docs/api/composables/use-fetch) 相同的签名。
 ::
 
 :read-more{to="/docs/api/composables/use-fetch"}
 
-## Example
+## 示例
 
 ```vue [pages/index.vue]
 <script setup lang="ts">
-/* Navigation will occur before fetching is complete.
-  Handle pending and error states directly within your component's template
+/* 导航将会在获取数据完成之前发生。
+  直接在组件模板中处理挂起和错误状态
 */
 const { pending, data: posts } = await useLazyFetch('/api/posts')
 watch(posts, (newPosts) => {
-  // Because posts might start out null, you won't have access
-  // to its contents immediately, but you can watch it.
+  // 因为 posts 一开始可能是 null，所以你不会立即访问
+  // 它的内容，但是你可以观察它。
 })
 </script>
 
 <template>
   <div v-if="pending">
-    Loading ...
+    加载中 ...
   </div>
   <div v-else>
     <div v-for="post in posts">
-      <!-- do something -->
+      <!-- 做某事 -->
     </div>
   </div>
 </template>
 ```
 
 ::note
-`useLazyFetch` is a reserved function name transformed by the compiler, so you should not name your own function `useLazyFetch`.
+`useLazyFetch` 是一个由编译器转换的保留函数名，因此你不应该将你的函数命名为 `useLazyFetch`。
 ::
 
 :read-more{to="/docs/getting-started/data-fetching"}

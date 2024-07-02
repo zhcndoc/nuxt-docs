@@ -1,36 +1,36 @@
 ---
 title: 'useHydration'
-description: 'Allows full control of the hydration cycle to set and receive data from the server.'
+description: '允许完全控制水化循环，以设置和接收来自服务器的数据。'
 links:
-  - label: Source
+  - label: 源代码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/hydrate.ts
     size: xs
 ---
 
-`useHydration` is a built-in composable that provides a way to set data on the server side every time a new HTTP request is made and receive that data on the client side. This way `useHydration` allows you to take full control of the hydration cycle.
+`useHydration` 是一个内置的组合器，它提供了一种在每次新的 HTTP 请求时在服务器端设置数据并在客户端接收数据的方式。这样，`useHydration` 允许你对水合循环进行完全控制。
 
 ::note
-This is an advanced composable and is mostly used internally (`useAsyncData`) or by Nuxt modules.
+这是一个高级组合器，主要在内部分配使用（`useAsyncData`）或在 Nuxt 模块中使用。
 ::
 
-## Type
+## 类型
 
 ```ts [signature]
 useHydration <T> (key: string, get: () => T, set: (value: T) => void) => {}
 ```
 
-You can use `useHydration()` within composables, plugins and components.
+您可以在组合器、插件和组件内部使用 `useHydration()`。
 
-`useHydration` accepts three parameters:
+`useHydration` 接受三个参数：
 
-- `key`: unique key that identifies the data in your Nuxt application
-  - **Type**: `String`
-- `get`: function that returns the value to set the initial data
-  - **Type**: `Function`
-- `set`: function that receives the data on the client-side
-  - **Type**: `Function`
+- `key`: 在 Nuxt 应用程序中唯一标识数据的键
+  - **类型**: `String`
+- `get`: 返回用于设置初始数据的值的函数
+  - **类型**: `Function`
+- `set`: 接收客户端数据的函数
+  - **类型**: `Function`
 
-Once the initial data is returned using the `get` function on the server side, you can access that data within `nuxtApp.payload` using the unique key that is passed as the first parameter in `useHydration` composable.
+一旦服务器端使用 `get` 函数返回初始数据，您就可以在 `nuxtApp.payload` 中使用作为 `useHydration` 组合器中第一个参数传递的唯一密钥来访问该数据。
 
 :read-more{to="/docs/getting-started/data-fetching"}
