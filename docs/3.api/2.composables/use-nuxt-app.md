@@ -250,9 +250,9 @@ getCurrentInstance() // 仍然工作！
 
 #### 解决方案
 
-这就是 `runWithContext` 可以用来恢复上下文，类似于 `<script setup>` 的工作方式的地方。
+这是 `runWithContext` 可以用来恢复上下文的地方，类似于 `<script setup>` 的工作方式。
 
-Nuxt 3 内部使用 [unjs/unctx](https://github.com/unjs/unctx) 来支持组合函数类似于 Vue 对插件和中间件的组合函数。这为整个 Nuxt 框架带来了组合 API 的 DX 和性能收益。
+Nuxt 内部使用 [unjs/unctx](https://github.com/unjs/unctx) 来支持类似于 Vue 用于插件和中间件的组合式。这使得像 `navigateTo()` 这样的组合式能够在不直接传递 `nuxtApp` 给它们的情况下工作 - 将 Composition API 的 DX 和性能优势带给整个 Nuxt 框架。
 
 Nuxt 组合函数与 Vue 组合 API 的设计相同，因此需要类似的解决方案来神奇地进行这种转换。查看 [unjs/unctx#2](https://github.com/unjs/unctx/issues/2)（提案），[unjs/unctx#4](https://github.com/unjs/unctx/pull/4)（转换实现），以及 [nuxt/framework#3884](https://github.com/nuxt/framework/pull/3884)（集成到 Nuxt）。
 

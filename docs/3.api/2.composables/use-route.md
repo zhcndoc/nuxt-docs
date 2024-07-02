@@ -48,4 +48,4 @@ const { data: mountain } = await useFetch(`/api/mountains/${route.params.slug}`)
 浏览器在发送请求时不会发送 [URL 片段](https://url.spec.whatwg.org/#concept-url-fragment)（例如 `#foo`）。因此，在模板中使用 `route.fullPath` 可能会触发复水化问题，因为在客户端包含片段，但在服务器上不包含。
 ::
 
-:read-more{icon="i-simple-icons-vuedotjs" to="https://router.vuejs.org/api/interfaces/RouteLocationNormalizedLoaded.html"}
+:read-more{icon="i-simple-icons-vuedotjs" to="https://router.vuejs.org/api/#RouteLocationNormalizedLoaded"}
