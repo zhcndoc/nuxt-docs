@@ -46,7 +46,7 @@ counter.value = counter.value || Math.round(Math.random() * 1000)
 :link-example{to="/docs/examples/advanced/use-cookie"}
 
 ::note
-当 Cookie 发生变化时，手动刷新 `useCookie` 值，使用 [`refreshCookie`](/api/utils/refresh-cookie)。
+当 Cookie 发生变化时，手动刷新 `useCookie` 值，使用 [`refreshCookie`](/docs/api/utils/refresh-cookie)。
 ::
 
 ## 选项
@@ -151,7 +151,7 @@ Cookie 组合函数接受多个选项，这些选项允许你修改 Cookie 的�
 - `false` - 不会监视 Cookie 引用数据的变化。
 
 ::note
-当 Cookie 发生变化时，手动刷新 `useCookie` 值，使用 [`refreshCookie`](/api/utils/refresh-cookie)。
+当 Cookie 发生变化时，手动刷新 `useCookie` 值，使用 [`refreshCookie`](/docs/api/utils/refresh-cookie)。
 ::
 
 **示例 1:**
