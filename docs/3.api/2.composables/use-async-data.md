@@ -18,7 +18,7 @@ links:
 
 ```vue [pages/index.vue]
 <script setup lang="ts">
-const { data, pending, error, refresh, clear } = await useAsyncData(
+const { data, status, error, refresh, clear } = await useAsyncData(
   'mountains',
   () => $fetch('https://api.nuxtjs.dev/mountains')
 )
@@ -30,7 +30,7 @@ const { data, pending, error, refresh, clear } = await useAsyncData(
 ::
 
 ::note
-`data`, `pending`, `status` 和 `error` 是Vue refs，当在 `<script setup>` 中使用时，它们应该通过 `.value` 访问，而 `refresh`/`execute` 和 `clear` 是普通函数。
+`data`, `status` 和 `error` 是Vue refs，当在 `<script setup>` 中使用时，它们应该通过 `.value` 访问，而 `refresh`/`execute` 和 `clear` 是普通函数。
 ::
 
 ### 监视参数
@@ -92,11 +92,10 @@ const { data: posts } = await useAsyncData(
 ## 返回值
 
 - `data`: 传递进来的异步函数的结果。
-- `pending`: 一个布尔值，指示数据是否仍在抓取中。
 - `refresh` / `execute`: 一个函数，可以用来刷新 `handler` 函数返回的数据。
 - `error`: 一个错误对象，如果数据抓取失败。
 - `status`: 一个字符串，指示数据请求的状态（`"idle"`, `"pending"`, `"success"`, `"error"`）。
-- `clear`: 一个函数，将 `data` 设置为 `undefined`，将 `error` 设置为 `null`，将 `pending` 设置为 `false`，将 `status` 设置为 `'idle'`，并标记任何当前正在进行的请求为取消。
+- `clear`: 一个函数，将 `data` 设置为 `undefined`，将 `error` 设置为 `null`，将 `status` 设置为 `'idle'`，并标记任何当前正在进行的请求为取消。
 
 默认情况下，Nuxt 等待 `refresh` 完成之后才能再次执行。
 
@@ -132,7 +131,6 @@ type AsyncDataOptions<DataT> = {
 
 type AsyncData<DataT, ErrorT> = {
   data: Ref<DataT | null>
-  pending: Ref<boolean>
   refresh: (opts?: AsyncDataExecuteOptions) => Promise<void>
   execute: (opts?: AsyncDataExecuteOptions) => Promise<void>
   clear: () => void

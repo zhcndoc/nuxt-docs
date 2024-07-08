@@ -18,7 +18,7 @@ links:
 
 ```vue [pages/modules.vue]
 <script setup lang="ts">
-const { data, pending, error, refresh, clear } = await useFetch('/api/modules', {
+const { data, status, error, refresh, clear } = await useFetch('/api/modules', {
   pick: ['title']
 })
 </script>
@@ -29,14 +29,14 @@ const { data, pending, error, refresh, clear } = await useFetch('/api/modules', 
 ::
 
 ::note
-`data`、 `pending`、 `status` 和 `error` 是 Vue Ref 对象，并且在 `<script setup>` 中使用时应该使用 `.value` 进行访问，而 `refresh`/`execute` 和 `clear` 则是普通的函数。
+`data`、`status` 和 `error` 是 Vue Ref 对象，并且在 `<script setup>` 中使用时应该使用 `.value` 进行访问，而 `refresh`/`execute` 和 `clear` 则是普通的函数。
 ::
 
 使用 `query` 选项，您可以在查询中添加搜索参数。这个选项由 [unjs/ofetch](https://github.com/unjs/ofetch) 扩展，并使用 [unjs/ufo](https://github.com/unjs/ufo) 创建 URL，对象会自动字符串化。
 
 ```ts
 const param1 = ref('value1')
-const { data, pending, error, refresh } = await useFetch('/api/modules', {
+const { data, status, error, refresh } = await useFetch('/api/modules', {
   query: { param1, param2: 'value2' }
 })
 ```
@@ -46,7 +46,7 @@ const { data, pending, error, refresh } = await useFetch('/api/modules', {
 您也可以使用 [interceptors](https://github.com/unjs/ofetch#%EF%B8%8F-interceptors)：
 
 ```ts
-const { data, pending, error, refresh, clear } = await useFetch('/api/auth/login', {
+const { data, status, error, refresh, clear } = await useFetch('/api/auth/login', {
   onRequest({ request, options }) {
     // 设置请求头
     options.headers = options.headers || {}
@@ -127,11 +127,10 @@ const { data, pending, error, refresh, clear } = await useFetch('/api/auth/login
 ## 返回值
 
 - `data`: 异步函数传递的结果。
-- `pending`: 一个布尔值，指示数据是否还在被获取。
 - `refresh`/`execute`: 一个用于刷新由 `handler` 函数返回的数据的函数。
 - `error`: 一个错误对象，如果数据获取失败。
 - `status`: 一个字符串，指示数据请求的状态（`"idle"`、`"pending"`、`"success"`、`"error"`）。
-- `clear`: 一个函数，将 `data` 设置为 `undefined`，将 `error` 设置为 `null`，将 `pending` 设置为 `false`，将 `status` 设置为 `'idle'`，并将任何当前待处理的请求标记为取消。
+- `clear`: 一个函数，将 `data` 设置为 `undefined`，将 `error` 设置为 `null`，将 `status` 设置为 `'idle'`，并将任何当前待处理的请求标记为取消。
 
 默认情况下，Nuxt 会在 `refresh` 执行完毕之前才能再次执行。
 
@@ -169,7 +168,6 @@ type UseFetchOptions<DataT> = {
 
 type AsyncData<DataT, ErrorT> = {
   data: Ref<DataT | null>
-  pending: Ref<boolean>
   refresh: (opts?: AsyncDataExecuteOptions) => Promise<void>
   execute: (opts?: AsyncDataExecuteOptions) => Promise<void>
   clear: () => void

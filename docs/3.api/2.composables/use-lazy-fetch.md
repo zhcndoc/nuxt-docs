@@ -22,10 +22,10 @@ links:
 
 ```vue [pages/index.vue]
 <script setup lang="ts">
-/* 导航将会在获取数据完成之前发生。
-  直接在组件模板中处理挂起和错误状态
-*/
-const { pending, data: posts } = await useLazyFetch('/api/posts')
+/* 导航将在获取完成之前发生。
+ * 在组件模板中直接处理 “pending” 和 “error” 状态
+ */
+const { status, data: posts } = await useLazyFetch('/api/posts')
 watch(posts, (newPosts) => {
   // 因为 posts 一开始可能是 null，所以你不会立即访问
   // 它的内容，但是你可以观察它。
@@ -33,7 +33,7 @@ watch(posts, (newPosts) => {
 </script>
 
 <template>
-  <div v-if="pending">
+  <div v-if="status === 'pending'">
     加载中 ...
   </div>
   <div v-else>

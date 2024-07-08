@@ -22,10 +22,10 @@ links:
 
 ```vue [pages/index.vue]
 <script setup lang="ts">
-/* 导航将在数据获取之前发生。
-  直接在组件模板中处理挂起和错误状态
+/* 导航将在获取完成之前发生。
+  在您的组件模板中直接处理 “pending” 和 “error” 状态。
 */
-const { pending, data: count } = await useLazyAsyncData('count', () => $fetch('/api/count'))
+const { status, data: count } = await useLazyAsyncData('count', () => $fetch('/api/count'))
 
 watch(count, (newCount) => {
   // 因为 count 可能一开始是 null
@@ -35,7 +35,7 @@ watch(count, (newCount) => {
 
 <template>
   <div>
-    {{ pending ? 'Loading' : count }}
+    {{ status === 'pending' ? 'Loading' : count }}
   </div>
 </template>
 ```
