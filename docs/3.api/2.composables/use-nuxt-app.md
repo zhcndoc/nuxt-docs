@@ -8,7 +8,7 @@ links:
     size: xs
 ---
 
-`useNuxtApp` 是一个内置的可组合函数，它提供了一种方式来访问Nuxt的共享运行时上下文，也被称为 [Nuxt 上下文](/docs/guide/going-further/nuxt-app#the-nuxt-context)，它在客户端和服务器端都可用。它帮助你访问 Vue 应用实例、运行时钩子、运行时配置变量和内部状态，如 `ssrContext` 和 `payload`。
+`useNuxtApp` 是一个内置的组合式函数，提供了一种访问 Nuxt 的共享运行时上下文的方式，也被称为 [Nuxt 上下文](/docs/guide/going-further/nuxt-app#the-nuxt-context)，它在客户端和服务器端都可用（但在 Nitro 路由内不可用）。它可以帮助您访问 Vue 应用程序实例、运行时钩子、运行时配置变量和内部状态，比如 `ssrContext` 和 `payload`。
 
 ```vue [app.vue]
 <script setup lang="ts">

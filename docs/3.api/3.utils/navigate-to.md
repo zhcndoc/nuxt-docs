@@ -9,12 +9,16 @@ links:
 ---
 
 ::note
-`navigateTo` 在服务器端和客户端都可用。
+`navigateTo` 可在客户端和服务器端使用（但不可在 Nitro 路由中使用）。
 ::
 
 ## 用法
 
 `navigateTo` 在服务器端和客户端都可用。它可以在 [Nuxt 上下文](/docs/guide/going-further/nuxt-app#the-nuxt-context)中使用，或者直接使用，以执行页面导航。
+
+::tip
+要从服务器端点发送重定向，请改用 [`sendRedirect`](https://h3.unjs.io/utils/response#sendredirectevent-location-code)。
+::
 
 ### 在 Vue 组件中
 
