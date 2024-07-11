@@ -1,50 +1,50 @@
 ---
 title: 'addRouteMiddleware'
-description: 'addRouteMiddleware() is a helper function to dynamically add middleware in your application.'
+description: 'addRouteMiddleware() 是用于在应用程序中动态添加中间件的一个辅助函数。'
 links:
-  - label: Source
+  - label: 源代码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/router.ts
     size: xs
 ---
 
 ::note
-Route middleware are navigation guards stored in the [`middleware/`](/docs/guide/directory-structure/middleware) directory of your Nuxt application (unless [set otherwise](/docs/api/nuxt-config#middleware)).
+路由中间件是存储在您的 Nuxt 应用程序的 [`middleware/`](/docs/guide/directory-structure/middleware) 目录中的导航守卫（除非[设置其他](/docs/api/nuxt-config#middleware)）。
 ::
 
-## Type
+## 类型
 
 ```ts
 addRouteMiddleware (name: string | RouteMiddleware, middleware?: RouteMiddleware, options: AddRouteMiddlewareOptions = {})
 ```
 
-## Parameters
+## 参数
 
 ### `name`
 
-- **Type:** `string` | `RouteMiddleware`
+- **类型:** `string` | `RouteMiddleware`
 
-Can be either a string or a function of type `RouteMiddleware`. Function takes the next route `to` as the first argument and the current route `from` as the second argument, both of which are Vue route objects.
+可以是字符串或类型为 `RouteMiddleware` 的函数。该函数以下一个路由 `to` 作为第一个参数，当前路由 `from` 作为第二个参数，两者都是 Vue 路由对象。
 
-Learn more about available properties of [route objects](/docs/api/composables/use-route).
+了解更多关于[路由对象](/docs/api/composables/use-route)可用的属性。
 
 ### `middleware`
 
-- **Type:** `RouteMiddleware`
+- **类型:** `RouteMiddleware`
 
-The second argument is a function of type `RouteMiddleware`. Same as above, it provides `to` and `from` route objects. It becomes optional if the first argument in `addRouteMiddleware()` is already passed as a function.
+第二个参数是类型为 `RouteMiddleware` 的函数。与上面相同，它提供了 `to` 和 `from` 路由对象。如果 `addRouteMiddleware()` 的第一个参数已经作为函数传递，那么它就变得可选。
 
 ### `options`
 
-- **Type:** `AddRouteMiddlewareOptions`
+- **类型:** `AddRouteMiddlewareOptions`
 
-An optional `options` argument lets you set the value of `global` to `true` to indicate whether the router middleware is global or not (set to `false` by default).
+一个可选的 `options` 参数让你可以设置 `global` 的值为 `true` 来指示路由中间件是否是全局的（默认为 `false`）。
 
-## Examples
+## 示例
 
-### Anonymous Route Middleware
+### 匿名路由中间件
 
-Anonymous route middleware does not have a name. It takes a function as the first argument, making the second `middleware` argument redundant:
+匿名路由中间件没有名称。它以一个函数作为第一个参数，使得第二个 `middleware` 参数变得多余：
 
 ```ts [plugins/my-plugin.ts]
 export default defineNuxtPlugin(() => {
@@ -56,11 +56,11 @@ export default defineNuxtPlugin(() => {
 })
 ```
 
-### Named Route Middleware
+### 命名路由中间件
 
-Named route middleware takes a string as the first argument and a function as the second.
+命名路由中间件以字符串作为第一个参数，以函数作为第二个参数。
 
-When defined in a plugin, it overrides any existing middleware of the same name located in the `middleware/` directory:
+当在插件中定义时，它会覆盖 `middleware/` 目录中同名已存在的中间件：
 
 ```ts [plugins/my-plugin.ts]
 export default defineNuxtPlugin(() => {
@@ -70,9 +70,9 @@ export default defineNuxtPlugin(() => {
 })
 ```
 
-### Global Route Middleware
+### 全局路由中间件
 
-Set an optional, third argument `{ global: true }` to indicate whether the route middleware is global:
+设置一个可选的第三个参数 `{ global: true }` 来指示路由中间件是否是全局的：
 
 ```ts [plugins/my-plugin.ts]
 export default defineNuxtPlugin(() => {

@@ -1,26 +1,26 @@
 ---
 title: "refreshCookie"
-description: "Refresh useCookie values manually when a cookie has changed"
+description: "当 Cookie 发生变化时，手动刷新 useCookie 的值"
 navigation:
-  badge: New
+  badge: 新的
 links:
-  - label: Source
+  - label: 源代码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/cookie.ts
     size: xs
 ---
 
 ::important
-This utility is available since [Nuxt v3.10](/blog/v3-10).
+该实用程序自 [Nuxt v3.10](/blog/v3-10) 起可用。
 ::
 
-## Purpose
+## 目的
 
-The `refreshCookie` function is designed to refresh cookie value returned by `useCookie`.
+`refreshCookie` 函数旨在手动刷新由 `useCookie` 返回的 Cookie 值。
 
-This is useful for updating the `useCookie` ref when we know the new cookie value has been set in the browser.
+这在我们知道新的 Cookie 值已经在浏览器中被设置时更新 `useCookie` 引用是非常有用的。
 
-## Usage
+## 使用
 
 ```vue [app.vue]
 <script setup lang="ts">
@@ -36,10 +36,10 @@ const loggedIn = computed(() => !!tokenCookie.value)
 ```
 
 ::note{to="/docs/guide/going-further/experimental-features#cookiestore"}
-You can enable experimental `cookieStore` option to automatically refresh `useCookie` value when cookie changes in the browser.
+您可以通过启用实验性的 `cookieStore` 选项来自动在浏览器中 Cookie 更改时刷新 `useCookie` 的值。
 ::
 
-## Type
+## 类型
 
 ```ts
 refreshCookie(name: string): void

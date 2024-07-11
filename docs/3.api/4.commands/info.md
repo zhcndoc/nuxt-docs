@@ -1,8 +1,8 @@
 ---
 title: "nuxi info"
-description: The info command logs information about the current or specified Nuxt project.
+description: info 命令记录当前或指定 Nuxt 项目的相关信息。
 links:
-  - label: Source
+  - label: 源代码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/cli/blob/main/src/commands/info.ts
     size: xs
@@ -12,8 +12,8 @@ links:
 npx nuxi info [rootDir]
 ```
 
-The `info` command logs information about the current or specified Nuxt project.
+`info` 命令记录当前或指定 Nuxt 项目的相关信息。
 
-Option        | Default          | Description
+选项        | 默认值          | 描述
 -------------------------|-----------------|------------------
-`rootDir` | `.` | The directory of the target application.
+`rootDir` | `.` | 目标应用程序的目录。

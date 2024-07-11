@@ -1,34 +1,34 @@
 ---
 title: 'abortNavigation'
-description: 'abortNavigation is a helper function that prevents navigation from taking place and throws an error if one is set as a parameter.'
+description: 'abortNavigation 是一个辅助函数，它防止导航发生，如果传入一个错误参数，则抛出该错误。'
 links:
-  - label: Source
+  - label: 源代码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/router.ts
     size: xs
 ---
 
 ::warning
-`abortNavigation` is only usable inside a [route middleware handler](/docs/guide/directory-structure/middleware).
+`abortNavigation` 只能在[路由中间件处理程序](/docs/guide/directory-structure/middleware)内部使用。
 ::
 
-## Type
+## 类型
 
 ```ts
 abortNavigation(err?: Error | string): false
 ```
 
-## Parameters
+## 参数
 
 ### `err`
 
-- **Type**: [`Error`](https://developer.mozilla.org/pl/docs/Web/JavaScript/Reference/Global_Objects/Error) | `string`
+- **类型**: [`Error`](https://developer.mozilla.org/pl/docs/Web/JavaScript/Reference/Global_Objects/Error) | `string`
 
-  Optional error to be thrown by `abortNavigation`.
+  `abortNavigation` 抛出的可选错误。
 
-## Examples
+## 示例
 
-The example below shows how you can use `abortNavigation` in a route middleware to prevent unauthorized route access:
+下面的示例显示了如何在路由中间件中使用 `abortNavigation` 来防止未授权的路由访问：
 
 ```ts [middleware/auth.ts]
 export default defineNuxtRouteMiddleware((to, from) => {
@@ -44,9 +44,9 @@ export default defineNuxtRouteMiddleware((to, from) => {
 })
 ```
 
-### `err` as a String
+### `err` 作为字符串
 
-You can pass the error as a string:
+你可以将错误作为字符串传递：
 
 ```ts [middleware/auth.ts]
 export default defineNuxtRouteMiddleware((to, from) => {
@@ -58,14 +58,14 @@ export default defineNuxtRouteMiddleware((to, from) => {
 })
 ```
 
-### `err` as an Error Object
+### `err` 作为 Error 对象
 
-You can pass the error as an [`Error`](https://developer.mozilla.org/pl/docs/Web/JavaScript/Reference/Global_Objects/Error) object, e.g. caught by the `catch`-block:
+你可以将错误作为一个 [`Error`](https://developer.mozilla.org/pl/docs/Web/JavaScript/Reference/Global_Objects/Error) 对象传递，例如在 `catch` 块中捕获的错误：
 
 ```ts [middleware/auth.ts]
 export default defineNuxtRouteMiddleware((to, from) => {
   try {
-    /* code that might throw an error */
+    /* 可能抛出错误的代码 */
   } catch (err) {
     return abortNavigation(err)
   }

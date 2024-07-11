@@ -1,8 +1,8 @@
 ---
 title: "nuxi add"
-description: "Scaffold an entity into your Nuxt application."
+description: "为你的 Nuxt 应用生成一个实体。"
 links:
-  - label: Source
+  - label: 源代码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/cli/blob/main/src/commands/add.ts
     size: xs
@@ -12,80 +12,80 @@ links:
 npx nuxi add [--cwd] [--force] <TEMPLATE> <NAME>
 ```
 
-Option        | Default          | Description
+选项        | 默认值          | 描述
 -------------------------|-----------------|------------------
-`TEMPLATE` | - | Specify a template of the file to be generated.
-`NAME` | - | Specify a name of the file that will be created.
-`--cwd` | `.` | The directory of the target application.
-`--force` | `false` | Force override file if it already exists.
+`TEMPLATE` | - | 指定要生成的文件的模板。
+`NAME` | - | 指定将创建的文件的名称。
+`--cwd` | `.` | 目标应用的目录。
+`--force` | `false` | 如果文件已存在，强制覆盖。
 
-**Modifiers:**
+**修饰符:**
 
-Some templates support additional modifier flags to add a suffix (like `.client` or `.get`) to their name.
+一些模板支持额外的修饰符标志，以在其名称后添加一个后缀（如 `.client` 或 `.get`）。
 
 ```bash [Terminal]
-# Generates `/plugins/sockets.client.ts`
+# 生成 `/plugins/sockets.client.ts`
 npx nuxi add plugin sockets --client
 ```
 
 ## `nuxi add component`
 
-* Modifier flags: `--mode client|server` or `--client` or `--server`
+* 修饰符标志: `--mode client|server` 或 `--client` 或 `--server`
 
 ```bash [Terminal]
-# Generates `components/TheHeader.vue`
+# 生成 `components/TheHeader.vue`
 npx nuxi add component TheHeader
 ```
 
 ## `nuxi add composable`
 
 ```bash [Terminal]
-# Generates `composables/foo.ts`
+# 生成 `composables/foo.ts`
 npx nuxi add composable foo
 ```
 
 ## `nuxi add layout`
 
 ```bash [Terminal]
-# Generates `layouts/custom.vue`
+# 生成 `layouts/custom.vue`
 npx nuxi add layout custom
 ```
 
 ## `nuxi add plugin`
 
-* Modifier flags: `--mode client|server` or `--client`or `--server`
+* 修饰符标志: `--mode client|server` 或 `--client` 或 `--server`
 
 ```bash [Terminal]
-# Generates `plugins/analytics.ts`
+# 生成 `plugins/analytics.ts`
 npx nuxi add plugin analytics
 ```
 
 ## `nuxi add page`
 
 ```bash [Terminal]
-# Generates `pages/about.vue`
+# 生成 `pages/about.vue`
 npx nuxi add page about
 ```
 
 ```bash [Terminal]
-# Generates `pages/category/[id].vue`
+# 生成 `pages/category/[id].vue`
 npx nuxi add page "category/[id]"
 ```
 
 ## `nuxi add middleware`
 
-* Modifier flags: `--global`
+* 修饰符标志: `--global`
 
 ```bash [Terminal]
-# Generates `middleware/auth.ts`
+# 生成 `middleware/auth.ts`
 npx nuxi add middleware auth
 ```
 
 ## `nuxi add api`
 
-* Modifier flags: `--method` (can accept `connect`, `delete`, `get`, `head`, `options`, `patch`, `post`, `put` or `trace`) or alternatively you can directly use `--get`, `--post`, etc.
+* 修饰符标志: `--method`（可以接受 `connect`、`delete`、`get`、`head`、`options`、`patch`、`post`、`put` 或 `trace`），或者你可以直接使用 `--get`、`--post` 等。
 
 ```bash [Terminal]
-# Generates `server/api/hello.ts`
+# 生成 `server/api/hello.ts`
 npx nuxi add api hello
 ```

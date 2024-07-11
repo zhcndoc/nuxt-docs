@@ -1,32 +1,32 @@
 ---
 title: "navigateTo"
-description: navigateTo is a helper function that programmatically navigates users.
+description: navigateTo 是一个辅助函数，用于程序化地导航用户。
 links:
-  - label: Source
+  - label: 源代码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/router.ts
     size: xs
 ---
 
 ::note
-`navigateTo` is available on both server side and client side.
+`navigateTo` 在服务器端和客户端都可用。
 ::
 
-## Usage
+## 用法
 
-`navigateTo` is available on both server side and client side. It can be used within the [Nuxt context](/docs/guide/going-further/nuxt-app#the-nuxt-context), or directly, to perform page navigation.
+`navigateTo` 在服务器端和客户端都可用。它可以在 [Nuxt 上下文](/docs/guide/going-further/nuxt-app#the-nuxt-context)中使用，或者直接使用，以执行页面导航。
 
-### Within a Vue Component
+### 在 Vue 组件中
 
 ```vue
 <script setup lang="ts">
-// passing 'to' as a string
+// 将 'to' 作为字符串传递
 await navigateTo('/search')
 
-// ... or as a route object
+// ... 或者作为路由对象
 await navigateTo({ path: '/search' })
 
-// ... or as a route object with query parameters
+// ... 或者作为具有查询参数的路由对象
 await navigateTo({
   path: '/search',
   query: {
@@ -37,12 +37,12 @@ await navigateTo({
 </script>
 ```
 
-### Within Route Middleware
+### 在路由中间件中
 
 ```ts
 export default defineNuxtRouteMiddleware((to, from) => {
   if (to.path !== '/search') {
-    // setting the redirect code to '301 Moved Permanently'
+    // 将重定向代码设置为 '301 Moved Permanently'
     return navigateTo('/search', { redirectCode: 301 })
   }
 })
@@ -50,38 +50,38 @@ export default defineNuxtRouteMiddleware((to, from) => {
 
 :read-more{to="/docs/guide/directory-structure/middleware"}
 
-### External URL
+### 外部 URL
 
-The `external` parameter in `navigateTo` influences how navigating to URLs is handled:
+`navigateTo` 中的 `external` 参数影响如何处理对 URL 的导航：
 
-- **Without `external: true`**:
-  - Internal URLs navigate as expected.
-  - External URLs throw an error.
+- **没有 `external: true`**:
+  - 内部 URL 按预期导航。
+  - 外部 URL 抛出一个错误。
 
-- **With `external: true`**:
-  - Internal URLs navigate with a full-page reload.
-  - External URLs navigate as expected.
+- **有 `external: true`**:
+  - 内部 URL 通过全页面刷新导航。
+  - 外部 URL 按预期导航。
 
-#### Example
+#### 示例
 
 ```vue
 <script setup lang="ts">
-// will throw an error;
-// navigating to an external URL is not allowed by default
+// 将会抛出一个错误；
+// 导航到外部 URL 默认是不允许的
 await navigateTo('https://nuxt.com')
 
-// will redirect successfully with the 'external' parameter set to 'true'
+// 将会成功重定向，因为 'external' 参数设置为 'true'
 await navigateTo('https://nuxt.com', {
   external: true
 })
 </script>
 ```
 
-### Using open()
+### 使用 open()
 
 ```vue
 <script setup lang="ts">
-// will open 'https://nuxt.com' in a new tab
+// 将会在新标签页中打开 'https://nuxt.com'
 await navigateTo('https://nuxt.com', {
   open: {
     target: '_blank',
@@ -94,7 +94,7 @@ await navigateTo('https://nuxt.com', {
 </script>
 ```
 
-## Type
+## 类型
 
 ```ts
 navigateTo(to: RouteLocationRaw | undefined | null, options?: NavigateToOptions) => Promise<void | NavigationFailure> | RouteLocationRaw
@@ -108,101 +108,101 @@ interface NavigateToOptions {
 ```
 
 ::warning
-Make sure to always use `await` or `return` on result of `navigateTo` when calling it.
+在使用 `navigateTo` 时，请确保总是使用 `await` 或 `return` 结果。
 ::
 
-## Parameters
+## 参数
 
 ### `to`
 
-**Type**: [`RouteLocationRaw`](https://router.vuejs.org/api/interfaces/RouteLocationOptions.html#Interface-RouteLocationOptions) | `undefined` | `null`
+**类型**: [`RouteLocationRaw`](https://router.vuejs.org/api/interfaces/RouteLocationOptions.html#Interface-RouteLocationOptions) | `undefined` | `null`
 
-**Default**: `'/'`
+**默认**: `'/'`
 
-`to` can be a plain string or a route object to redirect to. When passed as `undefined` or `null`, it will default to `'/'`.
+`to` 可以是纯字符串或路由对象，以重定向到。当传递为 `undefined` 或 `null` 时，它将默认为 `'/'`。
 
-### `options` (optional)
+### `options`（可选）
 
-**Type**: `NavigateToOptions`
+**类型**: `NavigateToOptions`
 
-An object accepting the following properties:
+一个接受以下属性的对象：
 
-- `replace` (optional)
+- `replace`（可选）
 
-  **Type**: `boolean`
+  **类型**: `boolean`
 
-  **Default**: `false`
+  **默认**: `false`
 
-  By default, `navigateTo` pushes the given route into the Vue Router's instance on the client side.
+  默认情况下，`navigateTo` 在客户端实例上将给定路由推入 Vue Router。
 
-  This behavior can be changed by setting `replace` to `true`, to indicate that given route should be replaced.
+  可以通过将 `replace` 设置为 `true` 来更改此行为，以指示给定路由应该被替换。
 
-- `redirectCode` (optional)
+- `redirectCode`（可选）
 
-  **Type**: `number`
+  **类型**: `number`
 
-  **Default**: `302`
+  **默认**: `302`
 
-  `navigateTo` redirects to the given path and sets the redirect code to [`302 Found`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/302) by default when the redirection takes place on the server side.
+  `navigateTo` 重定向到给定路径，并设置重定向代码为 [`302 Found`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/302)，当重定向发生在服务器端时默认。
 
-  This default behavior can be modified by providing different `redirectCode`. Commonly, [`301 Moved Permanently`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/301) can be used for permanent redirections.
+  可以通过提供不同的 `redirectCode` 来修改此默认行为。通常，可以使用 [`301 Moved Permanently`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/301) 来表示永久重定向。
 
-- `external` (optional)
+- `external`（可选）
 
-  **Type**: `boolean`
+  **类型**: `boolean`
 
-  **Default**: `false`
+  **默认**: `false`
 
-  Allows navigating to an external URL when set to `true`. Otherwise, `navigateTo` will throw an error, as external navigation is not allowed by default.
+  设置为 `true` 时允许导航到外部 URL。否则，`navigateTo` 将抛出错误，因为默认情况下不允许外部导航。
 
-- `open` (optional)
+- `open`（可选）
 
-  **Type**: `OpenOptions`
+  **类型**: `OpenOptions`
 
-  Allows navigating to the URL using the [open()](https://developer.mozilla.org/en-US/docs/Web/API/Window/open) method of the window. This option is only applicable on the client side and will be ignored on the server side.
+  允许使用 [open()](https://developer.mozilla.org/en-US/docs/Web/API/Window/open) 方法的窗口的 `window` 对象来导航到 URL。此选项仅在客户端有效，在服务器端将被忽略。
 
-  An object accepting the following properties:
+  一个接受以下属性的对象：
 
   - `target`
 
-    **Type**: `string`
+    **类型**: `string`
 
-    **Default**: `'_blank'`
+    **默认**: `'_blank'`
 
-    A string, without whitespace, specifying the name of the browsing context the resource is being loaded into.
+    一个没有空格的字符串，指定资源加载到的浏览上下文名称。
 
-  - `windowFeatures` (optional)
+  - `windowFeatures`（可选）
 
-    **Type**: `OpenWindowFeatures`
+    **类型**: `OpenWindowFeatures`
 
-    An object accepting the following properties:
+    一个接受以下属性的对象：
 
-    - `popup` (optional)
+    - `popup`（可选）
 
-      **Type**: `boolean`
+      **类型**: `boolean`
 
-    - `width` or `innerWidth` (optional)
+    - `width` 或 `innerWidth`（可选）
 
-      **Type**: `number`
+      **类型**: `number`
 
-    - `height` or `innerHeight` (optional)
+    - `height` 或 `innerHeight`（可选）
 
-      **Type**: `number`
+      **类型**: `number`
 
-    - `left` or `screenX` (optional)
+    - `left` 或 `screenX`（可选）
 
-      **Type**: `number`
+      **类型**: `number`
 
-    - `top` or `screenY` (optional)
+    - `top` 或 `screenY`（可选）
 
-      **Type**: `number`
+      **类型**: `number`
 
-    - `noopener` (optional)
+    - `noopener`（可选）
 
-      **Type**: `boolean`
+      **类型**: `boolean`
 
-    - `noreferrer` (optional)
+    - `noreferrer`（可选）
 
-      **Type**: `boolean`
+      **类型**: `boolean`
 
-    Refer to the [documentation](https://developer.mozilla.org/en-US/docs/Web/API/Window/open) for more detailed information on the **windowFeatures** properties.
+    参考[文档](https://developer.mozilla.org/en-US/docs/Web/API/Window/open)获取关于 **windowFeatures** 属性的更详细信息。

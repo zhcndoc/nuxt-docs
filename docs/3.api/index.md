@@ -1,31 +1,31 @@
 ---
-title: 'Nuxt API Reference'
-titleTemplate: '%s'
-description: 'Explore all Nuxt Internals: Components, Composables, Utils, Commands and more.'
+title: 'Nuxt API 参考'
+titleTemplate: '%s - Nuxt 中文文档'
+description: '探索所有 Nuxt 内部内容：组件、组合式函数、实用工具、命令等。'
 navigation: false
 surround: false
 ---
 
 ::card-group
-  ::card{icon="i-ph-cube-duotone" title="Components" to="/docs/api/components/client-only"}
-  Explore Nuxt built-in components for pages, layouts, head, and more.
+  ::card{icon="i-ph-cube-duotone" title="组件" to="/docs/api/components/client-only"}
+  探索页面、布局、头部等的 Nuxt 内置组件。
   ::
-  ::card{icon="i-ph-arrows-left-right-duotone" title="Composables" to="/docs/api/composables/use-app-config"}
-  Discover Nuxt composable functions for data-fetching, head management and more.
+  ::card{icon="i-ph-arrows-left-right-duotone" title="组合式函数" to="/docs/api/composables/use-app-config"}
+  发现 Nuxt 可组合函数用于数据获取、头部管理等。
   ::
-  ::card{icon="i-ph-function-duotone" title="Utils" to="/docs/api/utils/dollarfetch"}
-  Learn about Nuxt utility functions for navigation, error handling and more.
+  ::card{icon="i-ph-function-duotone" title="实用工具" to="/docs/api/utils/dollarfetch"}
+  了解用于导航、错误处理等的 Nuxt 实用程序功能。
   ::
-  ::card{icon="i-ph-terminal-window-duotone" title="Commands" to="/docs/api/commands/add"}
-  List of Nuxt CLI commands to init, analyze, build, and preview your application.
+  ::card{icon="i-ph-terminal-window-duotone" title="CLI 命令" to="/docs/api/commands/add"}
+  用于建立、分析、构建和预览应用程序的 Nuxt CLI 命令列表。
   ::
   ::card{icon="i-ph-toolbox-duotone" title="Nuxt Kit" to="/docs/api/kit/modules"}
-  Understand Nuxt Kit utilities to create modules and control Nuxt.
+  了解 Nuxt Kit 实用程序来创建模块和控制 Nuxt。
   ::
-  ::card{icon="i-ph-brain-duotone" title="Advanced" to="/docs/api/advanced/hooks"}
-  Go deep in Nuxt internals with Nuxt lifecycle hooks.
+  ::card{icon="i-ph-brain-duotone" title="高级用法" to="/docs/api/advanced/hooks"}
+  使用 Nuxt 生命周期钩子深入了解 Nuxt 内部。
   ::
-  ::card{icon="i-ph-gear-duotone" title="Nuxt Configuration" to="/docs/api/nuxt-config"}
-  Explore all Nuxt configuration options to customize your application.
+  ::card{icon="i-ph-gear-duotone" title="Nuxt 配置" to="/docs/api/nuxt-config"}
+  探索所有 Nuxt 配置选项，以定制您的应用程序。
   ::
 ::

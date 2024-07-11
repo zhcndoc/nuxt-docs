@@ -1,8 +1,8 @@
 ---
 title: "nuxi devtools"
-description: The devtools command allows you to enable or disable Nuxt DevTools on a per-project basis.
+description: nuxi devtools 命令允许你在每个项目的基础上启用或禁用 Nuxt DevTools。
 links:
-  - label: Source
+  - label: 源代码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/cli/blob/main/src/commands/devtools.ts
     size: xs
@@ -12,12 +12,12 @@ links:
 npx nuxi devtools enable|disable [rootDir]
 ```
 
-Running `nuxi devtools enable` will install the Nuxt DevTools globally, and also enable it within the particular project you are using. It is saved as a preference in your user-level `.nuxtrc`. If you want to remove devtools support for a particular project, you can run `nuxi devtools disable`.
+运行 `nuxi devtools enable` 将会在全球范围内安装 Nuxt DevTools，并在你正在使用的特定项目中启用它。它被保存在你的用户级别 `.nuxtrc` 中。如果你想为特定项目移除 DevTools 支持，你可以运行 `nuxi devtools disable`。
 
-Option        | Default          | Description
+选项 | 默认值 | 描述
 -------------------------|-----------------|------------------
-`rootDir` | `.` | The root directory of the app you want to enable devtools for.
+`rootDir` | `.` | 您想要为哪个应用程序启用 DevTools 的根目录。
 
 ::read-more{icon="i-simple-icons-nuxtdotjs" to="https://devtools.nuxt.com" target="_blank"}
-Read more about the **Nuxt DevTools**.
+阅读更多关于 **Nuxt DevTools** 的信息。
 ::

@@ -1,18 +1,18 @@
 ---
 title: 'updateAppConfig'
-description: 'Update the App Config at runtime.'
+description: '在运行时更新 App 的配置。'
 links:
-  - label: Source
+  - label: 源代码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/config.ts
     size: xs
 ---
 
 ::note
-Updates the [`app.config`](/docs/guide/directory-structure/app-config) using deep assignment. Existing (nested) properties will be preserved.
+使用深度赋值更新 [`app.config`](/docs/guide/directory-structure/app-config)。现有的（嵌套的）属性将被保留。
 ::
 
-## Usage
+## 使用方法
 
 ```js
 const appConfig = useAppConfig() // { foo: 'bar' }

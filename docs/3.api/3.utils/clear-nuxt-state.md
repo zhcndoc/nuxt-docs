@@ -1,23 +1,23 @@
 ---
 title: 'clearNuxtState'
-description: Delete the cached state of useState.
+description: 清除 useState 的缓存状态。
 links:
-  - label: Source
+  - label: 源代码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/state.ts
     size: xs
 ---
 
 ::note
-This method is useful if you want to invalidate the state of `useState`.
+这个方法对于想要清除 useState 的状态非常有用。
 ::
 
-## Type
+## 类型
 
 ```ts
 clearNuxtState (keys?: string | string[] | ((key: string) => boolean)): void
 ```
 
-## Parameters
+## 参数
 
-- `keys`: One or an array of keys that are used in [`useState`](/docs/api/composables/use-state) to delete their cached state. If no keys are provided, **all state** will be invalidated.
+- `keys`: 用于 useState 的一个或一组键，用于删除它们的缓存状态。如果没有提供键，所有状态将被无效化。

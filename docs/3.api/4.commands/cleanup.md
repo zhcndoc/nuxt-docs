@@ -1,8 +1,8 @@
 ---
 title: 'nuxi cleanup'
-description: "Remove common generated Nuxt files and caches."
+description: "移除常见的 Nuxt 生成文件和缓存。"
 links:
-  - label: Source
+  - label: 源代码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/cli/blob/main/src/commands/cleanup.ts
     size: xs
@@ -12,12 +12,12 @@ links:
 npx nuxi cleanup [rootDir]
 ```
 
-The `cleanup` command removes common generated Nuxt files and caches, including:
+`cleanup` 命令会移除常见的 Nuxt 生成文件和缓存，包括：
 - `.nuxt`
 - `.output`
 - `node_modules/.vite`
 - `node_modules/.cache`
 
-Option        | Default          | Description
+选项        | 默认值          | 描述
 -------------------------|-----------------|------------------
-`rootDir` | `.` | The root directory of the project.
+`rootDir` | `.` | 项目的根目录。

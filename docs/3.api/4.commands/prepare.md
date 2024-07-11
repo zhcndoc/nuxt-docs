@@ -1,8 +1,8 @@
 ---
 title: 'nuxi prepare'
-description: The prepare command creates a .nuxt directory in your application and generates types.
+description: 准备命令会在你的应用中创建一个 .nuxt 目录，并生成类型。
 links:
-  - label: Source
+  - label: 源代码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/cli/blob/main/src/commands/prepare.ts
     size: xs
@@ -12,8 +12,8 @@ links:
 npx nuxi prepare [--log-level] [rootDir]
 ```
 
-The `prepare` command creates a [`.nuxt`](/docs/guide/directory-structure/nuxt) directory in your application and generates types. This can be useful in a CI environment or as a `postinstall` command in your [`package.json`](/docs/guide/directory-structure/package).
+`prepare` 命令会在你的应用中创建一个 [`.nuxt`](/docs/guide/directory-structure/nuxt) 目录，并生成类型。这可以在 CI 环境中使用，或者在你的 [`package.json`](/docs/guide/directory-structure/package) 中的 `postinstall` 命令中使用。
 
 Option        | Default          | Description
 -------------------------|-----------------|------------------
-`rootDir` | `.` | The root directory of the application to prepare.
+`rootDir` | `.` | 要准备的应用的根目录。
