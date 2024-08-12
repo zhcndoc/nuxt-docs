@@ -52,6 +52,25 @@ const { enabled, state } = usePreviewMode({
 `getState` 函数将附加返回值到当前状态，因此请小心不要意外覆盖重要状态。
 ::
 
+### 自定义 `onEnable` 和 `onDisable` 回调
+
+默认情况下，当启用 `usePreviewMode` 时，它将调用 `refreshNuxtData()` 来重新从服务器获取所有数据。
+
+当禁用预览模式时，组合将附加一个回调来在后续路由导航后调用 `refreshNuxtData()`。
+
+您可以通过为 `onEnable` 和 `onDisable` 选项提供自定义函数来指定要触发的自定义回调。
+
+```js
+const { enabled, state } = usePreviewMode({
+  onEnable: () => {
+    console.log('preview mode has been enabled')
+  },
+  onDisable: () => {
+    console.log('preview mode has been disabled')
+  }
+})
+```
+
 ## 示例
 
 下面的示例创建了一个页面，该页面的一部分内容仅在预览模式下渲染。
