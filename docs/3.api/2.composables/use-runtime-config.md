@@ -4,7 +4,7 @@ description: '使用 useRuntimeConfig 组合函数访问运行时配置变量。
 links:
   - label: Source
     icon: i-simple-icons-github
-    to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/asyncData.ts
+    to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/nuxt.ts
     size: xs
 ---
 

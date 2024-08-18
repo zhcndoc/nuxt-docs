@@ -72,7 +72,7 @@ const { data: posts } = await useAsyncData(
   - `getCachedData`: 提供一个函数，返回缓存的数据。返回的 _null_ 或 _undefined_ 值将触发抓取。默认情况下，这是：`key => nuxt.isHydrating ? nuxt.payload.data[key] : nuxt.static.data[key]`，这只有在启用 `payloadExtraction` 时才会缓存数据。
   - `pick`: 只从这个数组中选择指定的键。
   - `watch`: 观察可变源以自动刷新。
-  - `deep`: 返回一个深层引用的对象（它默认为 `true`）。如果你不需要深层响应的数据，可以将其设置为 `false` 来返回浅层引用的对象，这可以改善性能。
+  - `deep`: 返回深引用对象中的数据。 默认情况下为 `false`，以性能为目的以浅引用对象返回数据。
   - `dedupe`: 避免在同一时间重复抓取同一个键（默认为 `cancel`）。可能的选项：
     - `cancel` - 当有新的请求时，取消当前正在进行的请求。
     - `defer` - 如果有一个正在进行的请求，则根本不会发出新的请求。

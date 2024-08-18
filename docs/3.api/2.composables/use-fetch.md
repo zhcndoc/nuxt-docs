@@ -107,7 +107,7 @@ const { data, status, error, refresh, clear } = await useFetch('/api/auth/login'
   - `getCachedData`: 提供一个函数，返回缓存的数。返回 `null` 或 `undefined` 值将触发获取。默认情况下，这是一个：`key => nuxt.isHydrating ? nuxt.payload.data[key] : nuxt.static.data[key]`，它仅在启用 `payloadExtraction` 时缓存数据。
   - `pick`: 从 `handler` 函数结果中仅选择此数组中的键。
   - `watch`: 监听一系列响应源，并在它们改变时自动刷新获取结果。默认情况下，请求选项和 URL 被监听。您可以使用 `watch: false` 完全忽略响应源。与 `immediate: false` 一起，这允许您完全手动使用 `useFetch`。
-  - `deep`: 返回一个深层 ref 对象中的数据（默认情况下是 `true`）。您可以通过将其设置为 `false` 来返回一个浅层 ref 对象，这可以提高性能，如果您的数据不需要是深层次的响应性。
+  - `deep`: 返回深度引用对象的数据。默认为 `false`，以便为性能返回浅引用对象中的数据。
   - `dedupe`: 避免在一次时间内对同一键进行更多的请求（默认为 `cancel`）。可能的选项：
     - `cancel` - 当有新请求时，取消现有请求。
     - `defer` - 如果当前有一个待处理的请求，不会做出新的请求。

@@ -129,7 +129,7 @@ interface PageMeta {
 
   - **类型**: `boolean | (to: RouteLocationNormalized, from: RouteLocationNormalized) => boolean`
 
-    告诉 Nuxt 在渲染页面之前是否滚动到顶部。如果您想要覆盖 Nuxt 的默认滚动行为，您可以在 `~/app/router.options.ts` 中这样做（查看 [自定义路由](/docs/guide/going-further/custom-routing#using-approuteroptions) 了解更多信息）。
+    告诉 Nuxt 在渲染页面之前是否滚动到顶部。如果您想要覆盖 Nuxt 的默认滚动行为，您可以在 `~/app/router.options.ts` 中这样做（查看 [自定义路由](/docs/guide/recipes/custom-routing#using-approuteroptions) 了解更多信息）。
 
   **`[key: string]`**
 
