@@ -38,6 +38,7 @@ const { data: mountain } = await useFetch(`/api/mountains/${route.params.slug}`)
 
 - `fullPath`: 当前路由关联的编码 URL，包含路径、查询和哈希
 - `hash`: 解码的 URL 哈希部分，从#开始
+- `query`: 访问路由查询参数
 - `matched`: 当前路由位置正常化匹配路由记录的数组
 - `meta`: 附加到记录的自定义数据
 - `name`: 路由记录的唯一名称
