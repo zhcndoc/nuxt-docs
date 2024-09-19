@@ -69,6 +69,10 @@ const { data, status, error, refresh, clear } = await useFetch('/api/auth/login'
 `useFetch` 是一个由编译器转换的保留函数名，所以您不应该将您的函数命名为 `useFetch`。
 ::
 
+::warning
+如果你遇到从 `useFetch` 解构出来的 `data` 变量返回的是一个字符串而不是一个解析过的 JSON 对象，那么确保你的组件不包含像 `import { useFetch } from '@vueuse/core` 这样的导入语句。
+::
+
 ::tip{icon="i-ph-video-duotone" to="https://www.youtube.com/watch?v=njsGVmcWviY" target="_blank"}
 观看 Alexander Lichter 的视频，以避免错误地使用 `useFetch`！
 ::
@@ -142,7 +146,7 @@ const { data, status, error, refresh, clear } = await useFetch('/api/auth/login'
 
 ```ts [Signature]
 function useFetch<DataT, ErrorT>(
-  url: string | Request | Ref<string | Request> | () => string | Request,
+  url: string | Request | Ref<string | Request> | (() => string) | Request,
   options?: UseFetchOptions<DataT>
 ): Promise<AsyncData<DataT, ErrorT>>
 
