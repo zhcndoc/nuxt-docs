@@ -73,7 +73,7 @@ const { data, status, error, refresh, clear } = await useFetch('/api/auth/login'
 如果你遇到从 `useFetch` 解构出来的 `data` 变量返回的是一个字符串而不是一个解析过的 JSON 对象，那么确保你的组件不包含像 `import { useFetch } from '@vueuse/core` 这样的导入语句。
 ::
 
-::tip{icon="i-ph-video-duotone" to="https://www.youtube.com/watch?v=njsGVmcWviY" target="_blank"}
+::tip{icon="i-ph-video" to="https://www.youtube.com/watch?v=njsGVmcWviY" target="_blank"}
 观看 Alexander Lichter 的视频，以避免错误地使用 `useFetch`！
 ::
 

@@ -14,7 +14,7 @@ links:
 
 默认情况下，它还会保存你的应用当前 `state`（即任何你可以通过 `useState` 访问的状态）。
 
-::read-more{to="/docs/guide/going-further/experimental-features#restorestate" icon="i-ph-star-duotone"}
+::read-more{to="/docs/guide/going-further/experimental-features#restorestate" icon="i-ph-star"}
 你可以通过在 `nuxt.config` 文件中启用 `experimental.restoreState` 选项来启用实验性的状态恢复。
 ::
 

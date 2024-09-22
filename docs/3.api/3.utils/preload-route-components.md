@@ -10,7 +10,7 @@ links:
 
 预加载路由会加载用户将来可能会导航到的给定路由的组件。这确保组件可以更早地可用，并且不太可能阻塞导航，从而提高性能。
 
-::tip{icon="i-ph-rocket-launch-duotone" color="gray"}
+::tip{icon="i-ph-rocket-launch" color="gray"}
 Nuxt 已经在使用 `NuxtLink` 组件时自动预加载必要的路由。
 ::
 

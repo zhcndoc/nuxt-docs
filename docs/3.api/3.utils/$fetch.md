@@ -10,11 +10,11 @@ links:
 
 Nuxt 使用 [ofetch](https://github.com/unjs/ofetch) 来全局暴露 `$fetch` 助手，以便在 Vue 应用或 API 路由中进行 HTTP 请求。
 
-::tip{icon="i-ph-rocket-launch-duotone" color="gray"}
+::tip{icon="i-ph-rocket-launch" color="gray"}
 在服务器端渲染期间，调用 `$fetch` 来获取您的内部 [API 路由](/docs/guide/directory-structure/server)将会直接调用相关函数（模拟请求），**节省了一次额外的 API 调用**。
 ::
 
-::note{color="blue" icon="i-ph-info-duotone"}
+::note{color="blue" icon="i-ph-info"}
 在组件中使用 `$fetch` 而不将其包裹在 [`useAsyncData`](/docs/api/composables/use-async-data) 中会导致数据被两次获取：最初在服务器上，然后在客户端 hydration 期间再次获取，因为 `$fetch` 不会将服务器状态传递给客户端。因此，由于客户端必须再次获取数据，该 fetch 将在两方执行。
 ::
 

@@ -138,7 +138,7 @@ Nuxt 通过 `ssrContext` 暴露了以下属性：
 
   自 [Nuxt v3.4](https://nuxt.com/blog/v3-4#payload-enhancements) 以来，你可以通过使用一个有效载荷插件来定义你自己的减少器/重新生成器，来为不支持的类型定义自己的减少器/重新生成器。
 
-  ::tip{icon="i-ph-video-duotone" to="https://www.youtube.com/watch?v=8w6ffRBs8a4" target="_blank"}
+  ::tip{icon="i-ph-video" to="https://www.youtube.com/watch?v=8w6ffRBs8a4" target="_blank"}
   观看 Alexander Lichter 关于序列化有效载荷的视频，尤其是关于类的情况。
   ::
 
