@@ -49,8 +49,8 @@ const { data, status, error, refresh } = await useFetch('/api/modules', {
 const { data, status, error, refresh, clear } = await useFetch('/api/auth/login', {
   onRequest({ request, options }) {
     // 设置请求头
-    options.headers = options.headers || {}
-    options.headers.authorization = '...'
+    // 请注意，这依赖于 ofetch >= 1.4.0 - 你可能需要刷新你的锁定文件。
+    options.headers.set('Authorization', '...')
   },
   onRequestError({ request, options, error }) {
     // 处理请求错误
