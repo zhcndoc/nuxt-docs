@@ -125,6 +125,19 @@ interface NavigateToOptions {
 
 `to` 可以是纯字符串或路由对象，以重定向到。当传递为 `undefined` 或 `null` 时，它将默认为 `'/'`。
 
+#### 示例
+
+```ts
+// 直接传递 URL 将重定向到 '/blog' 页面
+await navigateTo('/blog')
+
+// 使用路由对象，将重定向到名称为 'blog' 的路由。
+await navigateTo({ name: 'blog' })
+
+// 通过路由对象重定向到 '/product' 路由，同时传递一个参数（id = 1）。
+await navigateTo({ name: 'product', params: { id: 1 } })
+```
+
 ### `options`（可选）
 
 **类型**: `NavigateToOptions`
