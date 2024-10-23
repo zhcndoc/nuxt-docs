@@ -30,6 +30,7 @@ interface PageMeta {
   redirect?: RouteRecordRedirectOption
   name?: string
   path?: string
+  props?: RouteRecordRaw['props']
   alias?: string | string[]
   pageTransition?: boolean | TransitionProps
   layoutTransition?: boolean | TransitionProps
@@ -62,6 +63,12 @@ interface PageMeta {
   - **类型**: `string`
 
     如果您的模式比文件名表达的更复杂，您可以定义一个 [自定义正则表达式](#using-a-custom-regular-expression)。
+
+  **`props`**
+  
+  - **类型**: [`RouteRecordRaw['props']`](https://router.vuejs.org/guide/essentials/passing-props)
+
+    允许将路由 `params` 作为传递给页面组件的 props 进行访问。
 
   **`alias`**
 
