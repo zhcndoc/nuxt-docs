@@ -54,7 +54,7 @@ const { data } = await useAsyncData('todos', () => $fetch('/api/todos'))
 const newTodo = ref('')
 const previousTodos = ref([])
 
-// 访问 todos.vue 中的 useFetch 缓存值
+// 访问 todos.vue 中的 useAsyncData 缓存值
 const { data: todos } = useNuxtData('todos')
 
 const { data } = await useFetch('/api/addTodo', {
