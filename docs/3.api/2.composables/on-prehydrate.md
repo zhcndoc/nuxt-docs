@@ -1,6 +1,6 @@
 ---
 title: "onPrehydrate"
-description: "在 Nuxt 页面预填充之前，使用 onPrehydrate 在客户端立即运行回调。"
+description: "在 Nuxt 对页面进行水合之前，使用 onPrehydrate 在客户端立即运行回调。"
 links:
   - label: Source
     icon: i-simple-icons-github
