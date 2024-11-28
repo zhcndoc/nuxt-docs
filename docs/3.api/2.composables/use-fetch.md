@@ -29,7 +29,7 @@ const { data, status, error, refresh, clear } = await useFetch('/api/modules', {
 ::
 
 ::note
-`data`、`status` 和 `error` 是 Vue Ref 对象，并且在 `<script setup>` 中使用时应该使用 `.value` 进行访问，而 `refresh`/`execute` 和 `clear` 则是普通的函数。
+`data`、`status` 和 `error` 是 Vue refs，在 `<script setup>` 中使用时应通过 `.value` 访问，而 `refresh`/`execute` 和 `clear` 是普通函数。
 ::
 
 使用 `query` 选项，您可以在查询中添加搜索参数。这个选项由 [unjs/ofetch](https://github.com/unjs/ofetch) 扩展，并使用 [unjs/ufo](https://github.com/unjs/ufo) 创建 URL，对象会自动字符串化。
