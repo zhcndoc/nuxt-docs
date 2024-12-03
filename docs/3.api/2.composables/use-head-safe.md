@@ -38,7 +38,7 @@ useHeadSafe({
 useHeadSafe(input: MaybeComputedRef<HeadSafe>): void
 ```
 
-安全值的允许列表是：
+允许的值列表是：
 
 ```ts
 export default {
