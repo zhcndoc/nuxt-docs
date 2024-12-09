@@ -17,3 +17,4 @@ npx nuxi upgrade [--force|-f]
 选项        | 默认值          | 描述
 -------------------------|-----------------|------------------
 `--force, -f` | `false` | 升级前删除 `node_modules` 和锁文件。
+`--channel, -ch` | `"stable"` | 指定要安装的频道 ("nightly" 或 "stable")
