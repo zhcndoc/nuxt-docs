@@ -8,12 +8,26 @@ links:
     size: xs
 ---
 
+<!--info-cmd-->
 ```bash [Terminal]
-npx nuxi info [rootDir]
+npx nuxi info [ROOTDIR] [--cwd=<directory>]
 ```
+<!--/info-cmd-->
 
 `info` 命令记录当前或指定 Nuxt 项目的相关信息。
 
-选项        | 默认值          | 描述
--------------------------|-----------------|------------------
-`rootDir` | `.` | 目标应用程序的目录。
+## 参数
+
+<!--info-args-->
+参数 | 描述
+--- | ---
+`ROOTDIR="."` | 指定工作目录（默认：`.`）
+<!--/info-args-->
+
+## 选项
+
+<!--info-opts-->
+选项 | 默认值 | 描述
+--- | --- | ---
+`--cwd=<directory>` |  | 指定工作目录，这优先于 ROOTDIR（默认：`.`）
+<!--/info-opts-->

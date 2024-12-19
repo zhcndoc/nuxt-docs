@@ -8,15 +8,30 @@ links:
     size: xs
 ---
 
+<!--typecheck-cmd-->
 ```bash [Terminal]
-npx nuxi typecheck [--log-level] [rootDir]
+npx nuxi typecheck [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>]
 ```
+<!--/typecheck-cmd-->
 
 `typecheck` 命令运行 [`vue-tsc`](https://github.com/vuejs/language-tools/tree/master/packages/tsc) 来检查整个应用程序中的类型。
 
-选项        | 默认值          | 描述
--------------------------|-----------------|------------------
-`rootDir` | `.` | 目标应用程序的目录。
+## 参数
+
+<!--typecheck-args-->
+参数 | 描述
+--- | ---
+`ROOTDIR="."` | 指定工作目录（默认：`.`）
+<!--/typecheck-args-->
+
+## 选项
+
+<!--typecheck-opts-->
+选项 | 默认值 | 描述
+--- | --- | ---
+`--cwd=<directory>` |  | 指定工作目录，这优先于 ROOTDIR（默认：`.`）
+`--logLevel=<silent\|info\|verbose>` |  | 指定构建时的日志级别
+<!--/typecheck-opts-->
 
 ::note
 这个命令将 `process.env.NODE_ENV` 设置为 `production`。要覆盖，请在 [`.env`](/docs/guide/directory-structure/env) 文件或在命令行参数中定义 `NODE_ENV`。

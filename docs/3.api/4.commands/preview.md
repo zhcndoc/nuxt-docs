@@ -8,16 +8,32 @@ links:
     size: xs
 ---
 
+<!--preview-cmd-->
 ```bash [终端]
-npx nuxi preview|start [rootDir] [--dotenv]
+npx nuxi preview [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>] [--envName] [--dotenv]
 ```
+<!--/preview-cmd-->
 
 `preview` 命令在运行 `build` 命令之后启动一个服务器来预览您的 Nuxt 应用程序。`start` 命令是 `preview` 命令的别名。在生产环境中运行您的应用程序时，请参考[部署部分](/docs/getting-started/deployment)。
 
-选项        | 默认值          | 描述
--------------------------|-----------------|------------------
-`rootDir` | `.` | 要预览的应用程序的根目录。
-`--dotenv` | `.` | 指向另一个 `.env` 文件以加载，相对于根目录的**相对**路径。
+## 参数
+
+<!--preview-args-->
+参数 | 描述
+--- | ---
+`ROOTDIR="."` | 指定工作目录（默认：`.`）
+<!--/preview-args-->
+
+## 选项
+
+<!--preview-opts-->
+选项 | 默认值 | 描述
+--- | --- | ---
+`--cwd=<directory>` |  | 指定工作目录，这优先于 ROOTDIR（默认：`.`）
+`--logLevel=<silent\|info\|verbose>` |  | 指定构建时的日志级别
+`--envName` |  | 在解析配置覆盖时使用的环境（默认是 `production` 当构建时，和 `development` 当运行开发服务器时）
+`--dotenv` |  | 要加载的 `.env` 文件的路径，相对于根目录
+<!--/preview-opts-->
 
 这个命令设置 `process.env.NODE_ENV` 为 `production`。要覆盖，请在 `.env` 文件中或作为命令行参数定义 `NODE_ENV`。
 

@@ -8,27 +8,37 @@ links:
     size: xs
 ---
 
+<!--init-cmd-->
 ```bash [Terminal]
-npx nuxi init [--verbose|-v] [--template,-t] [dir]
+npx nuxi init [DIR] [--cwd=<directory>] [-t, --template] [-f, --force] [--offline] [--preferOffline] [--no-install] [--gitInit] [--shell] [--packageManager]
 ```
+<!--/init-cmd-->
 
 `init` 命令使用 [unjs/giget](https://github.com/unjs/giget) 初始化一个新的 Nuxt 项目。
 
+## 参数
+
+<!--init-args-->
+参数 | 描述
+--- | ---
+`DIR=""` | 项目目录
+<!--/init-args-->
+
 ## 选项
 
-Option        | Default          | Description
--------------------------|-----------------|------------------
-`--cwd` | | 当前工作目录
-`--log-level` | | 日志级别
-`--template, -t` | `v3` | 指定使用作为模板的模板名称或 Git 仓库。格式为 `gh:org/name` 以使用自定义的 GitHub 模板。
-`--force, -f` | `false` | 强制克隆到任何现有目录。
-`--offline` | `false` | 强制离线模式（不尝试从 GitHub 下载模板，只使用本地缓存）。
-`--prefer-offline` | `false` | 偏好离线模式（首先尝试本地缓存下载模板）。
-`--no-install` | `false` | 跳过安装依赖。
-`--git-init` | `false` | 初始化 Git 仓库。
-`--shell` | `false` | 安装后，在项目目录中启动 shell（实验性）。
-`--package-manager` | `npm` | 包管理器选择（npm, pnpm, yarn, bun）。
-`--dir` | | 项目目录。
+<!--init-opts-->
+选项 | 默认值 | 描述
+--- | --- | ---
+`--cwd=<directory>` | `.` | 指定工作目录
+`-t, --template` |  | 模板名称
+`-f, --force` |  | 覆盖现有目录
+`--offline` |  | 强制离线模式
+`--preferOffline` |  | 优先离线模式
+`--no-install` |  | 跳过安装依赖
+`--gitInit` |  | 初始化 git 仓库
+`--shell` |  | 安装后在项目目录中启动 shell
+`--packageManager` |  | 包管理器选择 (npm, pnpm, yarn, bun)
+<!--/init-opts-->
 
 ## 环境变量
 

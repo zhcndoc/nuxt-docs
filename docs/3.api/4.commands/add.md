@@ -8,16 +8,30 @@ links:
     size: xs
 ---
 
+<!--add-cmd-->
 ```bash [Terminal]
-npx nuxi add [--cwd] [--force] <TEMPLATE> <NAME>
+npx nuxi add <TEMPLATE> <NAME> [--cwd=<directory>] [--logLevel=<silent|info|verbose>] [--force]
 ```
+<!--/add-cmd-->
 
-选项        | 默认值          | 描述
--------------------------|-----------------|------------------
-`TEMPLATE` | - | 指定要生成的文件的模板。
-`NAME` | - | 指定将创建的文件的名称。
-`--cwd` | `.` | 目标应用的目录。
-`--force` | `false` | 如果文件已存在，强制覆盖。
+### Arguments
+
+<!--add-args-->
+参数 | 描述
+--- | ---
+`TEMPLATE` | 指定要生成的文件的模板（选项：<api\|plugin\|component\|composable\|middleware\|layout\|page>）
+`NAME` | 指定将创建的文件的名称
+<!--/add-args-->
+
+### 选项
+
+<!--add-opts-->
+选项 | 默认值 | 描述
+--- | --- | ---
+`--cwd=<directory>` | `.` | 指定工作目录
+`--logLevel=<silent\|info\|verbose>` |  | 指定构建时日志级别
+`--force` | `false` | 如果文件已存在，强制覆盖
+<!--/add-opts-->
 
 **修饰符:**
 
