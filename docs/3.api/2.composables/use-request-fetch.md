@@ -1,38 +1,38 @@
 ---
 title: 'useRequestFetch'
-description: 'Forward the request context and headers for server-side fetch requests with the useRequestFetch composable.'
+description: '使用 useRequestFetch 组合函数转发请求上下文和头部，以便进行服务器端的获取请求。'
 links:
-  - label: Source
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/ssr.ts
     size: xs
 ---
 
-You can use `useRequestFetch` to forward the request context and headers when making server-side fetch requests.
+您可以使用 `useRequestFetch` 在进行服务器端获取请求时转发请求上下文和头部。
 
-When making a client-side fetch request, the browser automatically sends the necessary headers.
-However, when making a request during server-side rendering, because the request is made on the server, we need to forward the headers manually.
+在进行客户端获取请求时，浏览器会自动发送所需的头部。
+然而，在服务器端渲染期间进行请求时，由于请求是在服务器上发起的，我们需要手动转发头部。
 
 ::note
-Headers that are **not meant to be forwarded** will **not be included** in the request. These headers include, for example:
-`transfer-encoding`, `connection`, `keep-alive`, `upgrade`, `expect`, `host`, `accept`
+**不需要转发**的头部将**不会被包含**在请求中。这些头部包括，例如：
+`transfer-encoding`、`connection`、`keep-alive`、`upgrade`、`expect`、`host`、`accept`
 ::
 
 ::tip
-The [`useFetch`](/docs/api/composables/use-fetch) composable uses `useRequestFetch` under the hood to automatically forward the request context and headers.
+[`useFetch`](/docs/api/composables/use-fetch) 组合函数在内部使用 `useRequestFetch` 自动转发请求上下文和头部。
 ::
 
 ::code-group
 
 ```vue [pages/index.vue]
 <script setup lang="ts">
-  // This will forward the user's headers to the `/api/foo` event handler
-  // Result: { cookies: { foo: 'bar' } }
+  // 这将把用户的头部转发到 `/api/foo` 事件处理程序
+  // 结果: { cookies: { foo: 'bar' } }
   const requestFetch = useRequestFetch()
   const { data: forwarded } = await useAsyncData(() => requestFetch('/api/cookies'))
   
-  // This will NOT forward anything
-  // Result: { cookies: {} }
+  // 这将不会转发任何内容
+  // 结果: { cookies: {} }
   const { data: notForwarded } = await useAsyncData(() => $fetch('/api/cookies')) 
 </script>
 ```
@@ -48,5 +48,5 @@ export default defineEventHandler((event) => {
 ::
 
 ::tip
-In the browser during client-side navigation, `useRequestFetch` will behave just like regular [`$fetch`](/docs/api/utils/dollarfetch).
+在浏览器的客户端导航期间，`useRequestFetch` 的行为就像普通的 [`$fetch`](/docs/api/utils/dollarfetch) 一样。
 ::
