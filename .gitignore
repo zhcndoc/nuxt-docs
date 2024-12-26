@@ -71,7 +71,6 @@ Temporary Items
 .env
 .netlify
 
-doc-agent
 fixtures-temp
 .pnpm-store
 eslint-typegen.d.ts

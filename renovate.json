@@ -1,0 +1,42 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "github>nuxt/renovate-config-nuxt",
+    ":pinDevDependencies",
+    ":widenPeerDependencies"
+  ],
+  "baseBranches": [
+    "main",
+    "3.x"
+  ],
+  "packageRules": [
+    {
+      "groupName": "vitest",
+      "matchPackageNames": [
+        "vite-node",
+        "vitest",
+        "/^@vitest//"
+      ]
+    },
+    {
+      "matchBaseBranches": [
+        "main",
+        "3.x"
+      ],
+      "ignoreDeps": [
+        "nitro",
+        "h3",
+        "nuxt",
+        "nuxt3",
+        "@nuxt/kit"
+      ]
+    },
+    {
+      "groupName": "webpack",
+      "matchPackageNames": [
+        "webpack",
+        "memfs"
+      ]
+    }
+  ]
+}
