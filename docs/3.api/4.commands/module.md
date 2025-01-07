@@ -14,7 +14,7 @@ Nuxi 提供了几个工具，可以无缝地与 [Nuxt 模块](/modules) 合作�
 
 <!--module-add-cmd-->
 ```bash [Terminal]
-npx nuxi module add <MODULENAME> [--cwd=<directory>] [--logLevel=<silent|info|verbose>] [--skipInstall] [--skipConfig]
+npx nuxi module add <MODULENAME> [--cwd=<directory>] [--logLevel=<silent|info|verbose>] [--skipInstall] [--skipConfig] [--dev]
 ```
 <!--/module-add-cmd-->
 
@@ -31,6 +31,7 @@ npx nuxi module add <MODULENAME> [--cwd=<directory>] [--logLevel=<silent|info|ve
 `--logLevel=<silent\|info\|verbose>` |  | 指定构建时的日志级别
 `--skipInstall` |  | 跳过 npm 安装
 `--skipConfig` |  | 跳过 nuxt.config.ts 更新
+`--dev` |  | 将模块安装为开发依赖项
 <!--/module-add-opts-->
 
 该命令允许你安装 [Nuxt 模块](/modules) 到你的应用程序中，无需手动工作。

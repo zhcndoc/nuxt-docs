@@ -19,7 +19,7 @@ npx nuxi add <TEMPLATE> <NAME> [--cwd=<directory>] [--logLevel=<silent|info|verb
 <!--add-args-->
 参数 | 描述
 --- | ---
-`TEMPLATE` | 指定要生成的文件的模板（选项：<api\|plugin\|component\|composable\|middleware\|layout\|page>）
+`TEMPLATE` | 指定要生成的文件的模板（选项：<api\|plugin\|component\|composable\|middleware\|layout\|page\|layer>）
 `NAME` | 指定将创建的文件的名称
 <!--/add-args-->
 
@@ -102,4 +102,11 @@ npx nuxi add middleware auth
 ```bash [Terminal]
 # 生成 `server/api/hello.ts`
 npx nuxi add api hello
+```
+
+## `nuxi add layer`
+
+```bash [Terminal]
+# Generates `layers/subscribe/nuxt.config.ts`
+npx nuxi add layer subscribe
 ```
