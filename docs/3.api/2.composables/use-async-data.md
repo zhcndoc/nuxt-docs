@@ -69,7 +69,13 @@ const { data: posts } = await useAsyncData(
   - `immediate`: 当设置为 `false` 时，将防止请求立即发出（默认为 `true`）。
   - `default`: 一个工厂函数，用于设置 `data` 的默认值，在异步函数解决之前 - 当 `lazy: true` 或 `immediate: false` 选项时非常有用。
   - `transform`: 一个函数，可以在异步函数结果解决后用来改变结果。
-  - `getCachedData`: 提供一个函数，返回缓存的数据。返回的 _null_ 或 _undefined_ 值将触发抓取。默认情况下，这是：`key => nuxt.isHydrating ? nuxt.payload.data[key] : nuxt.static.data[key]`，这只有在启用 `payloadExtraction` 时才会缓存数据。
+  - `getCachedData`: 提供一个返回缓存数据的函数。返回值为 `null` 或 `undefined` 将触发获取操作。默认情况下，这是：
+    ```ts
+    const getDefaultCachedData = (key) => nuxtApp.isHydrating 
+      ? nuxtApp.payload.data[key] 
+      : nuxtApp.static.data[key]
+    ```
+    只有在启用 `nuxt.config` 的 `experimental.payloadExtraction` 时，才会缓存数据。
   - `pick`: 只从这个数组中选择指定的键。
   - `watch`: 观察可变源以自动刷新。
   - `deep`: 返回深引用对象中的数据。 默认情况下为 `false`，以性能为目的以浅引用对象返回数据。
@@ -91,13 +97,19 @@ const { data: posts } = await useAsyncData(
 
 ## 返回值
 
-- `data`: 传递进来的异步函数的结果。
-- `refresh` / `execute`: 一个函数，可以用来刷新 `handler` 函数返回的数据。
-- `error`: 一个错误对象，如果数据抓取失败。
-- `status`: 一个字符串，指示数据请求的状态（`"idle"`, `"pending"`, `"success"`, `"error"`）。
-- `clear`: 一个函数，将 `data` 设置为 `undefined`，将 `error` 设置为 `null`，将 `status` 设置为 `'idle'`，并标记任何当前正在进行的请求为取消。
+- `data`: 传入的异步函数的结果。
+- `refresh`/`execute`: 可用于刷新 `handler` 函数返回的数据的函数。
+- `error`: 如果数据获取失败，则为错误对象。
+- `status`: 表示数据请求状态的字符串：
+  - `idle`: 当请求尚未开始时，例如：
+    - 当 `execute` 尚未被调用且 `{ immediate: false }` 被设置时
+    - 当在服务器上呈现 HTML 并且 `{ server: false }` 被设置时
+  - `pending`: 请求正在进行中
+  - `success`: 请求已成功完成
+  - `error`: 请求失败
+- `clear`: 一个函数，将 `data` 设置为 `undefined`，将 `error` 设置为 `null`，将 `status` 设置为 `'idle'`，并将任何当前待处理的请求标记为已取消。
 
-默认情况下，Nuxt 等待 `refresh` 完成之后才能再次执行。
+默认情况下，Nuxt 会等待 `refresh` 完成后才能再次执行。
 
 ::note
 如果你在服务器上没有抓取数据（例如，使用 `server: false`），那么数据将不会在页面重构完成之前被抓取。这意味着，即使你在客户端上等待 [`useAsyncData`](/docs/api/composables/use-async-data)，在 `<script setup>` 中 `data` 仍然保持 `null`。

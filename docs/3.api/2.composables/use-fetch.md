@@ -108,7 +108,13 @@ const { data, status, error, refresh, clear } = await useFetch('/api/auth/login'
   - `immediate`: 当设置为 `false` 时，将阻止请求立即发起。（默认为 `true`）。
   - `default`: 一个工厂函数，用于设置异步函数解决之前 `data` 的默认值。当 `lazy: true` 或 `immediate: false` 时，这个选项非常有用。（您可以在[这里](/docs/getting-started/data-fetching#watch)看到使用 `watch` 的一个例子）
   - `transform`: 一个函数，用于在异步函数解决后更改 `handler` 函数的结果。
-  - `getCachedData`: 提供一个函数，返回缓存的数。返回 `null` 或 `undefined` 值将触发获取。默认情况下，这是一个：`key => nuxt.isHydrating ? nuxt.payload.data[key] : nuxt.static.data[key]`，它仅在启用 `payloadExtraction` 时缓存数据。
+  - `getCachedData`: 提供一个返回缓存数据的函数。返回值为 `null` 或 `undefined` 将触发获取数据。默认情况下，这个是：
+    ```ts
+    const getDefaultCachedData = (key) => nuxtApp.isHydrating 
+      ? nuxtApp.payload.data[key] 
+      : nuxtApp.static.data[key]
+    ```
+    仅在 `nuxt.config` 的 `experimental.payloadExtraction` 启用时缓存数据。
   - `pick`: 从 `handler` 函数结果中仅选择此数组中的键。
   - `watch`: 监听一系列响应源，并在它们改变时自动刷新获取结果。默认情况下，请求选项和 URL 被监听。您可以使用 `watch: false` 完全忽略响应源。与 `immediate: false` 一起，这允许您完全手动使用 `useFetch`。
   - `deep`: 返回深度引用对象的数据。默认为 `false`，以便为性能返回浅引用对象中的数据。
@@ -133,7 +139,13 @@ const { data, status, error, refresh, clear } = await useFetch('/api/auth/login'
 - `data`: 异步函数传递的结果。
 - `refresh`/`execute`: 一个用于刷新由 `handler` 函数返回的数据的函数。
 - `error`: 一个错误对象，如果数据获取失败。
-- `status`: 一个字符串，指示数据请求的状态（`"idle"`、`"pending"`、`"success"`、`"error"`）。
+- `status`: 一个指示数据请求状态的字符串：
+  - `idle`: 当请求尚未开始时，例如：
+    - 当 `execute` 还未被调用且 `{ immediate: false }` 已被设置时
+    - 当在服务器上渲染HTML时，并且设置了 `{ server: false }`
+  - `pending`: 请求正在进行中
+  - `success`: 请求已成功完成
+  - `error`: 请求失败
 - `clear`: 一个函数，将 `data` 设置为 `undefined`，将 `error` 设置为 `null`，将 `status` 设置为 `'idle'`，并将任何当前待处理的请求标记为取消。
 
 默认情况下，Nuxt 会在 `refresh` 执行完毕之前才能再次执行。
@@ -146,7 +158,7 @@ const { data, status, error, refresh, clear } = await useFetch('/api/auth/login'
 
 ```ts [Signature]
 function useFetch<DataT, ErrorT>(
-  url: string | Request | Ref<string | Request> | (() => string) | Request,
+  url: string | Request | Ref<string | Request> | (() => string | Request),
   options?: UseFetchOptions<DataT>
 ): Promise<AsyncData<DataT, ErrorT>>
 

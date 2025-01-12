@@ -4,7 +4,7 @@ description: 'Nuxt 命令，用于在发布前构建您的 Nuxt 模块。'
 links:
   - label: 源代码
     icon: i-simple-icons-github
-    to: https://github.com/nuxt/cli/blob/main/src/commands/build-module.ts
+    to: https://github.com/nuxt/module-builder/blob/main/src/cli.ts
     size: xs
 ---
 
