@@ -4,7 +4,7 @@ description: 推荐的提供包含用户输入的 head 数据的方法。
 links:
   - label: 源代码
     icon: i-simple-icons-github
-    to: https://github.com/unjs/unhead/blob/main/packages/unhead/src/composables/useHeadSafe.ts
+    to: https://github.com/unjs/unhead/blob/main/packages/vue/src/composables/useHeadSafe.ts
     size: xs
 ---
 

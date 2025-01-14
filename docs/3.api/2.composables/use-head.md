@@ -4,7 +4,7 @@ description: useHead 可定制 Nuxt 应用程序的各个页面的头部属性�
 links:
   - label: 源代码
     icon: i-simple-icons-github
-    to: https://github.com/unjs/unhead/blob/main/packages/unhead/src/composables/useHead.ts
+    to: https://github.com/unjs/unhead/blob/main/packages/vue/src/composables/useHead.ts
     size: xs
 ---
 
