@@ -77,7 +77,7 @@ let previousTodos = []
 // 访问 todos.vue 中 useAsyncData 的缓存值
 const { data: todos } = useNuxtData('todos')
 
-const addTodo = async () => {
+async function addTodo () {
   return $fetch('/api/addTodo', {
     method: 'post',
     body: {

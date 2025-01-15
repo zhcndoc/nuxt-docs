@@ -63,6 +63,9 @@ const { data: posts } = await useAsyncData(
 
 - `key`: 一个唯一的键，以确保数据抓取可以被正确地消除重复。如果你不提供一个键，那么将为你生成一个唯一的键，它与 `useAsyncData` 的实例的文件名和行号唯一对应。
 - `handler`: 一个必须返回一个真实值（例如，它不应该是`undefined`或`null`）的异步函数，否则请求可能在客户端被重复。
+::warning
+`handler` 函数应该是 **无副作用** 的，以确保在 SSR 和 CSR 水合期间的可预测行为。如果您需要触发副作用，请使用 [`callOnce`](/docs/api/utils/call-once) 工具来实现。
+::
 - `options`:
   - `server`: 是否在服务器上抓取数据（默认为 `true`）。
   - `lazy`: 是否在加载路由后解析组合式，而不是在客户端导航时阻塞（默认为 `false`）。
