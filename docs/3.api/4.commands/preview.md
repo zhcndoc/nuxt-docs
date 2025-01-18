@@ -4,7 +4,7 @@ description: 预览命令在构建命令之后启动一个服务器来预览您�
 links:
   - label: 源代码
     icon: i-simple-icons-github
-    to: https://github.com/nuxt/cli/blob/main/src/commands/preview.ts
+    to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/preview.ts
     size: xs
 ---
 

@@ -4,7 +4,7 @@ description: "为你的 Nuxt 应用生成一个实体。"
 links:
   - label: 源代码
     icon: i-simple-icons-github
-    to: https://github.com/nuxt/cli/blob/main/src/commands/add.ts
+    to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/add.ts
     size: xs
 ---
 

@@ -4,7 +4,7 @@ description: "构建您的 Nuxt 应用程序。"
 links:
   - label: 源代码
     icon: i-simple-icons-github
-    to: https://github.com/nuxt/cli/blob/main/src/commands/build.ts
+    to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/build.ts
     size: xs
 ---
 

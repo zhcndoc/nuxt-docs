@@ -4,7 +4,7 @@ description: nuxi devtools 命令允许你在每个项目的基础上启用或�
 links:
   - label: 源代码
     icon: i-simple-icons-github
-    to: https://github.com/nuxt/cli/blob/main/src/commands/devtools.ts
+    to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/devtools.ts
     size: xs
 ---
 

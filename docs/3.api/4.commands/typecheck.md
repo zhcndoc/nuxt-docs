@@ -4,7 +4,7 @@ description: 该命令运行 vue-tsc 来检查整个应用程序中的类型。
 links:
   - label: 源代码
     icon: i-simple-icons-github
-    to: https://github.com/nuxt/cli/blob/main/src/commands/typecheck.ts
+    to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/typecheck.ts
     size: xs
 ---
 

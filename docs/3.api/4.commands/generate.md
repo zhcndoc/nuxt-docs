@@ -4,7 +4,7 @@ description: 预渲染应用程序的每个路由，并将结果存储为纯 HTM
 links:
   - label: 源代码
     icon: i-simple-icons-github
-    to: https://github.com/nuxt/cli/blob/main/src/commands/generate.ts
+    to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/generate.ts
     size: xs
 ---
 

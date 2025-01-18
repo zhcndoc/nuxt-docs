@@ -4,7 +4,7 @@ description: "分析生产包或您的 Nuxt 应用程序。"
 links:
   - label: 源代码
     icon: i-simple-icons-github
-    to: https://github.com/nuxt/cli/blob/main/src/commands/analyze.ts
+    to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/analyze.ts
     size: xs
 ---
 

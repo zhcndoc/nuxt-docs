@@ -4,7 +4,7 @@ description: 初始化命令用于创建一个新的 Nuxt 项目。
 links:
   - label: 源代码
     icon: i-simple-icons-github
-    to: https://github.com/nuxt/cli/blob/main/src/commands/init.ts
+    to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/init.ts
     size: xs
 ---
 
