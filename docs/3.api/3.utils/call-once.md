@@ -24,6 +24,8 @@ links:
 
 ## 使用
 
+`callOnce` 的默认模式是仅运行一次代码。例如，如果代码在服务器上运行，它不会在客户端再次运行。如果你在客户端多次使用 `callOnce`，例如通过返回此页面，它也不会再次运行。
+
 ```vue [app.vue]
 <script setup lang="ts">
 const websiteConfig = useState('config')
@@ -34,6 +36,23 @@ await callOnce(async () => {
 })
 </script>
 ```
+
+还可以在每次导航时运行，同时避免初始服务器/客户端双重负担。为此，可以使用 `navigation` 模式：
+
+```vue [app.vue]
+<script setup lang="ts">
+const websiteConfig = useState('config')
+
+await callOnce(async () => {
+  console.log('This will only be logged once and then on every client side navigation')
+  websiteConfig.value = await $fetch('https://my-cms.com/api/website-config')
+}, { mode: 'navigation' })
+</script>
+```
+
+::important
+`navigation` 模式自 [Nuxt v3.15](/blog/v3-15) 起可用。
+::
 
 ::tip{to="/docs/getting-started/state-management#usage-with-pinia"}
 `callOnce` 与 [Pinia 模块](/modules/pinia)结合使用时，用于调用 Store 操作非常有用。
@@ -52,9 +71,22 @@ await callOnce(async () => {
 ## 类型
 
 ```ts
-callOnce(fn?: () => any | Promise<any>): Promise<void>
-callOnce(key: string, fn?: () => any | Promise<any>): Promise<void>
+callOnce (key?: string, fn?: (() => any | Promise<any>), options?: CallOnceOptions): Promise<void>
+callOnce(fn?: (() => any | Promise<any>), options?: CallOnceOptions): Promise<void>
+
+type CallOnceOptions = {
+  /**
+   * callOnce 函数的执行模式
+   * @default 'render'
+   */
+  mode?: 'navigation' | 'render'
+}
 ```
+
+## 参数
 
 - `key`: 一个唯一的键，确保代码只执行一次。如果您不提供键，那么将为您生成一个唯一的键，该键与 `callOnce` 实例的文件和行号相对应。
 - `fn`: 要执行一次的函数。这个函数也可以返回一个 `Promise` 和一个值。
+- `options`: 设置模式，可以选择在导航时重新执行（`navigation`）或仅在应用程序的生命周期内执行一次（`render`）。默认为`render`。
+  - `render`: 在初始渲染期间执行一次（无论是SSR还是CSR） - 默认模式
+  - `navigation`: 在初始渲染时执行一次，并在随后的每次客户端导航时执行一次。

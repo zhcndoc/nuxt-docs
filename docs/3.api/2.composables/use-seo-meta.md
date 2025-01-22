@@ -4,7 +4,7 @@ description: useSeoMeta 组件允许您将网站的 SEO 元标签定义为一个
 links:
   - label: 源代码
     icon: i-simple-icons-github
-    to: https://github.com/unjs/unhead/blob/main/packages/vue/src/composables/useSeoMeta.ts
+    to: https://github.com/unjs/unhead/blob/main/packages/vue/src/composables.ts
     size: xs
 ---
 
