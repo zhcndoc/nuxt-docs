@@ -1,6 +1,6 @@
 ---
 title: "navigateTo"
-description: navigateTo 是一个辅助函数，用于程序化地导航用户。
+description: navigateTo 是一个辅助函数，用于以编程方式导航用户。
 links:
   - label: 源代码
     icon: i-simple-icons-github
@@ -8,16 +8,16 @@ links:
     size: xs
 ---
 
-::note
-`navigateTo` 可在客户端和服务器端使用（但不可在 Nitro 路由中使用）。
-::
-
 ## 用法
 
-`navigateTo` 在服务器端和客户端都可用。它可以在 [Nuxt 上下文](/docs/guide/going-further/nuxt-app#the-nuxt-context)中使用，或者直接使用，以执行页面导航。
+`navigateTo` 在服务器端和客户端均可用。可以在 [Nuxt 上下文](/docs/guide/going-further/nuxt-app#the-nuxt-context) 内部使用，或者直接使用，以执行页面导航。
 
-::tip
-要从服务器端点发送重定向，请改用 [`sendRedirect`](https://h3.unjs.io/utils/response#sendredirectevent-location-code)。
+::warning
+调用 `navigateTo` 时，请确保始终使用 `await` 或 `return` 返回结果。
+::
+
+::note
+`navigateTo` 不能在 Nitro 路由中使用。要在 Nitro 路由中执行服务器端重定向，请使用 [`sendRedirect`](https://h3.unjs.io/utils/response#sendredirectevent-location-code)。
 ::
 
 ### 在 Vue 组件中
@@ -27,10 +27,10 @@ links:
 // 将 'to' 作为字符串传递
 await navigateTo('/search')
 
-// ... 或者作为路由对象
+// ... 或作为路由对象
 await navigateTo({ path: '/search' })
 
-// ... 或者作为具有查询参数的路由对象
+// ... 或作为带有查询参数的路由对象
 await navigateTo({
   path: '/search',
   query: {
@@ -46,46 +46,62 @@ await navigateTo({
 ```ts
 export default defineNuxtRouteMiddleware((to, from) => {
   if (to.path !== '/search') {
-    // 将重定向代码设置为 '301 Moved Permanently'
+    // 设置重定向代码为 '301 Moved Permanently'
     return navigateTo('/search', { redirectCode: 301 })
   }
 })
 ```
 
+在路由中间件中使用 `navigateTo` 时，必须**返回其结果**以确保中间件执行流正常工作。
+
+例如，以下实现**不会按预期工作**：
+
+```ts
+export default defineNuxtRouteMiddleware((to, from) => {
+  if (to.path !== '/search') {
+    // ❌ 这不会按预期工作
+    navigateTo('/search', { redirectCode: 301 })
+    return
+  }
+})
+```
+
+在这种情况下，`navigateTo` 将被执行但未返回，这可能导致意外行为。
+
 :read-more{to="/docs/guide/directory-structure/middleware"}
 
-### 外部 URL
+### 导航到外部 URL
 
-`navigateTo` 中的 `external` 参数影响如何处理对 URL 的导航：
+`navigateTo` 中的 `external` 参数会影响导航到 URL 的处理方式：
 
 - **没有 `external: true`**:
   - 内部 URL 按预期导航。
-  - 外部 URL 抛出一个错误。
+  - 外部 URL 将抛出错误。
 
 - **有 `external: true`**:
-  - 内部 URL 通过全页面刷新导航。
+  - 内部 URL 将进行全页重新加载。
   - 外部 URL 按预期导航。
 
 #### 示例
 
 ```vue
 <script setup lang="ts">
-// 将会抛出一个错误；
-// 导航到外部 URL 默认是不允许的
+// 将抛出错误；
+// 默认情况下不允许导航到外部 URL
 await navigateTo('https://nuxt.com')
 
-// 将会成功重定向，因为 'external' 参数设置为 'true'
+// 将成功重定向，'external' 参数设置为 'true'
 await navigateTo('https://nuxt.com', {
   external: true
 })
 </script>
 ```
 
-### 使用 open()
+### 在新标签中打开页面
 
 ```vue
 <script setup lang="ts">
-// 将会在新标签页中打开 'https://nuxt.com'
+// 将在新标签中打开 'https://nuxt.com'
 await navigateTo('https://nuxt.com', {
   open: {
     target: '_blank',
@@ -101,7 +117,10 @@ await navigateTo('https://nuxt.com', {
 ## 类型
 
 ```ts
-navigateTo(to: RouteLocationRaw | undefined | null, options?: NavigateToOptions) => Promise<void | NavigationFailure> | RouteLocationRaw
+function navigateTo(
+  to: RouteLocationRaw | undefined | null,
+  options?: NavigateToOptions
+) => Promise<void | NavigationFailure | false> | false | void | RouteLocationRaw 
 
 interface NavigateToOptions {
   replace?: boolean
@@ -109,11 +128,21 @@ interface NavigateToOptions {
   external?: boolean
   open?: OpenOptions
 }
-```
 
-::warning
-在使用 `navigateTo` 时，请确保总是使用 `await` 或 `return` 结果。
-::
+type OpenOptions = {
+  target: string
+  windowFeatures?: OpenWindowFeatures
+}
+
+type OpenWindowFeatures = {
+  popup?: boolean
+  noopener?: boolean
+  noreferrer?: boolean
+} & XOR<{ width?: number }, { innerWidth?: number }>
+  & XOR<{ height?: number }, { innerHeight?: number }>
+  & XOR<{ left?: number }, { screenX?: number }>
+  & XOR<{ top?: number }, { screenY?: number }>
+```
 
 ## 参数
 
@@ -121,9 +150,9 @@ interface NavigateToOptions {
 
 **类型**: [`RouteLocationRaw`](https://router.vuejs.org/api/interfaces/RouteLocationOptions.html#Interface-RouteLocationOptions) | `undefined` | `null`
 
-**默认**: `'/'`
+**默认值**: `'/'`
 
-`to` 可以是纯字符串或路由对象，以重定向到。当传递为 `undefined` 或 `null` 时，它将默认为 `'/'`。
+`to` 可以是一个普通字符串或一个路由对象以重定向。当传递为 `undefined` 或 `null` 时，将默认为 `'/'`。
 
 #### 示例
 
@@ -131,10 +160,10 @@ interface NavigateToOptions {
 // 直接传递 URL 将重定向到 '/blog' 页面
 await navigateTo('/blog')
 
-// 使用路由对象，将重定向到名称为 'blog' 的路由。
+// 使用路由对象，将重定向到名称为 'blog' 的路由
 await navigateTo({ name: 'blog' })
 
-// 通过路由对象重定向到 '/product' 路由，同时传递一个参数（id = 1）。
+// 在使用路由对象传递参数 (id = 1) 时重定向到 'product' 路由。
 await navigateTo({ name: 'product', params: { id: 1 } })
 ```
 
@@ -144,82 +173,58 @@ await navigateTo({ name: 'product', params: { id: 1 } })
 
 一个接受以下属性的对象：
 
-- `replace`（可选）
+- `replace`
 
-  **类型**: `boolean`
+  - **类型**: `boolean`
+  - **默认值**: `false`
+  - 默认情况下，`navigateTo` 将给定路由推送到客户端的 Vue Router 实例中。
 
-  **默认**: `false`
+    可以通过将 `replace` 设置为 `true` 来更改此行为，以指示给定路由应被替换。
 
-  默认情况下，`navigateTo` 在客户端实例上将给定路由推入 Vue Router。
+- `redirectCode`
 
-  可以通过将 `replace` 设置为 `true` 来更改此行为，以指示给定路由应该被替换。
+  - **类型**: `number`
+  - **默认值**: `302`
 
-- `redirectCode`（可选）
+  - `navigateTo` 将重定向到给定路径，并在服务器端进行重定向时默认将重定向代码设置为 [`302 Found`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/302)。
 
-  **类型**: `number`
+    可以通过提供不同的 `redirectCode` 来修改此默认行为。通常可以使用 [`301 Moved Permanently`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/301) 进行永久重定向。
 
-  **默认**: `302`
+- `external`
 
-  `navigateTo` 重定向到给定路径，并设置重定向代码为 [`302 Found`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/302)，当重定向发生在服务器端时默认。
+  - **类型**: `boolean`
+  - **默认值**: `false`
 
-  可以通过提供不同的 `redirectCode` 来修改此默认行为。通常，可以使用 [`301 Moved Permanently`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/301) 来表示永久重定向。
+  - 当设置为 `true` 时，允许导航到外部 URL。否则，`navigateTo` 将抛出错误，因为默认情况下不允许外部导航。
 
-- `external`（可选）
+- `open`
 
-  **类型**: `boolean`
-
-  **默认**: `false`
-
-  设置为 `true` 时允许导航到外部 URL。否则，`navigateTo` 将抛出错误，因为默认情况下不允许外部导航。
-
-- `open`（可选）
-
-  **类型**: `OpenOptions`
-
-  允许使用 [open()](https://developer.mozilla.org/en-US/docs/Web/API/Window/open) 方法的窗口的 `window` 对象来导航到 URL。此选项仅在客户端有效，在服务器端将被忽略。
-
-  一个接受以下属性的对象：
-
-  - `target`
-
-    **类型**: `string`
-
-    **默认**: `'_blank'`
-
-    一个没有空格的字符串，指定资源加载到的浏览上下文名称。
-
-  - `windowFeatures`（可选）
-
-    **类型**: `OpenWindowFeatures`
+  - **类型**: `OpenOptions`
+  - 允许使用窗口的 [open()](https://developer.mozilla.org/en-US/docs/Web/API/Window/open) 方法导航到 URL。此选项仅适用于客户端，在服务器端将被忽略。
 
     一个接受以下属性的对象：
 
-    - `popup`（可选）
+  - `target`
 
-      **类型**: `boolean`
+    - **类型**: `string`
+    - **默认值**: `'_blank'`
 
-    - `width` 或 `innerWidth`（可选）
+    - 一个不带空格的字符串，指定资源正在加载到的浏览上下文的名称。
 
-      **类型**: `number`
+  - `windowFeatures`
 
-    - `height` 或 `innerHeight`（可选）
+    - **类型**: `OpenWindowFeatures`
 
-      **类型**: `number`
+    - 一个接受以下属性的对象：
 
-    - `left` 或 `screenX`（可选）
+      | 属性     | 类型      | 描述 |
+      |----------|-----------|------|
+      | `popup`  | `boolean` | 请求一个最小化的弹出窗口，而不是新的标签页，具体的 UI 特性由浏览器决定。 |
+      | `width` 或 `innerWidth`  | `number`  | 指定内容区域的宽度（最小 100 像素），包括滚动条。 |
+      | `height` 或 `innerHeight` | `number`  | 指定内容区域的高度（最小 100 像素），包括滚动条。 |
+      | `left` 或 `screenX`   | `number`  | 设置新窗口相对于屏幕左边缘的水平位置。 |
+      | `top` 或 `screenY`   | `number`  | 设置新窗口相对于屏幕上边缘的垂直位置。 |
+      | `noopener` | `boolean` | 防止新窗口通过 `window.opener` 访问原窗口。 |
+      | `noreferrer` | `boolean` | 防止发送 Referer 头，并隐式启用 `noopener`。 |
 
-      **类型**: `number`
-
-    - `top` 或 `screenY`（可选）
-
-      **类型**: `number`
-
-    - `noopener`（可选）
-
-      **类型**: `boolean`
-
-    - `noreferrer`（可选）
-
-      **类型**: `boolean`
-
-    参考[文档](https://developer.mozilla.org/en-US/docs/Web/API/Window/open)获取关于 **windowFeatures** 属性的更详细信息。
+      有关 **windowFeatures** 属性的更详细信息，请参阅 [文档](https://developer.mozilla.org/en-US/docs/Web/API/Window/open#windowfeatures)。

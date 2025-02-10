@@ -26,7 +26,7 @@
   },
   "devDependencies": {
     "@nuxt/schema": "workspace:*",
-    "rollup": "4.34.3",
+    "rollup": "4.34.6",
     "unbuild": "3.3.1",
     "vue": "3.5.13"
   },
@@ -39,7 +39,7 @@
     "consola": "^3.4.0",
     "cssnano": "^7.0.6",
     "defu": "^6.1.4",
-    "esbuild": "^0.24.2",
+    "esbuild": "^0.25.0",
     "escape-string-regexp": "^5.0.0",
     "externality": "^1.0.2",
     "get-port-please": "^3.1.2",
@@ -65,6 +65,6 @@
     "vue": "^3.3.4"
   },
   "engines": {
-    "node": "^18.12.0 || ^20.9.0 || >=22.0.0"
+    "node": "^18.20.6 || ^20.9.0 || >=22.0.0"
   }
 }
