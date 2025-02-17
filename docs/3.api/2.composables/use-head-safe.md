@@ -51,4 +51,4 @@ export default {
 }
 ```
 
-查看 [@unhead/schema](https://github.com/unjs/unhead/blob/main/packages/schema/src/safeSchema.ts) 以获取更详细的类型。
+查看 [@unhead/vue](https://github.com/unjs/unhead/blob/main/packages/vue/src/types/safeSchema.ts) 以获取更详细的类型。

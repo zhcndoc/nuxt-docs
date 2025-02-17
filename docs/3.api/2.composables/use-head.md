@@ -35,7 +35,7 @@ interface MetaObject {
 }
 ```
 
-请参阅 [@unhead/schema](https://github.com/unjs/unhead/blob/main/packages/schema/src/schema.ts) 了解更详细的类型。
+请参阅 [@unhead/vue](https://github.com/unjs/unhead/blob/main/packages/vue/src/types/schema.ts) 了解更详细的类型。
 
 ::note
 `useHead` 的属性可以是动态的，接受 `ref`、`computed` 和 `reactive` 属性。`meta` 参数也可以接受一个返回对象的函数，以使整个对象反应性。

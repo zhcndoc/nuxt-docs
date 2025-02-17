@@ -34,9 +34,9 @@ function pageToClientOnly<T extends ComponentOptions> (component: T) {
     clone.render = (ctx: any, cache: any, $props: any, $setup: any, $data: any, $options: any) => ($setup.mounted$ ?? ctx.mounted$)
       ? h(component.render?.bind(ctx)(ctx, cache, $props, $setup, $data, $options))
       : h('div')
-  } else if (clone.template) {
+  } else {
     // handle runtime-compiler template
-    clone.template = `
+    clone.template &&= `
       <template v-if="mounted$">${component.template}</template>
       <template v-else><div></div></template>
     `
@@ -52,7 +52,7 @@ function pageToClientOnly<T extends ComponentOptions> (component: T) {
     if (isPromise(setupState)) {
       return Promise.resolve(setupState).then((setupState: any) => {
         if (typeof setupState !== 'function') {
-          setupState = setupState || {}
+          setupState ||= {}
           setupState.mounted$ = mounted$
           return setupState
         }

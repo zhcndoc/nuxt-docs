@@ -4,6 +4,7 @@ import { basename, dirname, isAbsolute, join, normalize, resolve } from 'pathe'
 import { globby } from 'globby'
 import { resolvePath as _resolvePath } from 'mlly'
 import { resolveAlias as _resolveAlias } from 'pathe/utils'
+import { directoryToURL } from './internal/esm'
 import { tryUseNuxt } from './context'
 import { isIgnored } from './ignore'
 import { toArray } from './utils'
@@ -71,9 +72,7 @@ export async function findPath (paths: string | string[], opts?: ResolvePathOpti
  * Resolve path aliases respecting Nuxt alias options
  */
 export function resolveAlias (path: string, alias?: Record<string, string>): string {
-  if (!alias) {
-    alias = tryUseNuxt()?.options.alias || {}
-  }
+  alias ||= tryUseNuxt()?.options.alias || {}
   return _resolveAlias(path, alias)
 }
 
@@ -201,7 +200,7 @@ async function _resolvePathGranularly (path: string, opts: ResolvePathOptions = 
   }
 
   // Try to resolve as module id
-  const resolvedModulePath = await _resolvePath(_path, { url: [cwd, ...modulesDir] }).catch(() => null)
+  const resolvedModulePath = await _resolvePath(_path, { url: [cwd, ...modulesDir].map(d => directoryToURL(d)) }).catch(() => null)
   if (resolvedModulePath) {
     return {
       path: resolvedModulePath,

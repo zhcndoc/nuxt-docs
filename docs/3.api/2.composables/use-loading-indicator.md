@@ -40,7 +40,11 @@ links:
 
 ### `start()`
 
-将 `isLoading` 设置为 true，并开始增加 `progress` 值。
+将 `isLoading` 设置为 true，并开始增加 `progress` 值。`start` 接受一个 `{ force: true }` 选项，以跳过间隔并立即显示加载状态。
+
+### `set()`
+
+将 `progress` 值设置为特定值。`set` 接受 `{ force: true }` 选项，以跳过间隔并立即显示加载状态。
 
 ### `finish()`
 
@@ -60,5 +64,14 @@ links:
     // 这是默认情况下如何计算进度的方式
     estimatedProgress: (duration, elapsed) => (2 / Math.PI * 100) * Math.atan(elapsed / duration * 100 / 50)
   })
+</script>
+```
+
+```vue
+<script setup lang="ts">
+  const { start, set } = useLoadingIndicator()
+  // same as set(0, { force: true })
+  // set the progress to 0, and show loading immediately
+  start({ force: true })
 </script>
 ```
