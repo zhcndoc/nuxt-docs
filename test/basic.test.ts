@@ -2510,7 +2510,7 @@ describe('component islands', () => {
     const { page } = await renderPage('/')
 
     const islandPageRequest = page.waitForRequest((req) => {
-      return req.url().includes('/__nuxt_island/page:server-page')
+      return req.url().includes('/__nuxt_island/page_server-page')
     })
     await page.getByText('to server page').click()
     await islandPageRequest
@@ -2862,13 +2862,27 @@ describe('lazy import components', () => {
   })
 })
 
-describe('defineNuxtComponent watch duplicate', () => {
-  it('test after navigation duplicate', async () => {
+describe('defineNuxtComponent', () => {
+  it('watches duplicate updates after navigation', async () => {
     const { page } = await renderPage('/define-nuxt-component')
     await page.getByTestId('define-nuxt-component-bar').click()
     await page.getByTestId('define-nuxt-component-state').click()
     await page.getByTestId('define-nuxt-component-foo').click()
     expect(await page.getByTestId('define-nuxt-component-state').first().innerText()).toBe('2')
+  })
+
+  it('get correctly route when navigating between routes', async () => {
+    const { page } = await renderPage('/define-nuxt-component/route-1')
+    await page.getByText('Go to route 2').click()
+    expect(await page.getByTestId('define-nuxt-component-route-2-path').innerText()).include('route-2')
+
+    await page.getByText('Go to route 1').click()
+    expect(await page.getByTestId('define-nuxt-component-route-1-path').innerText()).include('route-1')
+  })
+
+  it ('should get correctly inject value', async () => {
+    const { page } = await renderPage('/define-nuxt-component/inject')
+    expect(await page.getByTestId('define-nuxt-component-inject-value').innerText()).include('bar')
   })
 })
 

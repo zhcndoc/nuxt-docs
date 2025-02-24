@@ -10,7 +10,7 @@ links:
 
 <!--preview-cmd-->
 ```bash [终端]
-npx nuxi preview [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>] [--envName] [--dotenv]
+npx nuxi preview [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>] [--envName] [--dotenv] [-p, --port]
 ```
 <!--/preview-cmd-->
 
@@ -33,6 +33,7 @@ npx nuxi preview [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>
 `--logLevel=<silent\|info\|verbose>` |  | 指定构建时的日志级别
 `--envName` |  | 在解析配置覆盖时使用的环境（默认是 `production` 当构建时，和 `development` 当运行开发服务器时）
 `--dotenv` |  | 要加载的 `.env` 文件的路径，相对于根目录
+`-p, --port` |  | 监听的端口（默认：`NUXT_PORT \|\| NITRO_PORT \|\| PORT`）
 <!--/preview-opts-->
 
 这个命令设置 `process.env.NODE_ENV` 为 `production`。要覆盖，请在 `.env` 文件中或作为命令行参数定义 `NODE_ENV`。
