@@ -10,8 +10,9 @@ links:
 
 您可以使用 `useRequestFetch` 在进行服务器端获取请求时转发请求上下文和头部。
 
-在进行客户端获取请求时，浏览器会自动发送所需的头部。
-然而，在服务器端渲染期间进行请求时，由于请求是在服务器上发起的，我们需要手动转发头部。
+在进行客户端获取请求时，浏览器会自动发送必要的头部。
+
+然而，在进行服务器端渲染时，由于安全考虑，我们需要手动转发头部。
 
 ::note
 **不需要转发**的头部将**不会被包含**在请求中。这些头部包括，例如：
@@ -26,14 +27,14 @@ links:
 
 ```vue [pages/index.vue]
 <script setup lang="ts">
-  // 这将把用户的头部转发到 `/api/foo` 事件处理程序
-  // 结果: { cookies: { foo: 'bar' } }
-  const requestFetch = useRequestFetch()
-  const { data: forwarded } = await useAsyncData(() => requestFetch('/api/cookies'))
-  
-  // 这将不会转发任何内容
-  // 结果: { cookies: {} }
-  const { data: notForwarded } = await useAsyncData(() => $fetch('/api/cookies')) 
+// 这将把用户的头部转发到 `/api/cookies` 事件处理程序
+// 结果: { cookies: { foo: 'bar' } }
+const requestFetch = useRequestFetch()
+const { data: forwarded } = await useAsyncData(() => requestFetch('/api/cookies'))
+
+// 这将不会转发任何内容
+// 结果: { cookies: {} }
+const { data: notForwarded } = await useAsyncData(() => $fetch('/api/cookies')) 
 </script>
 ```
 
