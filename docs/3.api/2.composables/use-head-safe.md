@@ -28,8 +28,8 @@ useHeadSafe({
 // <meta content="0;javascript:alert(1)">
 ```
 
-::read-more{to="https://unhead.unjs.io/usage/composables/use-head-safe" target="_blank"}
-在`unhead`文档中阅读更多内容。
+::read-more{to="https://unhead.unjs.io/docs/api/use-head-safe" target="_blank"}
+在the `Unhead`文档中阅读更多内容。
 ::
 
 ## 类型
@@ -41,13 +41,14 @@ useHeadSafe(input: MaybeComputedRef<HeadSafe>): void
 允许的值列表是：
 
 ```ts
-export default {
-  htmlAttrs: ['id', 'class', 'lang', 'dir'],
-  bodyAttrs: ['id', 'class'],
-  meta: ['id', 'name', 'property', 'charset', 'content'],
-  noscript: ['id', 'textContent'],
-  script: ['id', 'type', 'textContent'],
-  link: ['id', 'color', 'crossorigin', 'fetchpriority', 'href', 'hreflang', 'imagesrcset', 'imagesizes', 'integrity', 'media', 'referrerpolicy', 'rel', 'sizes', 'type'],
+const WhitelistAttributes = {
+  htmlAttrs: ['class', 'style', 'lang', 'dir'],
+  bodyAttrs: ['class', 'style'],
+  meta: ['name', 'property', 'charset', 'content', 'media'],
+  noscript: ['textContent'],
+  style: ['media', 'textContent', 'nonce', 'title', 'blocking'],
+  script: ['type', 'textContent', 'nonce', 'blocking'],
+  link: ['color', 'crossorigin', 'fetchpriority', 'href', 'hreflang', 'imagesrcset', 'imagesizes', 'integrity', 'media', 'referrerpolicy', 'rel', 'sizes', 'type'],
 }
 ```
 

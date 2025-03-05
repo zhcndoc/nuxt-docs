@@ -17,7 +17,7 @@ links:
 ## 描述
 
 一个组合工具，它会监听页面标题的变化，并相应地更新公告消息。它被 [`<NuxtRouteAnnouncer>`](/docs/api/components/nuxt-route-announcer) 使用，并且可以控制。
-它挂载到 Unhead 的 [`dom:rendered`](https://unhead.unjs.io/api/core/hooks#dom-hooks) 以读取页面的标题并将其设置为公告消息。
+它挂载到 Unhead 的 [`dom:rendered`](https://unhead.unjs.io/docs/guides/hooks) 以读取页面的标题并将其设置为公告消息。
 
 ## 参数
 
