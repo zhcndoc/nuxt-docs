@@ -74,7 +74,7 @@ const { data: posts } = await useAsyncData(
   - `transform`: 一个函数，可以在异步函数结果解决后用来改变结果。
   - `getCachedData`: 提供一个返回缓存数据的函数。返回值为 `null` 或 `undefined` 将触发获取操作。默认情况下，这是：
     ```ts
-    const getDefaultCachedData = (key) => nuxtApp.isHydrating 
+    const getDefaultCachedData = (key, nuxtApp) => nuxtApp.isHydrating 
       ? nuxtApp.payload.data[key] 
       : nuxtApp.static.data[key]
     ```
@@ -141,7 +141,7 @@ type AsyncDataOptions<DataT> = {
   transform?: (input: DataT) => DataT | Promise<DataT>
   pick?: string[]
   watch?: WatchSource[]
-  getCachedData?: (key: string, nuxtApp: NuxtApp) => DataT
+  getCachedData?: (key: string, nuxtApp: NuxtApp) => DataT | undefined
 }
 
 type AsyncData<DataT, ErrorT> = {

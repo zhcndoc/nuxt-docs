@@ -110,7 +110,7 @@ const { data, status, error, refresh, clear } = await useFetch('/api/auth/login'
   - `transform`: 一个函数，用于在异步函数解决后更改 `handler` 函数的结果。
   - `getCachedData`: 提供一个返回缓存数据的函数。返回值为 `null` 或 `undefined` 将触发获取数据。默认情况下，这个是：
     ```ts
-    const getDefaultCachedData = (key) => nuxtApp.isHydrating 
+    const getDefaultCachedData = (key, nuxtApp) => nuxtApp.isHydrating 
       ? nuxtApp.payload.data[key] 
       : nuxtApp.static.data[key]
     ```
@@ -173,7 +173,7 @@ type UseFetchOptions<DataT> = {
   server?: boolean
   lazy?: boolean
   immediate?: boolean
-  getCachedData?: (key: string, nuxtApp: NuxtApp) => DataT
+  getCachedData?: (key: string, nuxtApp: NuxtApp) => DataT | undefined
   deep?: boolean
   dedupe?: 'cancel' | 'defer'
   default?: () => DataT
