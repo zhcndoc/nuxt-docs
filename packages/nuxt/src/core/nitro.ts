@@ -6,7 +6,7 @@ import { createRouter as createRadixRouter, exportMatcher, toRouteMatcher } from
 import { joinURL, withTrailingSlash } from 'ufo'
 import { build, copyPublicAssets, createDevServer, createNitro, prepare, prerender, writeTypes } from 'nitro'
 import type { Nitro, NitroConfig, NitroOptions } from 'nitro/types'
-import { findPath, logger, resolveAlias, resolveIgnorePatterns, resolveNuxtModule } from '@nuxt/kit'
+import { createIsIgnored, findPath, logger, resolveAlias, resolveIgnorePatterns, resolveNuxtModule } from '@nuxt/kit'
 import escapeRE from 'escape-string-regexp'
 import { defu } from 'defu'
 import { dynamicEventHandler } from 'h3'
@@ -425,8 +425,55 @@ export async function initNitro (nuxt: Nuxt & { _nitro?: Nitro }) {
     }),
   )
 
+  // Apply Nuxt's ignore configuration to the root and src unstorage mounts
+  // created by Nitro. This ensures that the unstorage watcher will use the
+  // same ignore list as Nuxt's watcher and can reduce unneccesary file handles.
+  const isIgnored = createIsIgnored(nuxt)
+  nitroConfig.devStorage ??= {}
+  nitroConfig.devStorage.root ??= {
+    driver: 'fs',
+    readOnly: true,
+    base: nitroConfig.rootDir,
+    watchOptions: {
+      ignored: [isIgnored],
+    },
+  }
+  nitroConfig.devStorage.src ??= {
+    driver: 'fs',
+    readOnly: true,
+    base: nitroConfig.srcDir,
+    watchOptions: {
+      ignored: [isIgnored],
+    },
+  }
+
   // Extend nitro config with hook
   await nuxt.callHook('nitro:config', nitroConfig)
+
+  // TODO: extract to shared utility?
+  const excludedAlias = [/^@vue\/.*$/, 'vue', /vue-router/, 'vite/client', '#imports', 'vue-demi', /^#app/, '~', '@', '~~', '@@']
+  const basePath = nitroConfig.typescript!.tsConfig!.compilerOptions?.baseUrl ? resolve(nuxt.options.buildDir, nitroConfig.typescript!.tsConfig!.compilerOptions?.baseUrl) : nuxt.options.buildDir
+  const aliases = nitroConfig.alias!
+  const tsConfig = nitroConfig.typescript!.tsConfig!
+  tsConfig.compilerOptions ||= {}
+  tsConfig.compilerOptions.paths ||= {}
+  for (const _alias in aliases) {
+    const alias = _alias as keyof typeof aliases
+    if (excludedAlias.some(pattern => typeof pattern === 'string' ? alias === pattern : pattern.test(alias))) {
+      continue
+    }
+    if (alias in tsConfig.compilerOptions.paths) {
+      continue
+    }
+
+    const absolutePath = resolve(basePath, aliases[alias]!)
+    const stats = await fsp.stat(absolutePath).catch(() => null /* file does not exist */)
+    // note - nitro will check + remove the file extension as required
+    tsConfig.compilerOptions.paths[alias] = [absolutePath]
+    if (stats?.isDirectory()) {
+      tsConfig.compilerOptions.paths[`${alias}/*`] = [`${absolutePath}/*`]
+    }
+  }
 
   // Init nitro
   const nitro = await createNitro(nitroConfig, {
