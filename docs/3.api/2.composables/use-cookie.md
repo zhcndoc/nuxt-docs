@@ -144,7 +144,7 @@ Cookie 组合函数接受多个选项，这些选项允许你修改 Cookie 的�
 
 ### `watch`
 
-指定 `boolean` 或 `string` 值用于 [watch](https://vuejs.org/api/reactivity-core.html#watch) Cookie 引用数据。
+指定 `boolean` 或 `string` 值用于 [watch](https://vue.zhcndoc.com/api/reactivity-core.html#watch) Cookie 引用数据。
 
 - `true` - 将监视 Cookie 引用数据的变化及其嵌套属性（默认）。
 - `shallow` - 将监视 Cookie 引用数据的变化，仅限于顶级属性。

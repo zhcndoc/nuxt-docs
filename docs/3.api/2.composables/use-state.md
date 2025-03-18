@@ -31,7 +31,7 @@ const count = useState('counter', () => Math.round(Math.random() * 100))
 
 ## 使用 `shallowRef`
 
-如果你不需要你的状态是深度响应式的，你可以将 `useState` 与 [`shallowRef`](https://vuejs.org/api/reactivity-advanced.html#shallowref) 结合起来。当你的状态包含大型对象和数组时，这可以提高性能。
+如果你不需要你的状态是深度响应式的，你可以将 `useState` 与 [`shallowRef`](https://vue.zhcndoc.com/api/reactivity-advanced.html#shallowref) 结合起来。当你的状态包含大型对象和数组时，这可以提高性能。
 
 ```ts
 const state = useState('my-shallow-state', () => shallowRef({ deep: 'not reactive' }))

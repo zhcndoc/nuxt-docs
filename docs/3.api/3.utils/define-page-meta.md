@@ -78,9 +78,9 @@ interface PageMeta {
 
   **`keepalive`**
 
-  - **类型**: `boolean` | [`KeepAliveProps`](https://vuejs.org/api/built-in-components.html#keepalive)
+  - **类型**: `boolean` | [`KeepAliveProps`](https://vue.zhcndoc.com/api/built-in-components.html#keepalive)
 
-    当您希望跨路由更改保留页面状态时，或者使用 [`KeepAliveProps`](https://vuejs.org/api/built-in-components.html#keepalive) 进行精细控制时，将其设置为 `true`。
+    当您希望跨路由更改保留页面状态时，或者使用 [`KeepAliveProps`](https://vue.zhcndoc.com/api/built-in-components.html#keepalive) 进行精细控制时，将其设置为 `true`。
 
   **`key`**
 
@@ -96,7 +96,7 @@ interface PageMeta {
 
   **`layoutTransition`**
 
-  - **类型**: `boolean` | [`TransitionProps`](https://vuejs.org/api/built-in-components.html#transition)
+  - **类型**: `boolean` | [`TransitionProps`](https://vue.zhcndoc.com/api/built-in-components.html#transition)
 
     为当前布局设置过渡的名字。您也可以将这个值设置为 `false` 以禁用布局过渡。
 
@@ -108,7 +108,7 @@ interface PageMeta {
 
   **`pageTransition`**
 
-  - **类型**: `boolean` | [`TransitionProps`](https://vuejs.org/api/built-in-components.html#transition)
+  - **类型**: `boolean` | [`TransitionProps`](https://vue.zhcndoc.com/api/built-in-components.html#transition)
 
     为当前页面设置过渡的名字。您也可以将这个值设置为 `false` 以禁用页面过渡。
 

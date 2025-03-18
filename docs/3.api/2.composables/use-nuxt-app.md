@@ -80,14 +80,14 @@ await nuxtApp.callHook('my-plugin:init')
 
 ### `vueApp`
 
-`vueApp` 是全局的 Vue.js [应用程序实例](https://vuejs.org/api/application.html#application-api)，你可以在 `nuxtApp` 中访问它。
+`vueApp` 是全局的 Vue.js [应用程序实例](https://vue.zhcndoc.com/api/application.html#application-api)，你可以在 `nuxtApp` 中访问它。
 
 一些有用的方法：
-- [`component()`](https://vuejs.org/api/application.html#app-component) - 注册一个全局组件，如果传递了名称字符串和组件定义，或者如果只传递了名称，则检索一个已经注册的组件。
-- [`directive()`](https://vuejs.org/api/application.html#app-directive) - 注册一个全局自定义指令，如果传递了名称字符串和指令定义，或者如果只传递了名称，则检索一个已经注册的指令 [(示例)](/docs/guide/directory-structure/plugins#vue-directives)。
-- [`use()`](https://vuejs.org/api/application.html#app-use) - 安装一个 **[Vue.js 插件](https://vuejs.org/guide/reusability/plugins.html)** [(示例)](/docs/guide/directory-structure/plugins#vue-plugins)。
+- [`component()`](https://vue.zhcndoc.com/api/application.html#app-component) - 注册一个全局组件，如果传递了名称字符串和组件定义，或者如果只传递了名称，则检索一个已经注册的组件。
+- [`directive()`](https://vue.zhcndoc.com/api/application.html#app-directive) - 注册一个全局自定义指令，如果传递了名称字符串和指令定义，或者如果只传递了名称，则检索一个已经注册的指令 [(示例)](/docs/guide/directory-structure/plugins#vue-directives)。
+- [`use()`](https://vue.zhcndoc.com/api/application.html#app-use) - 安装一个 **[Vue.js 插件](https://vue.zhcndoc.com/guide/reusability/plugins.html)** [(示例)](/docs/guide/directory-structure/plugins#vue-plugins)。
 
-:read-more{icon="i-simple-icons-vuedotjs" to="https://vuejs.org/api/application.html#application-api"}
+:read-more{icon="i-simple-icons-vuedotjs" to="https://vue.zhcndoc.com/api/application.html#application-api"}
 
 ### `ssrContext`
 
@@ -136,7 +136,7 @@ Nuxt 通过 `ssrContext` 暴露了以下属性：
 
   也可以使用更高级的类型，如 `ref`、`reactive`、`shallowRef`、`shallowReactive` 和 `NuxtError`。
 
-  自 [Nuxt v3.4](https://nuxt.com/blog/v3-4#payload-enhancements) 以来，你可以通过使用一个有效载荷插件来定义你自己的减少器/重新生成器，来为不支持的类型定义自己的减少器/重新生成器。
+  自 [Nuxt v3.4](https://nuxt.zhcndoc.com/blog/v3-4#payload-enhancements) 以来，你可以通过使用一个有效载荷插件来定义你自己的减少器/重新生成器，来为不支持的类型定义自己的减少器/重新生成器。
 
   ::tip{icon="i-ph-video" to="https://www.youtube.com/watch?v=8w6ffRBs8a4" target="_blank"}
   观看 Alexander Lichter 关于序列化有效载荷的视频，尤其是关于类的情况。
