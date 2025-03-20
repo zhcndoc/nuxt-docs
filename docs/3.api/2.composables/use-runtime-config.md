@@ -82,7 +82,7 @@ export default defineEventHandler((event) => {
 
 我们可以在 `.env` 文件中设置环境变量，以便在 **开发** 和 **构建/生成** 时可访问。
 
-``` [.env]
+```ini [.env]
 NUXT_PUBLIC_API_BASE = "https://api.localhost:5555"
 NUXT_API_SECRET = "123"
 ```

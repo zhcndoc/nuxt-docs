@@ -41,8 +41,8 @@ const { data } = await useFetch('/api/item')
 
 ```vue [pages/contact.vue]
 <script setup lang="ts">
-function contactForm() {
-  $fetch('/api/contact', {
+async function contactForm() {
+  await $fetch('/api/contact', {
     method: 'POST',
     body: { hello: 'world '}
   })
