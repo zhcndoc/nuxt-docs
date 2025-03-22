@@ -1,29 +1,29 @@
 ---
 title: "useRequestHeader"
-description: "Use useRequestHeader to access a certain incoming request header."
+description: "使用 useRequestHeader 访问特定的传入请求头。"
 links:
-  - label: Source
+  - label: 源代码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/ssr.ts
     size: xs
 ---
 
-You can use the built-in [`useRequestHeader`](/docs/api/composables/use-request-header) composable to access any incoming request header within your pages, components, and plugins.
+您可以使用内置的 [`useRequestHeader`](/docs/api/composables/use-request-header) 组合函数来访问您页面、组件和插件中的任何传入请求头。
 
 ```ts
-// Get the authorization request header
+// 获取授权请求头
 const authorization = useRequestHeader('authorization')
 ```
 
 ::tip
-In the browser, `useRequestHeader` will return `undefined`.
+在浏览器中，`useRequestHeader` 将返回 `undefined`。
 ::
 
-## Example
+## 示例
 
-We can use `useRequestHeader` to easily figure out if a user is authorized or not.
+我们可以使用 `useRequestHeader` 来轻松判断用户是否被授权。
 
-The example below reads the `authorization` request header to find out if a person can access a restricted resource.
+下面的示例读取 `authorization` 请求头，以确定一个人是否可以访问受限资源。
 
 ```ts [middleware/authorized-only.ts]
 export default defineNuxtRouteMiddleware((to, from) => {

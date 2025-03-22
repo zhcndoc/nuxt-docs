@@ -1,24 +1,24 @@
 ---
 title: 'reloadNuxtApp'
-description: reloadNuxtApp will perform a hard reload of the page.
+description: reloadNuxtApp 将执行页面的硬重载。
 links:
-  - label: Source
+  - label: 源代码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/chunk.ts
     size: xs
 ---
 
 ::note
-`reloadNuxtApp` will perform a hard reload of your app, re-requesting a page and its dependencies from the server.
+`reloadNuxtApp`将对您的应用程序执行硬重载，从服务器重新请求页面及其依赖项。
 ::
 
-By default, it will also save the current `state` of your app (that is, any state you could access with `useState`).
+默认情况下，它还将保存您应用程序的当前 `state`（即，您可以通过 `useState` 访问的任何状态）。
 
 ::read-more{to="/docs/guide/going-further/experimental-features#restorestate" icon="i-lucide-star"}
-You can enable experimental restoration of this state by enabling the `experimental.restoreState` option in your `nuxt.config` file.
+您可以通过在 `nuxt.config` 文件中启用 `experimental.restoreState` 选项来开启对该状态的实验性恢复。
 ::
 
-## Type
+## 类型
 
 ```ts
 reloadNuxtApp(options?: ReloadNuxtAppOptions)
@@ -31,44 +31,40 @@ interface ReloadNuxtAppOptions {
 }
 ```
 
-### `options` (optional)
+### `options`（可选）
 
-**Type**: `ReloadNuxtAppOptions`
+**类型**: `ReloadNuxtAppOptions`
 
-An object accepting the following properties:
+一个接受以下属性的对象：
 
-- `path` (optional)
+- `path`（可选）
 
-  **Type**: `string`
+  **类型**: `string`
 
-  **Default**: `window.location.pathname`
+  **默认**: `window.location.pathname`
 
-  The path to reload (defaulting to the current path). If this is different from the current window location it
-  will trigger a navigation and add an entry in the browser history.
+  要重载的路径（默认为当前路径）。如果与当前窗口位置不同，它将触发导航并在浏览器历史记录中添加一条记录。
 
-- `ttl` (optional)
+- `ttl`（可选）
 
-  **Type**: `number`
+  **类型**: `number`
 
-  **Default**: `10000`
+  **默认**: `10000`
 
-  The number of milliseconds in which to ignore future reload requests. If called again within this time period,
-  `reloadNuxtApp` will not reload your app to avoid reload loops.
+  忽略将来的重载请求的毫秒数。如果在此时间段内再次调用，`reloadNuxtApp`将不会重载您的应用程序，以避免重载循环。
 
-- `force` (optional)
+- `force`（可选）
 
-  **Type**: `boolean`
+  **类型**: `boolean`
 
-  **Default**: `false`
+  **默认**: `false`
 
-  This option allows bypassing reload loop protection entirely, forcing a reload even if one has occurred within
-  the previously specified TTL.
+  此选项允许完全绕过重载循环保护，即使在之前指定的TTL内发生过重载，也强制重载。
 
-- `persistState` (optional)
+- `persistState`（可选）
 
-  **Type**: `boolean`
+  **类型**: `boolean`
 
-  **Default**: `false`
+  **默认**: `false`
 
-  Whether to dump the current Nuxt state to sessionStorage (as `nuxt:reload:state`). By default this will have no
-  effect on reload unless `experimental.restoreState` is also set, or unless you handle restoring the state yourself.
+  是否将当前 Nuxt 状态转储到 sessionStorage（作为 `nuxt:reload:state`）。默认情况下，除非同时设置 `experimental.restoreState`，否则这将对重载没有影响，或者除非您自己处理状态恢复。

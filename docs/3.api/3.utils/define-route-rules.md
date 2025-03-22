@@ -1,18 +1,18 @@
 ---
-title: 'defineRouteRules'
-description: 'Define route rules for hybrid rendering at the page level.'
+title: '定义路由规则'
+description: '在页面级别定义混合渲染的路由规则。'
 links:
-  - label: Source
+  - label: 来源
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/pages/runtime/composables.ts
     size: xs
 ---
 
 ::read-more{to="/docs/guide/going-further/experimental-features#inlinerouterules" icon="i-lucide-star"}
-This feature is experimental and in order to use it you must enable the `experimental.inlineRouteRules` option in your `nuxt.config`.
+此功能是实验性的，使用之前必须在 `nuxt.config` 中启用 `experimental.inlineRouteRules` 选项。
 ::
 
-## Usage
+## 用法
 
 ```vue [pages/index.vue]
 <script setup lang="ts">
@@ -22,11 +22,11 @@ defineRouteRules({
 </script>
 
 <template>
-  <h1>Hello world!</h1>
+  <h1>你好，世界！</h1>
 </template>
 ```
 
-Will be translated to:
+将转换为：
 
 ```ts [nuxt.config.ts]
 export default defineNuxtConfig({
@@ -37,16 +37,16 @@ export default defineNuxtConfig({
 ```
 
 ::note
-When running [`nuxt build`](/docs/api/commands/build), the home page will be pre-rendered in `.output/public/index.html` and statically served.
+在运行 [`nuxt build`](/docs/api/commands/build) 时，首页将预渲染到 `.output/public/index.html` 并静态服务。
 ::
 
-## Notes
+## 注意事项
 
-- A rule defined in `~/pages/foo/bar.vue` will be applied to `/foo/bar` requests.
-- A rule in `~/pages/foo/[id].vue` will be applied to `/foo/**` requests.
+- 在 `~/pages/foo/bar.vue` 中定义的规则将应用于 `/foo/bar` 请求。
+- 在 `~/pages/foo/[id].vue` 中的规则将应用于 `/foo/**` 请求。
 
-For more control, such as if you are using a custom `path` or `alias` set in the page's [`definePageMeta`](/docs/api/utils/define-page-meta), you should set `routeRules` directly within your `nuxt.config`.
+为了更好的控制，例如如果使用了在页面的 [`definePageMeta`](/docs/api/utils/define-page-meta) 中设置的自定义 `path` 或 `alias`，你应该直接在 `nuxt.config` 中设置 `routeRules`。
 
 ::read-more{to="/docs/guide/concepts/rendering#hybrid-rendering" icon="i-lucide-medal"}
-Read more about the `routeRules`.
+阅读更多关于 `routeRules` 的信息。
 ::

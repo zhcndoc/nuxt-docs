@@ -1,55 +1,55 @@
 ---
 title: 'useLazyFetch'
-description: This wrapper around useFetch triggers navigation immediately.
+description: 这个包裹在 useFetch 周围的函数会立即触发导航。
 links:
-  - label: Source
+  - label: 源代码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/fetch.ts
     size: xs
 ---
 
-## Description
+## 描述
 
-By default, [`useFetch`](/docs/api/composables/use-fetch) blocks navigation until its async handler is resolved. `useLazyFetch` provides a wrapper around [`useFetch`](/docs/api/composables/use-fetch) that triggers navigation before the handler is resolved by setting the `lazy` option to `true`.
+默认情况下，[`useFetch`](/docs/api/composables/use-fetch) 在其异步处理程序解析之前会阻止导航。`useLazyFetch` 提供了一个包裹 [`useFetch`](/docs/api/composables/use-fetch) 的函数，通过将 `lazy` 选项设置为 `true`，在处理程序解析之前触发导航。
 
 ::note
-`useLazyFetch` has the same signature as [`useFetch`](/docs/api/composables/use-fetch).
+`useLazyFetch` 的函数签名与 [`useFetch`](/docs/api/composables/use-fetch) 相同。
 ::
 
 ::note
-Awaiting `useLazyFetch` in this mode only ensures the call is initialized. On client-side navigation, data may not be immediately available, and you should make sure to handle the pending state in your app.
+在此模式下等待 `useLazyFetch` 仅确保调用被初始化。在客户端导航时，数据可能不会立即可用，您应确保在应用程序中处理挂起状态。
 ::
 
 :read-more{to="/docs/api/composables/use-fetch"}
 
-## Example
+## 示例
 
 ```vue [pages/index.vue]
 <script setup lang="ts">
-/* Navigation will occur before fetching is complete.
- * Handle 'pending' and 'error' states directly within your component's template
+/* 导航将在获取完成之前发生。
+ * 请直接在组件的模板中处理 'pending' 和 'error' 状态。
  */
 const { status, data: posts } = await useLazyFetch('/api/posts')
 watch(posts, (newPosts) => {
-  // Because posts might start out null, you won't have access
-  // to its contents immediately, but you can watch it.
+  // 因为 posts 可能最开始是 null，您将无法立即访问
+  // 它的内容，但您可以监视它。
 })
 </script>
 
 <template>
   <div v-if="status === 'pending'">
-    Loading ...
+    加载中 ...
   </div>
   <div v-else>
     <div v-for="post in posts">
-      <!-- do something -->
+      <!-- 执行某项操作 -->
     </div>
   </div>
 </template>
 ```
 
 ::note
-`useLazyFetch` is a reserved function name transformed by the compiler, so you should not name your own function `useLazyFetch`.
+`useLazyFetch` 是一个被编译器转换的保留函数名，因此您不应将自己的函数命名为 `useLazyFetch`。
 ::
 
 :read-more{to="/docs/getting-started/data-fetching"}

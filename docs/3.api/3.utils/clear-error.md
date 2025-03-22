@@ -1,29 +1,29 @@
 ---
 title: "clearError"
-description: "The clearError composable clears all handled errors."
+description: "clearError 组合式 API 用于清除所有已处理的错误。"
 links:
-  - label: Source
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/error.ts
     size: xs
 ---
 
-Within your pages, components, and plugins, you can use `clearError` to clear all errors and redirect the user.
+在您的页面、组件和插件中，您可以使用 `clearError` 来清除所有错误并重定向用户。
 
-**Parameters:**
+**参数：**
 
 - `options?: { redirect?: string }`
 
-You can provide an optional path to redirect to (for example, if you want to navigate to a 'safe' page).
+您可以提供一个可选的重定向路径（例如，如果您想导航到一个“安全”的页面）。
 
 ```js
-// Without redirect
+// 不重定向
 clearError()
 
-// With redirect
+// 重定向
 clearError({ redirect: '/homepage' })
 ```
 
-Errors are set in state using [`useError()`](/docs/api/composables/use-error). The `clearError` composable will reset this state and calls the `app:error:cleared` hook with the provided options.
+错误使用 [`useError()`](/docs/api/composables/use-error) 设置在状态中。 `clearError` 组合式 API 将重置该状态并调用带有提供选项的 `app:error:cleared` 钩子。
 
 :read-more{to="/docs/getting-started/error-handling"}

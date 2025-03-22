@@ -1,20 +1,20 @@
 ---
 title: 'useAsyncData'
-description: useAsyncData provides access to data that resolves asynchronously in an SSR-friendly composable.
+description: useAsyncData 提供对异步解析数据的访问，适用于 SSR 友好的组合式 API。
 links:
-  - label: Source
+  - label: 源代码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/asyncData.ts
     size: xs
 ---
 
-Within your pages, components, and plugins you can use useAsyncData to get access to data that resolves asynchronously.
+在你的页面、组件和插件中，你可以使用 useAsyncData 访问异步解析的数据。
 
 ::note
-[`useAsyncData`](/docs/api/composables/use-async-data) is a composable meant to be called directly in the [Nuxt context](/docs/guide/going-further/nuxt-app#the-nuxt-context). It returns reactive composables and handles adding responses to the Nuxt payload so they can be passed from server to client **without re-fetching the data on client side** when the page hydrates.
+[`useAsyncData`](/docs/api/composables/use-async-data) 是一个组合式 API，应该直接在 [Nuxt 上下文](/docs/guide/going-further/nuxt-app#the-nuxt-context) 中调用。它返回响应式组合式 API，并处理将响应添加到 Nuxt 负载中，以便在页面水合时能够从服务器传递到客户端 **而无需在客户端重新获取数据**。
 ::
 
-## Usage
+## 使用方法
 
 ```vue [pages/index.vue]
 <script setup lang="ts">
@@ -26,16 +26,16 @@ const { data, status, error, refresh, clear } = await useAsyncData(
 ```
 
 ::warning
-If you're using a custom useAsyncData wrapper, do not await it in the composable, as that can cause unexpected behavior. Please follow [this recipe](/docs/guide/recipes/custom-usefetch#custom-usefetch) for more information on how to make a custom async data fetcher.
+如果你使用自定义的 useAsyncData 封装，请不要在组合式 API 中使用 await，这可能导致意外行为。有关如何创建自定义异步数据获取器的更多信息，请遵循 [这个食谱](/docs/guide/recipes/custom-usefetch#custom-usefetch) 。
 ::
 
 ::note
-`data`, `status` and `error` are Vue refs and they should be accessed with `.value` when used within the `<script setup>`, while `refresh`/`execute` and `clear` are plain functions.
+`data`、`status` 和 `error` 是 Vue refs，在 `<script setup>` 中使用时应该通过 `.value` 来访问，而 `refresh`/`execute` 和 `clear` 是普通函数。
 ::
 
-### Watch Params
+### 监视参数
 
-The built-in `watch` option allows automatically rerunning the fetcher function when any changes are detected.
+内置的 `watch` 选项允许在检测到任何更改时自动重新运行获取函数。
 
 ```vue [pages/index.vue]
 <script setup lang="ts">
@@ -54,71 +54,71 @@ const { data: posts } = await useAsyncData(
 ```
 
 ::warning
-[`useAsyncData`](/docs/api/composables/use-async-data) is a reserved function name transformed by the compiler, so you should not name your own function [`useAsyncData`](/docs/api/composables/use-async-data) .
+[`useAsyncData`](/docs/api/composables/use-async-data) 是一个被编译器转换的保留函数名，因此你不应该将自己的函数命名为 [`useAsyncData`](/docs/api/composables/use-async-data) 。
 ::
 
 :read-more{to="/docs/getting-started/data-fetching#useasyncdata"}
 
-## Params
+## 参数
 
-- `key`: a unique key to ensure that data fetching can be properly de-duplicated across requests. If you do not provide a key, then a key that is unique to the file name and line number of the instance of `useAsyncData` will be generated for you.
-- `handler`: an asynchronous function that must return a truthy value (for example, it should not be `undefined` or `null`) or the request may be duplicated on the client side.
+- `key`: 确保数据获取可以在请求之间正确去重的唯一键。如果没有提供键，将为您生成一个唯一于 `useAsyncData` 实例的文件名和行号的键。
+- `handler`: 一个必须返回真值（例如，它不应该是 `undefined` 或 `null`）的异步函数，否则请求可能在客户端重复。
 ::warning
-The `handler` function should be **side-effect free** to ensure predictable behavior during SSR and CSR hydration. If you need to trigger side effects, use the [`callOnce`](/docs/api/utils/call-once) utility to do so.
+`handler` 函数应是 **无副作用** 的，以确保 SSR 和 CSR 水合期间的可预测行为。如果需要触发副作用，请使用 [`callOnce`](/docs/api/utils/call-once) 工具来执行。
 ::
 - `options`:
-  - `server`: whether to fetch the data on the server (defaults to `true`)
-  - `lazy`: whether to resolve the async function after loading the route, instead of blocking client-side navigation (defaults to `false`)
-  - `immediate`: when set to `false`, will prevent the request from firing immediately. (defaults to `true`)
-  - `default`: a factory function to set the default value of the `data`, before the async function resolves - useful with the `lazy: true` or `immediate: false` option
-  - `transform`: a function that can be used to alter `handler` function result after resolving
-  - `getCachedData`: Provide a function which returns cached data. A `null` or `undefined` return value will trigger a fetch. By default, this is:
+  - `server`: 是否在服务器上获取数据（默认为 `true`）
+  - `lazy`: 是否在加载路由后解析异步函数，而不是阻止客户端导航（默认为 `false`）
+  - `immediate`: 设置为 `false` 时，将阻止请求立即触发。（默认为 `true`）
+  - `default`: 在异步函数解析之前设置 `data` 的默认值的工厂函数 - 在 `lazy: true` 或 `immediate: false` 选项中很有用
+  - `transform`: 一个可以在解析后用来更改 `handler` 函数结果的函数
+  - `getCachedData`: 提供一个函数返回缓存数据。返回 `null` 或 `undefined` 将触发获取。默认情况下，这个函数是：
     ```ts
     const getDefaultCachedData = (key, nuxtApp) => nuxtApp.isHydrating 
       ? nuxtApp.payload.data[key] 
       : nuxtApp.static.data[key]
     ```
-    Which only caches data when `experimental.payloadExtraction` of `nuxt.config` is enabled.
-  - `pick`: only pick specified keys in this array from the `handler` function result
-  - `watch`: watch reactive sources to auto-refresh
-  - `deep`: return data in a deep ref object. It is `false` by default to return data in a shallow ref object for performance.
-  - `dedupe`: avoid fetching same key more than once at a time (defaults to `cancel`). Possible options:
-    - `cancel` - cancels existing requests when a new one is made
-    - `defer` - does not make new requests at all if there is a pending request
+    仅在启用 `nuxt.config` 的 `experimental.payloadExtraction` 时缓存数据。
+  - `pick`: 仅从 `handler` 函数结果中挑选此数组中的指定键
+  - `watch`: 监听响应式源以自动刷新
+  - `deep`: 以深层 ref 对象返回数据。默认情况下为 `false`，以为性能返回浅层 ref 对象。
+  - `dedupe`: 避免同时多次获取相同的键（默认为 `cancel`）。可能的选项：
+    - `cancel` - 当发起新的请求时，取消现有请求
+    - `defer` - 如果有待处理的请求，则不发起新的请求
 
 ::note
-Under the hood, `lazy: false` uses `<Suspense>` to block the loading of the route before the data has been fetched. Consider using `lazy: true` and implementing a loading state instead for a snappier user experience.
+在底层，`lazy: false` 使用 `<Suspense>` 在数据获取之前阻止路由加载。考虑使用 `lazy: true` 并实现加载状态以提供更灵敏的用户体验。
 ::
 
 ::read-more{to="/docs/api/composables/use-lazy-async-data"}
-You can use `useLazyAsyncData` to have the same behavior as `lazy: true` with `useAsyncData`.
+你可以使用 `useLazyAsyncData` 来实现与 `useAsyncData` 的 `lazy: true` 相同的行为。
 ::
 
 ::tip{icon="i-simple-icons-youtube" to="https://www.youtube.com/watch?v=aQPR0xn-MMk" target="_blank"}
-Learn how to use `transform` and `getCachedData` to avoid superfluous calls to an API and cache data for visitors on the client.
+了解如何使用 `transform` 和 `getCachedData` 来避免对 API 的多余调用并为客户端访客缓存数据。
 ::
 
-## Return Values
+## 返回值
 
-- `data`: the result of the asynchronous function that is passed in.
-- `refresh`/`execute`: a function that can be used to refresh the data returned by the `handler` function.
-- `error`: an error object if the data fetching failed.
-- `status`: a string indicating the status of the data request:
-  - `idle`: when the request has not started, such as:
-    - when `execute` has not yet been called and `{ immediate: false }` is set
-    - when rendering HTML on the server and `{ server: false }` is set
-  - `pending`: the request is in progress
-  - `success`: the request has completed successfully
-  - `error`: the request has failed
-- `clear`: a function which will set `data` to `undefined`, set `error` to `null`, set `status` to `'idle'`, and mark any currently pending requests as cancelled.
+- `data`: 传入的异步函数的结果。
+- `refresh`/`execute`: 可以用来刷新 `handler` 函数返回的数据的函数。
+- `error`: 如果数据获取失败，则为错误对象。
+- `status`: 指示数据请求状态的字符串：
+  - `idle`: 当请求尚未开始时，例如：
+    - 当 `execute` 尚未被调用且设置了 `{ immediate: false }`
+    - 当在服务器上渲染 HTML 时并且设置了 `{ server: false }`
+  - `pending`: 请求正在进行中
+  - `success`: 请求已成功完成
+  - `error`: 请求失败
+- `clear`: 将 `data` 设置为 `undefined`，将 `error` 设置为 `null`，将 `status` 设置为 `'idle'`，并标记任何当前待处理的请求为已取消。
 
-By default, Nuxt waits until a `refresh` is finished before it can be executed again.
+默认情况下，Nuxt 等待 `refresh` 完成后才能再次执行。
 
 ::note
-If you have not fetched data on the server (for example, with `server: false`), then the data _will not_ be fetched until hydration completes. This means even if you await [`useAsyncData`](/docs/api/composables/use-async-data) on the client side, `data` will remain `null` within `<script setup>`.
+如果您尚未在服务器上获取数据（例如，使用 `server: false`），那么数据_不会_在水合完成之前被获取。这意味着即使您在客户端使用 await [`useAsyncData`](/docs/api/composables/use-async-data)，`data` 在 `<script setup>` 中仍将保持 `null`。
 ::
 
-## Type
+## 类型
 
 ```ts [Signature]
 function useAsyncData<DataT, DataE>(

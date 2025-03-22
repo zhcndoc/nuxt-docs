@@ -1,25 +1,25 @@
 ---
 title: "onNuxtReady"
-description: The onNuxtReady composable allows running a callback after your app has finished initializing.
+description: onNuxtReady 组合函数允许在您的应用初始化完成后运行回调。
 links:
-  - label: Source
+  - label: 源代码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/ready.ts
     size: xs
 ---
 
 ::important
-`onNuxtReady` only runs on the client-side. :br
-It is ideal for running code that should not block the initial rendering of your app.
+`onNuxtReady` 仅在客户端运行。 :br
+它非常适合运行不应该阻塞您应用初始渲染的代码。
 ::
 
 ```ts [plugins/ready.client.ts]
 export default defineNuxtPlugin(() => {
   onNuxtReady(async () => {
     const myAnalyticsLibrary = await import('my-big-analytics-library')
-    // do something with myAnalyticsLibrary
+    // 使用 myAnalyticsLibrary 做一些事情
   })
 })
 ```
 
-It is 'safe' to run even after your app has initialized. In this case, then the code will be registered to run in the next idle callback.
+即使在您的应用初始化后运行也是“安全的”。在这种情况下，代码将注册在下一个空闲回调中运行。

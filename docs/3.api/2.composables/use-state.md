@@ -1,50 +1,50 @@
 ---
 title: "useState"
-description: The useState composable creates a reactive and SSR-friendly shared state.
+description: useState 组合函数创建一个响应式且支持 SSR 的共享状态。
 links:
-  - label: Source
+  - label: 源代码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/state.ts
     size: xs
 ---
 
-## Usage
+## 用法
 
 ```ts
-// Create a reactive state and set default value
+// 创建一个响应式状态并设置默认值
 const count = useState('counter', () => Math.round(Math.random() * 100))
 ```
 
 :read-more{to="/docs/getting-started/state-management"}
 
 ::important
-Because the data inside `useState` will be serialized to JSON, it is important that it does not contain anything that cannot be serialized, such as classes, functions or symbols.
+由于 `useState` 内的数据将被序列化为 JSON，因此确保其中不包含任何无法序列化的内容（如类、函数或符号）是非常重要的。
 ::
 
 ::warning
-`useState` is a reserved function name transformed by the compiler, so you should not name your own function `useState`.
+`useState` 是一个保留的函数名，由编译器转换，因此不应将您自己的函数命名为 `useState`。
 ::
 
 ::tip{icon="i-lucide-video" to="https://www.youtube.com/watch?v=mv0WcBABcIk" target="_blank"}
-Watch a video from Alexander Lichter about why and when to use `useState()`.
+观看 Alexander Lichter 的视频，了解何时以及为何使用 `useState()`。
 ::
 
-## Using `shallowRef`
+## 使用 `shallowRef`
 
-If you don't need your state to be deeply reactive, you can combine `useState` with [`shallowRef`](https://vuejs.org/api/reactivity-advanced.html#shallowref). This can improve performance when your state contains large objects and arrays.
+如果您不需要状态深度响应，可以将 `useState` 与 [`shallowRef`](https://vuejs.org/api/reactivity-advanced.html#shallowref) 结合使用。当您的状态包含大型对象和数组时，这可以提高性能。
 
 ```ts
 const state = useState('my-shallow-state', () => shallowRef({ deep: 'not reactive' }))
 // isShallow(state) === true
 ```
 
-## Type
+## 类型
 
 ```ts
 useState<T>(init?: () => T | Ref<T>): Ref<T>
 useState<T>(key: string, init?: () => T | Ref<T>): Ref<T>
 ```
 
-- `key`: A unique key ensuring that data fetching is properly de-duplicated across requests. If you do not provide a key, then a key that is unique to the file and line number of the instance of [`useState`](/docs/api/composables/use-state) will be generated for you.
-- `init`: A function that provides initial value for the state when not initiated. This function can also return a `Ref`.
-- `T`: (typescript only) Specify the type of state
+- `key`: 一个唯一的键，确保数据获取在请求之间正确去重。如果您不提供键，则会为您生成一个唯一于文件和 [`useState`](/docs/api/composables/use-state) 实例行号的键。
+- `init`: 当未初始化时，提供状态的初始值的函数。此函数也可以返回一个 `Ref`。
+- `T`: （仅限 TypeScript）指定状态的类型。

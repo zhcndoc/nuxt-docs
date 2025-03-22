@@ -1,6 +1,6 @@
 ---
 title: "nuxi build"
-description: "Build your Nuxt application."
+description: "构建你的 Nuxt 应用程序。"
 links:
   - label: Source
     icon: i-simple-icons-github
@@ -14,33 +14,33 @@ npx nuxi build [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>] 
 ```
 <!--/build-cmd-->
 
-The `build` command creates a `.output` directory with all your application, server and dependencies ready for production.
+`build` 命令会创建一个 `.output` 目录，里面包含所有已准备好用于生产的应用程序、服务器和依赖项。
 
-## Arguments
+## 参数
 
 <!--build-args-->
-Argument | Description
+参数 | 描述
 --- | ---
-`ROOTDIR="."` | Specifies the working directory (default: `.`)
+`ROOTDIR="."` | 指定工作目录（默认值： `.`）
 <!--/build-args-->
 
-## Options
+## 选项
 
 <!--build-opts-->
-Option | Default | Description
+选项 | 默认值 | 描述
 --- | --- | ---
-`--cwd=<directory>` |  | Specify the working directory, this takes precedence over ROOTDIR (default: `.`)
-`--logLevel=<silent\|info\|verbose>` |  | Specify build-time log level
-`--prerender` |  | Build Nuxt and prerender static routes
-`--preset` |  | Nitro server preset
-`--dotenv` |  | Path to `.env` file to load, relative to the root directory
-`--envName` |  | The environment to use when resolving configuration overrides (default is `production` when building, and `development` when running the dev server)
+`--cwd=<directory>` |  | 指定工作目录，优先于 ROOTDIR（默认值： `.`）
+`--logLevel=<silent\|info\|verbose>` |  | 指定构建时的日志级别
+`--prerender` |  | 构建 Nuxt 并预渲染静态路由
+`--preset` |  | Nitro 服务器预设
+`--dotenv` |  | 要加载的 `.env` 文件的路径，相对于根目录
+`--envName` |  | 使用何种环境来解析配置覆盖（构建时默认是 `production`，运行开发服务器时默认是 `development`）
 <!--/build-opts-->
 
 ::note
-This command sets `process.env.NODE_ENV` to `production`.
+此命令将 `process.env.NODE_ENV` 设置为 `production`。
 ::
 
 ::note
-`--prerender` will always set the `preset` to `static`
+`--prerender` 将始终将 `preset` 设置为 `static`
 ::

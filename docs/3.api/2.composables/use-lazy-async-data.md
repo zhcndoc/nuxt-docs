@@ -1,47 +1,47 @@
 ---
 title: useLazyAsyncData
-description: This wrapper around useAsyncData triggers navigation immediately.
+description: 这个对 useAsyncData 的封装会立即触发导航。
 links:
-  - label: Source
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/asyncData.ts
     size: xs
 ---
 
-## Description
+## 描述
 
-By default, [`useAsyncData`](/docs/api/composables/use-async-data) blocks navigation until its async handler is resolved. `useLazyAsyncData` provides a wrapper around [`useAsyncData`](/docs/api/composables/use-async-data) that triggers navigation before the handler is resolved by setting the `lazy` option to `true`.
+默认情况下，[`useAsyncData`](/docs/api/composables/use-async-data) 在其异步处理程序解析之前会阻止导航。 `useLazyAsyncData` 提供了一个围绕 [`useAsyncData`](/docs/api/composables/use-async-data) 的封装，通过将 `lazy` 选项设置为 `true` 来在处理程序解析之前触发导航。
 
 ::note
-`useLazyAsyncData` has the same signature as [`useAsyncData`](/docs/api/composables/use-async-data).
+`useLazyAsyncData` 的签名与 [`useAsyncData`](/docs/api/composables/use-async-data) 相同。
 ::
 
 :read-more{to="/docs/api/composables/use-async-data"}
 
-## Example
+## 示例
 
 ```vue [pages/index.vue]
 <script setup lang="ts">
-/* Navigation will occur before fetching is complete.
-  Handle 'pending' and 'error' states directly within your component's template
+/* 导航将在获取完成之前发生。
+  在组件的模板中直接处理 'pending' 和 'error' 状态
 */
 const { status, data: count } = await useLazyAsyncData('count', () => $fetch('/api/count'))
 
 watch(count, (newCount) => {
-  // Because count might start out null, you won't have access
-  // to its contents immediately, but you can watch it.
+  // 由于 count 可能一开始为 null，因此您不会立刻访问其内容，
+  // 但您可以进行观察。
 })
 </script>
 
 <template>
   <div>
-    {{ status === 'pending' ? 'Loading' : count }}
+    {{ status === 'pending' ? '加载中' : count }}
   </div>
 </template>
 ```
 
 ::warning
-`useLazyAsyncData` is a reserved function name transformed by the compiler, so you should not name your own function `useLazyAsyncData`.
+`useLazyAsyncData` 是一个被编译器转换的保留函数名，因此您不应将自己的函数命名为 `useLazyAsyncData`。
 ::
 
 :read-more{to="/docs/getting-started/data-fetching"}

@@ -1,14 +1,14 @@
 ---
-title: "nuxi module"
-description: "Search and add modules to your Nuxt application with the command line."
+title: "nuxi 模块"
+description: "使用命令行搜索和添加模块到你的 Nuxt 应用程序。"
 links:
-  - label: Source
+  - label: 源代码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/module/
     size: xs
 ---
 
-Nuxi provides a few utilities to work with [Nuxt modules](/modules) seamlessly.
+Nuxi 提供了一些工具，以无缝的方式与 [Nuxt 模块](/modules) 一起工作。
 
 ## nuxi module add
 
@@ -19,32 +19,32 @@ npx nuxi module add <MODULENAME> [--cwd=<directory>] [--logLevel=<silent|info|ve
 <!--/module-add-cmd-->
 
 <!--module-add-args-->
-Argument | Description
+参数 | 描述
 --- | ---
-`MODULENAME` | Module name
+`MODULENAME` | 模块名称
 <!--/module-add-args-->
 
 <!--module-add-opts-->
-Option | Default | Description
+选项 | 默认值 | 描述
 --- | --- | ---
-`--cwd=<directory>` | `.` | Specify the working directory
-`--logLevel=<silent\|info\|verbose>` |  | Specify build-time log level
-`--skipInstall` |  | Skip npm install
-`--skipConfig` |  | Skip nuxt.config.ts update
-`--dev` |  | Install module as dev dependency
+`--cwd=<directory>` | `.` | 指定工作目录
+`--logLevel=<silent\|info\|verbose>` |  | 指定构建时日志级别
+`--skipInstall` |  | 跳过 npm 安装
+`--skipConfig` |  | 跳过 nuxt.config.ts 更新
+`--dev` |  | 将模块作为开发依赖安装
 <!--/module-add-opts-->
 
-The command lets you install [Nuxt modules](/modules) in your application with no manual work.
+此命令允许您在应用程序中安装 [Nuxt 模块](/modules)，无需手动工作。
 
-When running the command, it will:
+运行此命令时，它将：
 
-- install the module as a dependency using your package manager
-- add it to your [package.json](/docs/guide/directory-structure/package) file
-- update your [`nuxt.config`](/docs/guide/directory-structure/nuxt-config) file
+- 使用您的包管理器安装模块作为依赖
+- 将其添加到您的 [package.json](/docs/guide/directory-structure/package) 文件中
+- 更新您的 [`nuxt.config`](/docs/guide/directory-structure/nuxt-config) 文件
 
-**Example:**
+**示例：**
 
-Installing the [`Pinia`](/modules/pinia) module
+安装 [`Pinia`](/modules/pinia) 模块
 
 ```bash [Terminal]
 npx nuxi module add pinia
@@ -58,26 +58,26 @@ npx nuxi module search <QUERY> [--cwd=<directory>] [--nuxtVersion=<2|3>]
 ```
 <!--/module-search-cmd-->
 
-### Arguments
+### 参数
 
 <!--module-search-args-->
-Argument | Description
+参数 | 描述
 --- | ---
-`QUERY` | keywords to search for
+`QUERY` | 要搜索的关键字
 <!--/module-search-args-->
 
-### Options
+### 选项
 
 <!--module-search-opts-->
-Option | Default | Description
+选项 | 默认值 | 描述
 --- | --- | ---
-`--cwd=<directory>` | `.` | Specify the working directory
-`--nuxtVersion=<2\|3>` |  | Filter by Nuxt version and list compatible modules only (auto detected by default)
+`--cwd=<directory>` | `.` | 指定工作目录
+`--nuxtVersion=<2\|3>` |  | 按 Nuxt 版本过滤，并仅列出兼容模块（默认自动检测）
 <!--/module-search-opts-->
 
-The command searches for Nuxt modules matching your query that are compatible with your Nuxt version.
+该命令会搜索与您的查询匹配并与您的 Nuxt 版本兼容的 Nuxt 模块。
 
-**Example:**
+**示例：**
 
 ```bash [Terminal]
 npx nuxi module search pinia

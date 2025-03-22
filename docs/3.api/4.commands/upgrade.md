@@ -1,8 +1,8 @@
 ---
-title: "nuxi upgrade"
-description: The upgrade command upgrades Nuxt to the latest version.
+title: "nuxi 升级"
+description: 升级命令将 Nuxt 升级到最新版本。
 links:
-  - label: Source
+  - label: 源代码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/upgrade.ts
     size: xs
@@ -14,24 +14,24 @@ npx nuxi upgrade [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>
 ```
 <!--/upgrade-cmd-->
 
-The `upgrade` command upgrades Nuxt to the latest version.
+`upgrade` 命令将 Nuxt 升级到最新版本。
 
-## Arguments
+## 参数
 
 <!--upgrade-args-->
-Argument | Description
+参数 | 描述
 --- | ---
-`ROOTDIR="."` | Specifies the working directory (default: `.`)
+`ROOTDIR="."` | 指定工作目录（默认值： `.`）
 <!--/upgrade-args-->
 
-## Options
+## 选项
 
 <!--upgrade-opts-->
-Option | Default | Description
+选项 | 默认 | 描述
 --- | --- | ---
-`--cwd=<directory>` |  | Specify the working directory, this takes precedence over ROOTDIR (default: `.`)
-`--logLevel=<silent\|info\|verbose>` |  | Specify build-time log level
-`--dedupe` |  | Will deduplicate dependencies but not recreate the lockfile
-`-f, --force` |  | Force upgrade to recreate lockfile and node_modules
-`-ch, --channel=<stable\|nightly>` | `stable` | Specify a channel to install from (default: stable)
+`--cwd=<directory>` |  | 指定工作目录，该选项优先于 ROOTDIR（默认值： `.`）
+`--logLevel=<silent\|info\|verbose>` |  | 指定构建时日志级别
+`--dedupe` |  | 将去重依赖项，但不会重新创建锁定文件
+`-f, --force` |  | 强制升级以重新创建锁定文件和 node_modules
+`-ch, --channel=<stable\|nightly>` | `stable` | 指定要安装的通道（默认值：stable）
 <!--/upgrade-opts-->

@@ -2,10 +2,10 @@
 navigation: false
 ---
 
-# Nuxt Docs
+# Nuxt 文档
 
-This repository contains the documentation of Nuxt hosted on <https://nuxt.com/docs>
+该仓库包含在 <https://nuxt.com/docs> 上托管的 Nuxt 文档
 
-## Contributing
+## 贡献
 
-Have a look at <https://github.com/nuxt/nuxt.com> to run the website locally.
+请查看 <https://github.com/nuxt/nuxt.com> 以在本地运行网站。

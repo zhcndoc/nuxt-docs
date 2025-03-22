@@ -1,23 +1,23 @@
 ---
 title: 'clearNuxtData'
-description: Delete cached data, error status and pending promises of useAsyncData and useFetch.
+description: 删除缓存数据、错误状态和 useAsyncData 及 useFetch 的挂起承诺。
 links:
-  - label: Source
+  - label: 源代码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/asyncData.ts
     size: xs
 ---
 
 ::note
-This method is useful if you want to invalidate the data fetching for another page.
+如果您想使另一个页面的数据获取失效，此方法非常有用。
 ::
 
-## Type
+## 类型
 
 ```ts
 clearNuxtData (keys?: string | string[] | ((key: string) => boolean)): void
 ```
 
-## Parameters
+## 参数
 
-* `keys`: One or an array of keys that are used in [`useAsyncData`](/docs/api/composables/use-async-data) to delete their cached data. If no keys are provided, **all data** will be invalidated.
+* `keys`: 一个或多个在 [`useAsyncData`](/docs/api/composables/use-async-data) 中使用的键，用于删除其缓存数据。如果未提供键，**所有数据**都将失效。

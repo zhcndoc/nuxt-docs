@@ -1,30 +1,30 @@
 ---
 title: "useError"
-description: useError composable returns the global Nuxt error that is being handled.
+description: useError 组合函数返回正在处理的全局 Nuxt 错误。
 links:
-  - label: Source
+  - label: 源代码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/error.ts
     size: xs
 ---
 
-The composable returns the global Nuxt error that is being handled and it is available on both client and server.
+该组合函数返回正在处理的全局 Nuxt 错误，并且在客户端和服务器上均可用。
 
 ```ts
 const error = useError()
 ```
 
-`useError` sets an error in the state and creates a reactive as well as SSR-friendly global Nuxt error across components.
+`useError` 在状态中设置一个错误，并创建一个响应式的、适合 SSR 的全局 Nuxt 错误，供组件使用。
 
-Nuxt errors have the following properties:
+Nuxt 错误具有以下属性：
 
 ```ts
 interface {
-  //  HTTP response status code
+  // HTTP 响应状态码
   statusCode: number
-  // HTTP response status message
+  // HTTP 响应状态信息
   statusMessage: string
-  // Error message
+  // 错误信息
   message: string
 }
 ```
