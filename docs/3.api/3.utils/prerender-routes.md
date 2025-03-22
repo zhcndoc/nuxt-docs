@@ -1,6 +1,6 @@
 ---
 title: 'prerenderRoutes'
-description: 预渲染路径提示 Nitro 预渲染额外的路径。
+description: prerenderRoutes hints to Nitro to prerender an additional route.
 links:
   - label: Source
     icon: i-simple-icons-github
@@ -8,14 +8,14 @@ links:
     size: xs
 ---
 
-当进行预渲染时，您可以为 Nitro 提示预渲染额外的路径，即使它们的 URL 在生成的页面 HTML 中不会显示。
+When prerendering, you can hint to Nitro to prerender additional paths, even if their URLs do not show up in the HTML of the generated page.
 
 ::important
-`预渲染路径` 只能在 [Nuxt 上下文](/docs/guide/going-further/nuxt-app#the-nuxt-context) 中被调用。
+`prerenderRoutes` can only be called within the [Nuxt context](/docs/guide/going-further/nuxt-app#the-nuxt-context).
 ::
 
 ::note
-`预渲染路径` 必须在预渲染期间执行。如果 `预渲染路径` 用在不被预渲染的动态页面/路由中，则它将不会被执行。
+`prerenderRoutes` has to be executed during prerendering. If the `prerenderRoutes` is used in dynamic pages/routes which are not prerendered, then it will not be executed.
 ::
 
 ```js
@@ -26,10 +26,10 @@ prerenderRoutes(['/', '/about'])
 ```
 
 ::note
-在浏览器中，或在预渲染之外调用，`预渲染路径` 将不会有任何效果。
+In the browser, or if called outside prerendering, `prerenderRoutes` will have no effect.
 ::
 
-您甚至可以预渲染 API 路由，这对于完全静态生成的网站（SSG）特别有用，因为您可以像有可用服务器一样 `$fetch` 数据！
+You can even prerender API routes which is particularly useful for full statically generated sites (SSG) because you can then `$fetch` data as if you have an available server!
 
 ```js
 prerenderRoutes('/api/content/article/name-of-article')
@@ -41,7 +41,6 @@ const articleContent = await $fetch('/api/content/article/name-of-article', {
 ```
 
 ::warning
-在生产环境中，预渲染的 API 路由可能不会返回预期的响应头，具体取决于您部署的提供商。例如，JSON 响应可能会以 `application/octet-stream` 内容类型提供。
-
-在获取预渲染的 API 路由时，请始终手动设置 `responseType`。
+Prerendered API routes in production may not return the expected response headers, depending on the provider you deploy to. For example, a JSON response might be served with an `application/octet-stream` content type.
+Always manually set `responseType` when fetching prerendered API routes.
 ::

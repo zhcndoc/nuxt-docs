@@ -1,6 +1,6 @@
 ---
 title: useRuntimeHook
-description: 在 Nuxt 应用程序中注册一个运行时钩子，并确保在作用域被销毁时正确处理。
+description: Registers a runtime hook in a Nuxt application and ensures it is properly disposed of when the scope is destroyed.
 links:
   - label: Source
     icon: i-simple-icons-github
@@ -9,7 +9,7 @@ links:
 ---
 
 ::important
-此可组合组件在 Nuxt v3.14+ 中可用。
+This composable is available in Nuxt v3.14+.
 ::
 
 ```ts [signature]
@@ -19,18 +19,18 @@ function useRuntimeHook<THookName extends keyof RuntimeNuxtHooks>(
 ): void
 ```
 
-## 用法
+## Usage
 
-### 参数
+### Parameters
 
-- `name`: 要注册的运行时钩子的名称。您可以在这里查看完整的 [运行时 Nuxt 钩子列表](/docs/api/advanced/hooks#app-hooks-runtime)。
-- `fn`: 当钩子被触发时要执行的回调函数。函数签名根据钩子名称而有所不同。
+- `name`: The name of the runtime hook to register. You can see the full list of [runtime Nuxt hooks here](/docs/api/advanced/hooks#app-hooks-runtime).
+- `fn`: The callback function to execute when the hook is triggered. The function signature varies based on the hook name.
 
-### 返回值
+### Returns
 
-该组合式函数不返回值，但在组件的作用域被销毁时会自动注销钩子。
+The composable doesn't return a value, but it automatically unregisters the hook when the component's scope is destroyed.
 
-## 示例
+## Example
 
 ```vue twoslash [pages/index.vue]
 <script setup lang="ts">

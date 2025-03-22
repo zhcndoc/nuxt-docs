@@ -1,55 +1,55 @@
 ---
 title: 'useRouteAnnouncer'
-description: 这个组合函数会监听页面标题的变化，并相应地更新公告消息。
+description: This composable observes the page title changes and updates the announcer message accordingly.
 navigation:
-  badge: 新
+  badge: New
 links:
-  - label: 源代码
+  - label: Source
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/route-announcer.ts
     size: xs
 ---
 
 ::important
-这个 composables 在 Nuxt v3.12+ 中可用。
+This composable is available in Nuxt v3.12+.
 ::
 
-## 描述
+## Description
 
-一个组合工具，它会监听页面标题的变化，并相应地更新公告消息。它被 [`<NuxtRouteAnnouncer>`](/docs/api/components/nuxt-route-announcer) 使用，并且可以控制。
-它挂载到 Unhead 的 [`dom:rendered`](https://unhead.unjs.io/docs/guides/hooks) 以读取页面的标题并将其设置为公告消息。
+A composable which observes the page title changes and updates the announcer message accordingly. Used by [`<NuxtRouteAnnouncer>`](/docs/api/components/nuxt-route-announcer) and controllable.
+It hooks into Unhead's [`dom:rendered`](https://unhead.unjs.io/docs/guides/hooks) to read the page's title and set it as the announcer message.
 
-## 参数
+## Parameters
 
-- `politeness`: 设置屏幕阅读器公告的紧急程度：`off`（禁用公告），`polite`（等待静音），或 `assertive`（立即打断）。(默认 `polite`)
+- `politeness`: Sets the urgency for screen reader announcements: `off` (disable the announcement), `polite` (waits for silence), or `assertive` (interrupts immediately).  (default `polite`).
 
-## 属性
+## Properties
 
 ### `message`
 
-- **类型**: `Ref<string>`
-- **描述**: 要宣布的消息
+- **type**: `Ref<string>`
+- **description**: The message to announce
 
 ### `politeness`
 
-- **类型**: `Ref<string>`
-- **描述**: 屏幕阅读器公告紧急程度级别 `off`，`polite`，或 `assertive`
+- **type**: `Ref<string>`
+- **description**: Screen reader announcement urgency level `off`, `polite`, or `assertive`
 
-## 方法
+## Methods
 
 ### `set(message, politeness = "polite")`
 
-设置要宣布的消息及其紧急程度。
+Sets the message to announce with its urgency level.
 
 ### `polite(message)`
 
-用 `politeness = "polite"` 设置消息。
+Sets the message with `politeness = "polite"`
 
 ### `assertive(message)`
 
-用 `politeness = "assertive"` 设置消息。
+Sets the message with `politeness = "assertive"`
 
-## 示例
+## Example
 
 ```vue [pages/index.vue]
 <script setup lang="ts">

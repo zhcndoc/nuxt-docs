@@ -1,18 +1,18 @@
 ---
 title: useHeadSafe
-description: 推荐的提供包含用户输入的 head 数据的方法。
+description: The recommended way to provide head data with user input.
 links:
-  - label: 源代码
+  - label: Source
     icon: i-simple-icons-github
     to: https://github.com/unjs/unhead/blob/main/packages/vue/src/composables.ts
     size: xs
 ---
 
-`useHeadSafe` 组合函数是 [`useHead`](/docs/api/composables/use-head) 组合函数的包装器，它限制了输入，只允许安全值。
+The `useHeadSafe` composable is a wrapper around the [`useHead`](/docs/api/composables/use-head) composable that restricts the input to only allow safe values.
 
-## 使用方法
+## Usage
 
-你可以传递与 [`useHead`](/docs/api/composables/use-head) 相同的值
+You can pass all the same values as [`useHead`](/docs/api/composables/use-head)
 
 ```ts
 useHeadSafe({
@@ -23,22 +23,22 @@ useHeadSafe({
     { 'http-equiv': 'refresh', content: '0;javascript:alert(1)' }
   ]
 })
-// 将安全地生成
+// Will safely generate
 // <script id="xss-script"></script>
 // <meta content="0;javascript:alert(1)">
 ```
 
 ::read-more{to="https://unhead.unjs.io/docs/api/use-head-safe" target="_blank"}
-在the `Unhead`文档中阅读更多内容。
+Read more on the `Unhead` documentation.
 ::
 
-## 类型
+## Type
 
 ```ts
 useHeadSafe(input: MaybeComputedRef<HeadSafe>): void
 ```
 
-允许的值列表是：
+The list of allowed values is:
 
 ```ts
 const WhitelistAttributes = {
@@ -52,4 +52,4 @@ const WhitelistAttributes = {
 }
 ```
 
-查看 [@unhead/vue](https://github.com/unjs/unhead/blob/main/packages/vue/src/types/safeSchema.ts) 以获取更详细的类型。
+See [@unhead/vue](https://github.com/unjs/unhead/blob/main/packages/vue/src/types/safeSchema.ts) for more detailed types.

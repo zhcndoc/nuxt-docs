@@ -1,14 +1,14 @@
 ---
 title: 'useAppConfig'
-description: '访问项目中定义的可反应应用配置。'
+description: 'Access the reactive app config defined in the project.'
 links:
-  - label: 源代码
+  - label: Source
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/config.ts
     size: xs
 ---
 
-## 用法
+## Usage
 
 ```ts
 const appConfig = useAppConfig()

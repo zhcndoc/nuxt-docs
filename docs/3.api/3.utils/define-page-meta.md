@@ -1,14 +1,14 @@
 ---
 title: 'definePageMeta'
-description: '定义页面的元数据。'
+description: 'Define metadata for your page components.'
 links:
-  - label: 源代码
+  - label: Source
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/pages/runtime/composables.ts
     size: xs
 ---
 
-`definePageMeta` 是一个编译宏，您可以使用它为位于 `pages/` 目录（除非 [set otherwise](/docs/api/nuxt-config#pages)）中的 **page** 组件设置元数据。这样，您可以为 Nuxt 应用程序的每个静态或动态路由设置自定义元数据。
+`definePageMeta` is a compiler macro that you can use to set metadata for your **page** components located in the [`pages/`](/docs/guide/directory-structure/pages) directory (unless [set otherwise](/docs/api/nuxt-config#pages)). This way you can set custom metadata for each static or dynamic route of your Nuxt application.
 
 ```vue [pages/some-page.vue]
 <script setup lang="ts">
@@ -20,7 +20,7 @@ definePageMeta({
 
 :read-more{to="/docs/guide/directory-structure/pages/#page-metadata"}
 
-## 类型
+## Type
 
 ```ts
 definePageMeta(meta: PageMeta) => void
@@ -44,115 +44,115 @@ interface PageMeta {
 }
 ```
 
-## 参数
+## Parameters
 
 ### `meta`
 
-- **类型**: `PageMeta`
+- **Type**: `PageMeta`
 
-  一个接受以下页面元数据的对象：
+  An object accepting the following page metadata:
 
   **`name`**
 
-  - **类型**: `string`
+  - **Type**: `string`
 
-    您可以为这个页面的路由定义一个名字。默认情况下，名字是根据 `pages/` 目录中的文件名生成的。
+    You may define a name for this page's route. By default, name is generated based on path inside the [`pages/` directory](/docs/guide/directory-structure/pages).
 
   **`path`**
 
-  - **类型**: `string`
+  - **Type**: `string`
 
-    如果您的模式比文件名表达的更复杂，您可以定义一个 [自定义正则表达式](#using-a-custom-regular-expression)。
+    You may define a [custom regular expression](#using-a-custom-regular-expression) if you have a more complex pattern than can be expressed with the file name.
 
   **`props`**
   
-  - **类型**: [`RouteRecordRaw['props']`](https://router.vuejs.org/guide/essentials/passing-props)
+  - **Type**: [`RouteRecordRaw['props']`](https://router.vuejs.org/guide/essentials/passing-props)
 
-    允许将路由 `params` 作为传递给页面组件的 props 进行访问。
+    Allows accessing the route `params` as props passed to the page component.
 
   **`alias`**
 
-  - **类型**: `string | string[]`
+  - **Type**: `string | string[]`
 
-    记录的别名。允许定义额外的路径，这些路径将像记录的副本一样表现。允许拥有路径缩写，如 `/users/:id` 和 `/u/:id`。所有 `alias` 和 `path` 值必须共享相同的 params。
+    Aliases for the record. Allows defining extra paths that will behave like a copy of the record. Allows having paths shorthands like `/users/:id` and `/u/:id`. All `alias` and `path` values must share the same params.
 
   **`keepalive`**
 
-  - **类型**: `boolean` | [`KeepAliveProps`](https://vue.zhcndoc.com/api/built-in-components.html#keepalive)
+  - **Type**: `boolean` | [`KeepAliveProps`](https://vuejs.org/api/built-in-components.html#keepalive)
 
-    当您希望跨路由更改保留页面状态时，或者使用 [`KeepAliveProps`](https://vue.zhcndoc.com/api/built-in-components.html#keepalive) 进行精细控制时，将其设置为 `true`。
+    Set to `true` when you want to preserve page state across route changes or use the [`KeepAliveProps`](https://vuejs.org/api/built-in-components.html#keepalive) for a fine-grained control.
 
   **`key`**
 
-  - **类型**: `false` | `string` | `((route: RouteLocationNormalizedLoaded) => string)`
+  - **Type**: `false` | `string` | `((route: RouteLocationNormalizedLoaded) => string)`
 
-    当您需要更多控制何时重渲染 `<NuxtPage>` 组件时，设置 `key` 值。
+    Set `key` value when you need more control over when the `<NuxtPage>` component is re-rendered.
 
   **`layout`**
 
-  - **类型**: `false` | `LayoutKey` | `Ref<LayoutKey>` | `ComputedRef<LayoutKey>`
+  - **Type**: `false` | `LayoutKey` | `Ref<LayoutKey>` | `ComputedRef<LayoutKey>`
 
-    为每个路由设置静态或动态布局名称。这可以设置为 `false`，以禁用默认布局。
+    Set a static or dynamic name of the layout for each route. This can be set to `false` in case the default layout needs to be disabled.
 
   **`layoutTransition`**
 
-  - **类型**: `boolean` | [`TransitionProps`](https://vue.zhcndoc.com/api/built-in-components.html#transition)
+  - **Type**: `boolean` | [`TransitionProps`](https://vuejs.org/api/built-in-components.html#transition)
 
-    为当前布局设置过渡的名字。您也可以将这个值设置为 `false` 以禁用布局过渡。
+    Set name of the transition to apply for current layout. You can also set this value to `false` to disable the layout transition.
 
   **`middleware`**
 
-  - **类型**: `MiddlewareKey` | [`NavigationGuard`](https://router.vuejs.org/api/interfaces/NavigationGuard.html#navigationguard) | `Array<MiddlewareKey | NavigationGuard>`
+  - **Type**: `MiddlewareKey` | [`NavigationGuard`](https://router.vuejs.org/api/interfaces/NavigationGuard.html#navigationguard) | `Array<MiddlewareKey | NavigationGuard>`
 
-    直接在 `definePageMeta` 中定义匿名或命名中间件。了解更多关于 [路由中间件](/docs/guide/directory-structure/middleware)。
+    Define anonymous or named middleware directly within `definePageMeta`. Learn more about [route middleware](/docs/guide/directory-structure/middleware).
 
   **`pageTransition`**
 
-  - **类型**: `boolean` | [`TransitionProps`](https://vue.zhcndoc.com/api/built-in-components.html#transition)
+  - **Type**: `boolean` | [`TransitionProps`](https://vuejs.org/api/built-in-components.html#transition)
 
-    为当前页面设置过渡的名字。您也可以将这个值设置为 `false` 以禁用页面过渡。
+    Set name of the transition to apply for current page. You can also set this value to `false` to disable the page transition.
 
   **`viewTransition`**
 
-  - **类型**: `boolean | 'always'`
+  - **Type**: `boolean | 'always'`
 
-    **实验性功能，仅当在您的 nuxt.config 文件中 [启用](/docs/getting-started/transitions#view-transitions-api-experimental)**</br>
-    启用/禁用当前页面的视图过渡。
-    如果设置为 true，Nuxt 将不会在用户浏览器的 `prefers-reduced-motion: reduce` 匹配时应用过渡（推荐）。如果设置为 `always`，Nuxt 将总是应用过渡。
+    **Experimental feature, only available when [enabled in your nuxt.config file](/docs/getting-started/transitions#view-transitions-api-experimental)**</br>
+    Enable/disable View Transitions for the current page.
+    If set to true, Nuxt will not apply the transition if the users browser matches `prefers-reduced-motion: reduce` (recommended). If set to `always`, Nuxt will always apply the transition.
 
   **`redirect`**
 
-  - **类型**: [`RouteRecordRedirectOption`](https://router.vuejs.org/guide/essentials/redirect-and-alias.html#redirect-and-alias)
+  - **Type**: [`RouteRecordRedirectOption`](https://router.vuejs.org/guide/essentials/redirect-and-alias.html#redirect-and-alias)
 
-    如果直接匹配这个路由，那么重定向到哪里。重定向在检查任何导航守卫之前发生，并使用新的目标位置触发新的导航。
+    Where to redirect if the route is directly matched. The redirection happens before any navigation guard and triggers a new navigation with the new target location.
 
   **`validate`**
 
-  - **类型**: `(route: RouteLocationNormalized) => boolean | Promise<boolean> | Partial<NuxtError> | Promise<Partial<NuxtError>>`
+  - **Type**: `(route: RouteLocationNormalized) => boolean | Promise<boolean> | Partial<NuxtError> | Promise<Partial<NuxtError>>`
 
-    验证给定路由是否可以有效地使用这个页面渲染。如果有效，返回 true；如果无效，返回 false。如果找不到其他匹配，这意味着一个 404。您还可以直接返回一个包含 `statusCode`/`statusMessage` 的对象来立即响应错误（不会检查其他匹配）。
+    Validate whether a given route can validly be rendered with this page. Return true if it is valid, or false if not. If another match can't be found, this will mean a 404. You can also directly return an object with `statusCode`/`statusMessage` to respond immediately with an error (other matches will not be checked).
 
   **`scrollToTop`**
 
-  - **类型**: `boolean | (to: RouteLocationNormalized, from: RouteLocationNormalized) => boolean`
+  - **Type**: `boolean | (to: RouteLocationNormalized, from: RouteLocationNormalized) => boolean`
 
-    告诉 Nuxt 在渲染页面之前是否滚动到顶部。如果您想要覆盖 Nuxt 的默认滚动行为，您可以在 `~/app/router.options.ts` 中这样做（查看 [自定义路由](/docs/guide/recipes/custom-routing#using-approuteroptions) 了解更多信息）。
+    Tell Nuxt to scroll to the top before rendering the page or not. If you want to overwrite the default scroll behavior of Nuxt, you can do so in `~/app/router.options.ts` (see [custom routing](/docs/guide/recipes/custom-routing#using-approuteroptions)) for more info.
 
   **`[key: string]`**
 
-  - **类型**: `any`
+  - **Type**: `any`
 
-    除了上述属性之外，您还可以设置 **自定义** 元数据。您可能希望在 [增强 `meta` 对象的类型](/docs/guide/directory-structure/pages/#typing-custom-metadata) 以一种类型安全的方式。
+    Apart from the above properties, you can also set **custom** metadata. You may wish to do so in a type-safe way by [augmenting the type of the `meta` object](/docs/guide/directory-structure/pages/#typing-custom-metadata).
 
-## 示例
+## Examples
 
-### 基本用法
+### Basic Usage
 
-下面的示例演示了：
+The example below demonstrates:
 
-- `key` 如何作为一个函数返回一个值；
-- 如何通过 `keepalive` 属性确保 `<modal>` 组件在切换多个组件时不被缓存；
-- 添加 `pageType` 作为自定义属性：
+- how `key` can be a function that returns a value;
+- how `keepalive` property makes sure that the `<modal>` component is not cached when switching between multiple components;
+- adding `pageType` as a custom property:
 
 ```vue [pages/some-page.vue]
 <script setup lang="ts">
@@ -168,14 +168,14 @@ definePageMeta({
 </script>
 ```
 
-### 定义中间件
+### Defining Middleware
 
-下面的示例展示了如何使用 `function` 直接在 `definePageMeta` 中定义中间件，或者将中间件设置为匹配位于 `middleware/` 目录中的中间件文件名称的 `string`：
+The example below shows how the middleware can be defined using a `function` directly within the `definePageMeta` or set as a `string` that matches the middleware file name located in the `middleware/` directory:
 
 ```vue [pages/some-page.vue]
 <script setup lang="ts">
 definePageMeta({
-  // 定义中间件作为一个函数
+  // define middleware as a function
   middleware: [
     function (to, from) {
       const auth = useState('auth')
@@ -190,22 +190,22 @@ definePageMeta({
     }
   ],
 
-  // ... 或者一个字符串
+  // ... or a string
   middleware: 'auth'
 
-  // ... 或者多个字符串
+  // ... or multiple strings
   middleware: ['auth', 'another-named-middleware']
 })
 </script>
 ```
 
-### 使用自定义正则表达式
+### Using a Custom Regular Expression
 
-自定义正则表达式是一个很好的方法，可以解决重叠路由之间的冲突，例如：
+A custom regular expression is a good way to resolve conflicts between overlapping routes, for instance:
 
-两条路线 "/test-category" 和 "/1234-post" 都匹配 `[postId]-[postSlug].vue` 和 `[categorySlug].vue` 页面路由。
+The two routes "/test-category" and "/1234-post" match both `[postId]-[postSlug].vue` and `[categorySlug].vue` page routes.
 
-为了确保我们在 `[postId]-[postSlug]` 路由中只匹配数字（`\d+`）为 `postId`，我们可以在 `[postId]-[postSlug].vue` 页面模板中添加以下内容：
+To make sure that we are only matching digits (`\d+`) for `postId` in the `[postId]-[postSlug]` route, we can add the following to the `[postId]-[postSlug].vue` page template:
 
 ```vue [pages/[postId\\]-[postSlug\\].vue]
 <script setup lang="ts">
@@ -215,19 +215,19 @@ definePageMeta({
 </script>
 ```
 
-了解更多示例，请参阅 [Vue Router 的匹配语法](https://router.vuejs.org/guide/essentials/route-matching-syntax.html)。
+For more examples see [Vue Router's Matching Syntax](https://router.vuejs.org/guide/essentials/route-matching-syntax.html).
 
-### 定义布局
+### Defining Layout
 
-您可以通过设置与默认情况下位于 `layouts/` 目录中的布局文件名称匹配的布局来定义布局。您还可以通过将 `layout` 设置为 `false` 来禁用布局：
+You can define the layout that matches the layout's file name located (by default) in the [`layouts/` directory](/docs/guide/directory-structure/layouts). You can also disable the layout by setting the `layout` to `false`:
 
 ```vue [pages/some-page.vue]
 <script setup lang="ts">
 definePageMeta({
-  // 设置自定义布局
+  // set custom layout
   layout: 'admin'
 
-  // ... 或者禁用默认布局
+  // ... or disable a default layout
   layout: false
 })
 </script>

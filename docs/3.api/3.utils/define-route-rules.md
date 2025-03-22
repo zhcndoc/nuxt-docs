@@ -1,18 +1,18 @@
 ---
 title: 'defineRouteRules'
-description: '在页面级别为混合渲染定义路由规则。'
+description: 'Define route rules for hybrid rendering at the page level.'
 links:
-  - label: 源代码
+  - label: Source
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/pages/runtime/composables.ts
     size: xs
 ---
 
-::read-more{to="/docs/guide/going-further/experimental-features#inlinerouterules" icon="i-ph-star"}
-此功能是实验性的，为了使用它，您必须在您的 `nuxt.config` 中启用 `experimental.inlineRouteRules` 选项。
+::read-more{to="/docs/guide/going-further/experimental-features#inlinerouterules" icon="i-lucide-star"}
+This feature is experimental and in order to use it you must enable the `experimental.inlineRouteRules` option in your `nuxt.config`.
 ::
 
-## 用法
+## Usage
 
 ```vue [pages/index.vue]
 <script setup lang="ts">
@@ -26,7 +26,7 @@ defineRouteRules({
 </template>
 ```
 
-将被转换成：
+Will be translated to:
 
 ```ts [nuxt.config.ts]
 export default defineNuxtConfig({
@@ -37,16 +37,16 @@ export default defineNuxtConfig({
 ```
 
 ::note
-当运行 [`nuxt build`](/docs/api/commands/build) 时，首页将在 `.output/public/index.html` 中被预渲染并静态地提供。
+When running [`nuxt build`](/docs/api/commands/build), the home page will be pre-rendered in `.output/public/index.html` and statically served.
 ::
 
-## 注解
+## Notes
 
-- 在 `~/pages/foo/bar.vue` 中定义的规则将被应用于 `/foo/bar` 请求。
-- 在 `~/pages/foo/[id].vue` 中定义的规则将被应用于 `/foo/**` 请求。
+- A rule defined in `~/pages/foo/bar.vue` will be applied to `/foo/bar` requests.
+- A rule in `~/pages/foo/[id].vue` will be applied to `/foo/**` requests.
 
-为了获得更多的控制，例如，如果您在页面的 [`definePageMeta`](/docs/api/utils/define-page-meta) 中使用了自定义的 `path` 或 `alias`，您应该在 `nuxt.config` 中直接设置 `routeRules`。
+For more control, such as if you are using a custom `path` or `alias` set in the page's [`definePageMeta`](/docs/api/utils/define-page-meta), you should set `routeRules` directly within your `nuxt.config`.
 
-::read-more{to="/docs/guide/concepts/rendering#hybrid-rendering" icon="i-ph-medal"}
-阅读更多关于`routeRules`的信息。
+::read-more{to="/docs/guide/concepts/rendering#hybrid-rendering" icon="i-lucide-medal"}
+Read more about the `routeRules`.
 ::

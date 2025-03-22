@@ -1,28 +1,28 @@
 ---
 title: "useResponseHeader"
-description: "使用 useResponseHeader 来设置服务器响应头。"
+description: "Use useResponseHeader to set a server response header."
 links:
-  - label: 源码
+  - label: Source
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/ssr.ts
     size: xs
 ---
 
-::重要
-此组合函数在 Nuxt v3.14+ 中可用。
+::important
+This composable is available in Nuxt v3.14+.
 ::
 
-您可以使用内置的 [`useResponseHeader`](/docs/api/composables/use-response-header) 组合函数在您的页面、组件和插件中设置任何服务器响应头。
+You can use the built-in [`useResponseHeader`](/docs/api/composables/use-response-header) composable to set any server response header within your pages, components, and plugins.
 
 ```ts
-// 设置自定义响应头
+// Set the a custom response header
 const header = useResponseHeader('X-My-Header');
 header.value = 'my-value';
 ```
 
-## 示例
+## Example
 
-我们可以使用 `useResponseHeader` 轻松地在每个页面设置响应头。
+We can use `useResponseHeader` to easily set a response header on a per-page basis.
 
 ```vue [pages/test.vue]
 <script setup>
@@ -32,17 +32,17 @@ header.value = 'my-value';
 </script>
 
 <template>
-  <h1>带自定义头的测试页面</h1>
-  <p>服务器对这个 "/test" 页面的响应将包含自定义的 "X-My-Header" 头。</p>
+  <h1>Test page with custom header</h1>
+  <p>The response from the server for this "/test" page will have a custom "X-My-Header" header.</p>
 </template>
 ```
 
-我们可以在 Nuxt [中间件](/docs/guide/directory-structure/middleware) 中使用 `useResponseHeader`，为所有页面设置响应头。
+We can use `useResponseHeader` for example in Nuxt [middleware](/docs/guide/directory-structure/middleware) to set a response header for all pages.
 
 ```ts [middleware/my-header-middleware.ts]
 export default defineNuxtRouteMiddleware((to, from) => {
   const header = useResponseHeader('X-My-Always-Header');
-  header.value = `我总是在这里！`;
+  header.value = `I'm Always here!`;
 });
 
 ```

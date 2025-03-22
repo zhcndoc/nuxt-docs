@@ -1,8 +1,8 @@
 ---
 title: 'nuxi build-module'
-description: 'Nuxt 命令，用于在发布前构建您的 Nuxt 模块。'
+description: 'Nuxt command to build your Nuxt module before publishing.'
 links:
-  - label: 源代码
+  - label: Source
     icon: i-simple-icons-github
     to: https://github.com/nuxt/module-builder/blob/main/src/cli.ts
     size: xs
@@ -14,29 +14,29 @@ npx nuxi build-module [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|ver
 ```
 <!--/build-module-cmd-->
 
-`build-module` 命令运行 `@nuxt/module-builder`，在您的 `rootDir` 内生成包含您 **nuxt-module** 的完整构建的 `dist` 目录。
+The `build-module` command runs `@nuxt/module-builder` to generate `dist` directory within your `rootDir` that contains the full build for your **nuxt-module**.
 
-## 参数
+## Arguments
 
 <!--build-module-args-->
-参数 | 描述
+Argument | Description
 --- | ---
-`ROOTDIR="."` | 指定工作目录（默认：`.`）
+`ROOTDIR="."` | Specifies the working directory (default: `.`)
 <!--/build-module-args-->
 
-## 选项
+## Options
 
 <!--build-module-opts-->
-选项 | 默认值 | 描述
+Option | Default | Description
 --- | --- | ---
-`--cwd=<directory>` |  | 指定工作目录，这优先于 ROOTDIR（默认：`.`）
-`--logLevel=<silent\|info\|verbose>` |  | 指定构建时日志级别
-`--build` | `false` | 为分发构建模块
-`--stub` | `false` | 使用 [jiti](https://github.com/unjs/jiti#jiti) 替代理模块，用于开发。（**注意：** 这主要用于开发目的。）
-`--sourcemap` | `false` | 生成 sourcemaps
-`--prepare` | `false` | 为本地开发准备模块
+`--cwd=<directory>` |  | Specify the working directory, this takes precedence over ROOTDIR (default: `.`)
+`--logLevel=<silent\|info\|verbose>` |  | Specify build-time log level
+`--build` | `false` | Build module for distribution
+`--stub` | `false` | Stub dist instead of actually building it for development
+`--sourcemap` | `false` | Generate sourcemaps
+`--prepare` | `false` | Prepare module for local development
 <!--/build-module-opts-->
 
-::read-more{to="https://github.com/nuxt/module-builder" icon="i-simple-icons-github" color="gray" target="_blank"}
-阅读更多关于 `@nuxt/module-builder`。
+::read-more{to="https://github.com/nuxt/module-builder" icon="i-simple-icons-github" target="\_blank"}
+Read more about `@nuxt/module-builder`.
 ::

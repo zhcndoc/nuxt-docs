@@ -1,47 +1,47 @@
 ---
 title: 'useNuxtData'
-description: '访问数据获取组合式 API 的当前缓存值。'
+description: 'Access the current cached value of data fetching composables.'
 links:
-  - label: 源码
+  - label: Source
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/asyncData.ts
     size: xs
 ---
 
 ::note
-`useNuxtData` 让你可以访问 [`useAsyncData`](/docs/api/composables/use-async-data)、[`useLazyAsyncData`](/docs/api/composables/use-lazy-async-data)、[`useFetch`](/docs/api/composables/use-fetch) 和 [`useLazyFetch`](/docs/api/composables/use-lazy-fetch) 的当前缓存值，前提是提供了显式的关键字。
+`useNuxtData` gives you access to the current cached value of [`useAsyncData`](/docs/api/composables/use-async-data) , [`useLazyAsyncData`](/docs/api/composables/use-lazy-async-data), [`useFetch`](/docs/api/composables/use-fetch) and [`useLazyFetch`](/docs/api/composables/use-lazy-fetch) with explicitly provided key.
 ::
 
-## 用法
+## Usage
 
-`useNuxtData` 组合式 API 用于访问数据获取组合式 API（如 `useAsyncData`、`useLazyAsyncData`、`useFetch` 和 `useLazyFetch`）的当前缓存值。通过提供数据获取时使用的关键字，你可以获取缓存的数据并根据需要使用它。
+The `useNuxtData` composable is used to access the current cached value of data-fetching composables such as `useAsyncData`, `useLazyAsyncData`, `useFetch`, and `useLazyFetch`. By providing the key used during the data fetch, you can retrieve the cached data and use it as needed.
 
-这对于通过重用已获取的数据来优化性能或实现类似乐观更新或级联数据更新的特性特别有用。
+This is particularly useful for optimizing performance by reusing already-fetched data or implementing features like Optimistic Updates or cascading data updates.
 
-使用 `useNuxtData` 时，确保已使用显式提供的关键字调用了数据获取组合式 API（如 `useFetch`、`useAsyncData` 等）。
+To use `useNuxtData`, ensure that the data-fetching composable (`useFetch`, `useAsyncData`, etc.) has been called with an explicitly provided key.
 
-## 参数
+## Params
 
-- `key`: 唯一键，用于标识缓存数据。该键应与原始数据获取期间使用的键匹配。
+- `key`: The unique key that identifies the cached data. This key should match the one used during the original data fetch.
 
-## 返回值
+## Return Values
 
-- `data`: 一个反应式引用，指向与提供的键关联的缓存数据。如果不存在缓存数据，则值为 `null`。此 `Ref` 会在缓存数据更改时自动更新，从而实现组件中的无缝响应式。
+- `data`: A reactive reference to the cached data associated with the provided key. If no cached data exists, the value will be `null`. This `Ref` automatically updates if the cached data changes, allowing seamless reactivity in your components.
 
-## 示例
+## Example
 
-以下示例展示了如何在从服务器获取最新数据时使用缓存数据作为占位符。
+The example below shows how you can use cached data as a placeholder while the most recent data is being fetched from the server.
 
 ```vue [pages/posts.vue]
 <script setup lang="ts">
-// 我们可以使用 'posts' 关键字以后访问相同的数据
+// We can access same data later using 'posts' key
 const { data } = await useFetch('/api/posts', { key: 'posts' })
 </script>
 ```
 
 ```vue [pages/posts/[id\\].vue]
 <script setup lang="ts">
-// 访问 posts.vue 中 useFetch 的缓存值（父路由）
+// Access to the cached value of useFetch in posts.vue (parent route)
 const { data: posts } = useNuxtData('posts')
 
 const route = useRoute()
@@ -49,22 +49,22 @@ const route = useRoute()
 const { data } = useLazyFetch(`/api/posts/${route.params.id}`, {
   key: `post-${route.params.id}`,
   default() {
-    // 从缓存中查找单个帖子并将其设置为默认值。
+    // Find the individual post from the cache and set it as the default value.
     return posts.value.find(post => post.id === route.params.id)
   }
 })
 </script>
 ```
 
-## 乐观更新
+## Optimistic Updates
 
-以下示例展示了如何使用 useNuxtData 实现乐观更新。
+The example below shows how implementing Optimistic Updates can be achieved using useNuxtData.
 
-乐观更新是一种技术，其中用户界面立即更新，假设服务器操作将成功。如果操作最终失败，用户界面将回滚到之前的状态。
+Optimistic Updates is a technique where the user interface is updated immediately, assuming a server operation will succeed. If the operation eventually fails, the UI is rolled back to its previous state.
 
 ```vue [pages/todos.vue]
 <script setup lang="ts">
-// 我们可以使用 'todos' 关键字以后访问相同的数据
+// We can access same data later using 'todos' key
 const { data } = await useAsyncData('todos', () => $fetch('/api/todos'))
 </script>
 ```
@@ -74,7 +74,7 @@ const { data } = await useAsyncData('todos', () => $fetch('/api/todos'))
 const newTodo = ref('')
 let previousTodos = []
 
-// 访问 todos.vue 中 useAsyncData 的缓存值
+// Access to the cached value of useAsyncData in todos.vue
 const { data: todos } = useNuxtData('todos')
 
 async function addTodo () {
@@ -84,18 +84,18 @@ async function addTodo () {
       todo: newTodo.value
     },
     onRequest () {
-      // 存储之前的缓存值以便在获取失败时恢复。
+      // Store the previously cached value to restore if fetch fails.
       previousTodos = todos.value
 
-      // 乐观地更新 todos。
+      // Optimistically update the todos.
       todos.value = [...todos.value, newTodo.value]
     },
     onResponseError () {
-      // 如果请求失败，回滚数据。
+      // Rollback the data if the request failed.
       todos.value = previousTodos
     },
     async onResponse () {
-      // 如果请求成功，后台使 todos 失效。
+      // Invalidate todos in the background if the request succeeded.
       await refreshNuxtData('todos')
     }
   })
@@ -103,7 +103,7 @@ async function addTodo () {
 </script>
 ```
 
-## 类型
+## Type
 
 ```ts
 useNuxtData<DataT = any> (key: string): { data: Ref<DataT | null> }

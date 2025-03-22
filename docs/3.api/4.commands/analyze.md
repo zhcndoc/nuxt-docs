@@ -1,8 +1,8 @@
 ---
 title: "nuxi analyze"
-description: "分析生产包或您的 Nuxt 应用程序。"
+description: "Analyze the production bundle or your Nuxt application."
 links:
-  - label: 源代码
+  - label: Source
     icon: i-simple-icons-github
     to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/analyze.ts
     size: xs
@@ -14,28 +14,28 @@ npx nuxi analyze [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>
 ```
 <!--/analyze-cmd-->
 
-`analyze` 命令构建 Nuxt 并分析生产包（实验性）。
+The `analyze` command builds Nuxt and analyzes the production bundle (experimental).
 
-## 参数
+## Arguments
 
 <!--analyze-args-->
-参数 | 描述
+Argument | Description
 --- | ---
-`ROOTDIR="."` | 指定工作目录（默认：`.`）
+`ROOTDIR="."` | Specifies the working directory (default: `.`)
 <!--/analyze-args-->
 
-## 选项
+## Options
 
 <!--analyze-opts-->
-选项 | 默认值 | 描述
+Option | Default | Description
 --- | --- | ---
-`--cwd=<directory>` |  | 指定工作目录，这优先于 ROOTDIR（默认：`.`）
-`--logLevel=<silent\|info\|verbose>` |  | 指定构建时日志级别
-`--dotenv` |  | `.env` 文件的路径，相对于根目录
-`--name=<name>` | `default` | 分析的名称
-`--no-serve` |  | 跳过分析结果的提供
+`--cwd=<directory>` |  | Specify the working directory, this takes precedence over ROOTDIR (default: `.`)
+`--logLevel=<silent\|info\|verbose>` |  | Specify build-time log level
+`--dotenv` |  | Path to `.env` file to load, relative to the root directory
+`--name=<name>` | `default` | Name of the analysis
+`--no-serve` |  | Skip serving the analysis results
 <!--/analyze-opts-->
 
 ::note
-这个命令将 `process.env.NODE_ENV` 设置为 `production`。
+This command sets `process.env.NODE_ENV` to `production`.
 ::

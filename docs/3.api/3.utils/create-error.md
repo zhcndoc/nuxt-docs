@@ -1,29 +1,29 @@
 ---
 title: 'createError'
-description: 创建一个带有额外元数据的错误对象。
+description: Create an error object with additional metadata.
 links:
-  - label: 源代码
+  - label: Source
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/error.ts
     size: xs
 ---
 
-你可以使用这个函数来创建一个带有额外元数据的错误对象。它可以在你的应用中的 Vue 和 Nitro 部分使用，并且设计用来抛出错误。
+You can use this function to create an error object with additional metadata. It is usable in both the Vue and Nitro portions of your app, and is meant to be thrown.
 
-## 参数
+## Parameters
 
 - `err`: `string | { cause, data, message, name, stack, statusCode, statusMessage, fatal }`
 
-你可以将一个字符串或对象传递给 `createError` 函数。如果你传递一个字符串，它将被用作错误 `message`，并且 `statusCode` 将默认为 `500`。如果你传递一个对象，你可以设置多个错误属性，比如 `statusCode`、`message` 和其他错误属性。
+You can pass either a string or an object to the `createError` function. If you pass a string, it will be used as the error `message`, and the `statusCode` will default to `500`. If you pass an object, you can set multiple properties of the error, such as `statusCode`, `message`, and other error properties.
 
-## 在 Vue 应用中
+## In Vue App
 
-如果你抛出一个用 `createError` 创建的错误：
+If you throw an error created with `createError`:
 
-- 在服务器端，它将触发一个全屏错误页面，你可以用 `clearError` 清除它。
-- 在客户端，它将抛出一个非致命错误供你处理。如果你需要触发一个全屏错误页面，那么你可以通过设置 `fatal: true` 来做到这一点。
+- on server-side, it will trigger a full-screen error page which you can clear with `clearError`.
+- on client-side, it will throw a non-fatal error for you to handle. If you need to trigger a full-screen error page, then you can do this by setting `fatal: true`.
 
-### 示例
+### Example
 
 ```vue [pages/movies/[slug\\].vue]
 <script setup lang="ts">
@@ -35,11 +35,11 @@ if (!data.value) {
 </script>
 ```
 
-## 在 API 路由中
+## In API Routes
 
-使用 `createError` 在服务器端 API 路由中触发错误处理。
+Use `createError` to trigger error handling in server API routes.
 
-### 示例
+### Example
 
 ```ts [server/api/error.ts]
 export default eventHandler(() => {
@@ -50,6 +50,6 @@ export default eventHandler(() => {
 })
 ```
 
-在 API 路由中，推荐使用 `createError` 传递一个带有简短 `statusMessage` 的对象，因为它可以在客户端访问。否则，在 API 路由中传递给 `createError` 的 `message` 将不会传播到客户端。或者，你可以使用 `data` 属性将数据返回给客户端。在任何情况下，总是考虑避免将动态用户输入放入消息中，以避免潜在的安全问题。
+In API routes, using `createError` by passing an object with a short `statusMessage` is recommended because it can be accessed on the client side. Otherwise, a `message` passed to `createError` on an API route will not propagate to the client. Alternatively, you can use the `data` property to pass data back to the client. In any case, always consider avoiding to put dynamic user input to the message to avoid potential security issues.
 
 :read-more{to="/docs/getting-started/error-handling"}

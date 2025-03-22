@@ -1,8 +1,8 @@
 ---
 title: "nuxi devtools"
-description: nuxi devtools 命令允许你在每个项目的基础上启用或禁用 Nuxt DevTools。
+description: The devtools command allows you to enable or disable Nuxt DevTools on a per-project basis.
 links:
-  - label: 源代码
+  - label: Source
     icon: i-simple-icons-github
     to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/devtools.ts
     size: xs
@@ -14,25 +14,25 @@ npx nuxi devtools <COMMAND> [ROOTDIR] [--cwd=<directory>]
 ```
 <!--/devtools-cmd-->
 
-运行 `nuxi devtools enable` 将会在全球范围内安装 Nuxt DevTools，并在你正在使用的特定项目中启用它。它被保存在你的用户级别 `.nuxtrc` 中。如果你想为特定项目移除 DevTools 支持，你可以运行 `nuxi devtools disable`。
+Running `nuxi devtools enable` will install the Nuxt DevTools globally, and also enable it within the particular project you are using. It is saved as a preference in your user-level `.nuxtrc`. If you want to remove devtools support for a particular project, you can run `nuxi devtools disable`.
 
-## 参数
+## Arguments
 
 <!--devtools-args-->
-参数 | 描述
+Argument | Description
 --- | ---
-`COMMAND` | 要运行的命令（选项：<enable\|disable>）
-`ROOTDIR="."` | 指定工作目录（默认：`.`）
+`COMMAND` | Command to run (options: <enable\|disable>)
+`ROOTDIR="."` | Specifies the working directory (default: `.`)
 <!--/devtools-args-->
 
-## 选项
+## Options
 
 <!--devtools-opts-->
-选项 | 默认值 | 描述
+Option | Default | Description
 --- | --- | ---
-`--cwd=<directory>` |  | 指定工作目录，这优先于 ROOTDIR（默认：`.`）
+`--cwd=<directory>` |  | Specify the working directory, this takes precedence over ROOTDIR (default: `.`)
 <!--/devtools-opts-->
 
-::read-more{icon="i-simple-icons-nuxtdotjs" to="https://devtools.nuxt.com" target="_blank"}
-阅读更多关于 **Nuxt DevTools** 的信息。
+::read-more{icon="i-simple-icons-nuxtdotjs" to="https://devtools.nuxt.com" target="\_blank"}
+Read more about the **Nuxt DevTools**.
 ::

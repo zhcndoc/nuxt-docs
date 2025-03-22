@@ -1,32 +1,32 @@
 ---
 title: "useRequestHeaders"
-description: "使用 useRequestHeaders 访问传入的请求头。"
+description: "Use useRequestHeaders to access the incoming request headers."
 links:
-  - label: 源代码
+  - label: Source
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/ssr.ts
     size: xs
 ---
 
-你可以使用内置的 [`useRequestHeaders`](/docs/api/composables/use-request-headers) 组合件在页面、组件和插件中访问传入的请求头。
+You can use built-in [`useRequestHeaders`](/docs/api/composables/use-request-headers) composable to access the incoming request headers within your pages, components, and plugins.
 
 ```js
-// 获取所有请求头
+// Get all request headers
 const headers = useRequestHeaders()
 
-// 只获取 cookie 请求头
+// Get only cookie request header
 const headers = useRequestHeaders(['cookie'])
 ```
 
-::提示
-在浏览器中，`useRequestHeaders` 将返回一个空对象。
+::tip
+In the browser, `useRequestHeaders` will return an empty object.
 ::
 
-## 示例
+## Example
 
-我们可以使用 `useRequestHeaders` 访问并代理 SSR 期间初始请求的 `authorization` 头到任何未来的内部请求。
+We can use `useRequestHeaders` to access and proxy the initial request's `authorization` header to any future internal requests during SSR.
 
-下面的示例将 `authorization` 请求头添加到同构的 `$fetch` 调用中。
+The example below adds the `authorization` request header to an isomorphic `$fetch` call.
 
 ```vue [pages/some-page.vue]
 <script setup lang="ts">

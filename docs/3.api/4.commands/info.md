@@ -1,8 +1,8 @@
 ---
 title: "nuxi info"
-description: info 命令记录当前或指定 Nuxt 项目的相关信息。
+description: The info command logs information about the current or specified Nuxt project.
 links:
-  - label: 源代码
+  - label: Source
     icon: i-simple-icons-github
     to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/info.ts
     size: xs
@@ -14,20 +14,20 @@ npx nuxi info [ROOTDIR] [--cwd=<directory>]
 ```
 <!--/info-cmd-->
 
-`info` 命令记录当前或指定 Nuxt 项目的相关信息。
+The `info` command logs information about the current or specified Nuxt project.
 
-## 参数
+## Arguments
 
 <!--info-args-->
-参数 | 描述
+Argument | Description
 --- | ---
-`ROOTDIR="."` | 指定工作目录（默认：`.`）
+`ROOTDIR="."` | Specifies the working directory (default: `.`)
 <!--/info-args-->
 
-## 选项
+## Options
 
 <!--info-opts-->
-选项 | 默认值 | 描述
+Option | Default | Description
 --- | --- | ---
-`--cwd=<directory>` |  | 指定工作目录，这优先于 ROOTDIR（默认：`.`）
+`--cwd=<directory>` |  | Specify the working directory, this takes precedence over ROOTDIR (default: `.`)
 <!--/info-opts-->

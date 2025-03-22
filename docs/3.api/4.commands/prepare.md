@@ -1,8 +1,8 @@
 ---
 title: 'nuxi prepare'
-description: 准备命令会在你的应用中创建一个 .nuxt 目录，并生成类型。
+description: The prepare command creates a .nuxt directory in your application and generates types.
 links:
-  - label: 源代码
+  - label: Source
     icon: i-simple-icons-github
     to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/prepare.ts
     size: xs
@@ -14,23 +14,23 @@ npx nuxi prepare [ROOTDIR] [--dotenv] [--cwd=<directory>] [--logLevel=<silent|in
 ```
 <!--/prepare-cmd-->
 
-`prepare` 命令会在你的应用中创建一个 [`.nuxt`](/docs/guide/directory-structure/nuxt) 目录，并生成类型。这可以在 CI 环境中使用，或者在你的 [`package.json`](/docs/guide/directory-structure/package) 中的 `postinstall` 命令中使用。
+The `prepare` command creates a [`.nuxt`](/docs/guide/directory-structure/nuxt) directory in your application and generates types. This can be useful in a CI environment or as a `postinstall` command in your [`package.json`](/docs/guide/directory-structure/package).
 
-## 参数
+## Arguments
 
 <!--prepare-args-->
-参数 | 描述
+Argument | Description
 --- | ---
-`ROOTDIR="."` | 指定工作目录（默认：`.`）
+`ROOTDIR="."` | Specifies the working directory (default: `.`)
 <!--/prepare-args-->
 
-## 选项
+## Options
 
 <!--prepare-opts-->
-选项 | 默认值 | 描述
+Option | Default | Description
 --- | --- | ---
-`--dotenv` |  | 要加载的 `.env` 文件的路径，相对于根目录
-`--cwd=<directory>` |  | 指定工作目录，这优先于 ROOTDIR（默认：`.`）
-`--logLevel=<silent\|info\|verbose>` |  | 指定构建时的日志级别
-`--envName` |  | 在解析配置覆盖时使用的环境（默认是 `production` 当构建时，和 `development` 当运行开发服务器时）
+`--dotenv` |  | Path to `.env` file to load, relative to the root directory
+`--cwd=<directory>` |  | Specify the working directory, this takes precedence over ROOTDIR (default: `.`)
+`--logLevel=<silent\|info\|verbose>` |  | Specify build-time log level
+`--envName` |  | The environment to use when resolving configuration overrides (default is `production` when building, and `development` when running the dev server)
 <!--/prepare-opts-->

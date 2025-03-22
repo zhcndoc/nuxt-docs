@@ -1,22 +1,22 @@
 ---
 title: 'useSeoMeta'
-description: useSeoMeta 组件允许您将网站的 SEO 元标签定义为一个带有完整 TypeScript 支持的平坦对象。
+description: The useSeoMeta composable lets you define your site's SEO meta tags as a flat object with full TypeScript support.
 links:
-  - label: 源代码
+  - label: Source
     icon: i-simple-icons-github
     to: https://github.com/unjs/unhead/blob/main/packages/vue/src/composables.ts
     size: xs
 ---
 
-这有助于您避免常见的错误，例如使用 `name` 而不是 `property`，以及拼写错误 - 拥有超过 100 个完全类型化的元标签。
+This helps you avoid common mistakes, such as using `name` instead of `property`, as well as typos - with over 100+ meta tags fully typed.
 
 ::important
-这是向您的网站添加元标签推荐的方式，因为它是 XSS 安全的，并且具有完整的 TypeScript 支持。
+This is the recommended way to add meta tags to your site as it is XSS safe and has full TypeScript support.
 ::
 
 :read-more{to="/docs/getting-started/seo-meta"}
 
-## 使用方法
+## Usage
 
 ```vue [app.vue]
 <script setup lang="ts">
@@ -31,11 +31,11 @@ useSeoMeta({
 </script>
 ```
 
-当插入可响应的标签时，您应该使用计算获取器语法 (`() => value`):
+When inserting tags that are reactive, you should use the computed getter syntax (`() => value`):
 
 ```vue [app.vue]
 <script setup lang="ts">
-const title = ref('我的标题')
+const title = ref('My title')
 
 useSeoMeta({
   title,
@@ -44,22 +44,22 @@ useSeoMeta({
 </script>
 ```
 
-## 参数
+## Parameters
 
-有超过 100 个参数。请查看 [源代码中的完整参数列表](https://github.com/harlan-zw/zhead/blob/main/packages/zhead/src/metaFlat.ts#L1035)。
+There are over 100 parameters. See the [full list of parameters in the source code](https://github.com/harlan-zw/zhead/blob/main/packages/zhead/src/metaFlat.ts#L1035).
 
 :read-more{to="/docs/getting-started/seo-meta"}
 
-## 性能
+## Performance
 
-在大多数情况下，SEO 元标签不需要是响应式的，因为搜索引擎机器人主要扫描初始页面加载。
+In most instances, SEO meta tags don't need to be reactive as search engine robots primarily scan the initial page load.
 
-为了获得更好的性能，当元标签不需要响应式时，你可以将 `useSeoMeta` 调用包装在仅限服务器的条件中：
+For better performance, you can wrap your `useSeoMeta` calls in a server-only condition when the meta tags don't need to be reactive:
 
 ```vue [app.vue]
 <script setup lang="ts">
 if (import.meta.server) {
-  // 这些元标签仅在服务器端渲染时添加
+  // These meta tags will only be added during server-side rendering
   useSeoMeta({
     robots: 'index, follow',
     description: 'Static description that does not need reactivity',
@@ -69,7 +69,7 @@ if (import.meta.server) {
 }
 
 const dynamicTitle = ref('My title')
-// 仅在必要时在条件外使用反应式元标签
+// Only use reactive meta tags outside the condition when necessary
 useSeoMeta({
   title: () => dynamicTitle.value,
   ogTitle: () => dynamicTitle.value,
@@ -77,4 +77,4 @@ useSeoMeta({
 </script>
 ```
 
-这之前使用了 [`useServerSeoMeta`](/docs/api/composables/use-server-seo-meta) 组合式 API，但它已被弃用，取而代之的是这种方法。
+This previously used the [`useServerSeoMeta`](/docs/api/composables/use-server-seo-meta) composable, but it has been deprecated in favor of this approach.
