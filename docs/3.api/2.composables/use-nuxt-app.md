@@ -80,14 +80,14 @@ await nuxtApp.callHook('my-plugin:init')
 
 ### `vueApp`
 
-`vueApp` 是全局 Vue.js [应用程序实例](https://vuejs.org/api/application.html#application-api)，你可以通过 `nuxtApp` 访问。
+`vueApp` 是全局 Vue.js [应用程序实例](https://vue.zhcndoc.com/api/application.html#application-api)，你可以通过 `nuxtApp` 访问。
 
 一些有用的方法：
-- [`component()`](https://vuejs.org/api/application.html#app-component) - 如果同时传递名称字符串和组件定义，则注册全局组件；如果仅传递名称，则检索已注册的组件。
-- [`directive()`](https://vuejs.org/api/application.html#app-directive) - 如果同时传递名称字符串和指令定义，则注册全局自定义指令；如果仅传递名称，则检索已注册的指令[(示例)](/docs/guide/directory-structure/plugins#vue-directives)。
-- [`use()`](https://vuejs.org/api/application.html#app-use) - 安装一个 **[Vue.js 插件](https://vuejs.org/guide/reusability/plugins.html)** [(示例)](/docs/guide/directory-structure/plugins#vue-plugins)。
+- [`component()`](https://vue.zhcndoc.com/api/application.html#app-component) - 如果同时传递名称字符串和组件定义，则注册全局组件；如果仅传递名称，则检索已注册的组件。
+- [`directive()`](https://vue.zhcndoc.com/api/application.html#app-directive) - 如果同时传递名称字符串和指令定义，则注册全局自定义指令；如果仅传递名称，则检索已注册的指令[(示例)](/docs/guide/directory-structure/plugins#vue-directives)。
+- [`use()`](https://vue.zhcndoc.com/api/application.html#app-use) - 安装一个 **[Vue.js 插件](https://vue.zhcndoc.com/guide/reusability/plugins.html)** [(示例)](/docs/guide/directory-structure/plugins#vue-plugins)。
 
-:read-more{icon="i-simple-icons-vuedotjs" to="https://vuejs.org/api/application.html#application-api"}
+:read-more{icon="i-simple-icons-vuedotjs" to="https://vue.zhcndoc.com/api/application.html#application-api"}
 
 ### `ssrContext`
 

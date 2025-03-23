@@ -1,5 +1,5 @@
 ---
-title: "nuxi 类型检查"
+title: "nuxi typecheck"
 description: typecheck 命令运行 vue-tsc 以检查您应用程序中的类型。
 links:
   - label: 源代码

@@ -17,7 +17,7 @@ links:
 ::
 
 ::note
-`navigateTo` 不能在 Nitro 路由内使用。要在 Nitro 路由中执行服务器端重定向，请使用 [`sendRedirect`](https://h3.unjs.io/utils/response#sendredirectevent-location-code)。
+`navigateTo` 不能在 Nitro 路由内使用。要在 Nitro 路由中执行服务器端重定向，请使用 [`sendRedirect`](https://h3.zhcndoc.com/utils/response#sendredirectevent-location-code)。
 ::
 
 ### 在 Vue 组件中

@@ -1,5 +1,5 @@
 ---
-title: "nuxi 升级"
+title: "nuxi upgrade"
 description: 升级命令将 Nuxt 升级到最新版本。
 links:
   - label: 源代码

@@ -1,5 +1,5 @@
 ---
-title: "nuxi 预览"
+title: "nuxi preview"
 description: 预览命令在构建命令后启动一个服务器以预览您的应用程序。
 links:
   - label: 源代码

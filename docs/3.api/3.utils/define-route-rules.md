@@ -1,5 +1,5 @@
 ---
-title: '定义路由规则'
+title: 'defineRouteRules'
 description: '在页面级别定义混合渲染的路由规则。'
 links:
   - label: 来源

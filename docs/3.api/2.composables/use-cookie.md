@@ -146,7 +146,7 @@ cookie 组合式 API 接受多个选项，您可以通过这些选项修改 cook
 
 ### `watch`
 
-指定一个 `boolean` 或 `string` 值，用于 [watch](https://vuejs.org/api/reactivity-core.html#watch) cookie 引用数据。
+指定一个 `boolean` 或 `string` 值，用于 [watch](https://vue.zhcndoc.com/api/reactivity-core.html#watch) cookie 引用数据。
 
 - `true` - 将监视 cookie 引用数据的变化及其嵌套属性（默认）。
 - `shallow` - 仅监视 cookie 引用数据的顶层属性变化。

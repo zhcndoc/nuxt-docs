@@ -1,5 +1,5 @@
 ---
-title: 'nuxi 清理'
+title: 'nuxi cleanup'
 description: '移除常见的生成 Nuxt 文件和缓存。'
 links:
   - label: 源代码

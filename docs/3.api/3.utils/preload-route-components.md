@@ -1,5 +1,5 @@
 ---
-title: '预加载路由组件'
+title: 'preloadRouteComponents'
 description: preloadRouteComponents 允许您手动预加载您 Nuxt 应用中的单个页面。
 links:
   - label: 源代码

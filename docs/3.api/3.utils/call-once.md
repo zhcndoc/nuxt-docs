@@ -1,6 +1,6 @@
 ---
 title: "callOnce"
-description: "在SSR或CSR期间仅运行给定函数或代码块一次。"
+description: "在 SSR 或 CSR 期间仅运行给定函数或代码块一次。"
 navigation:
   badge: 新
 links:

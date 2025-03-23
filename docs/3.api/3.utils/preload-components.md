@@ -1,5 +1,5 @@
 ---
-title: '预加载组件'
+title: 'preloadComponents'
 description: Nuxt 提供工具让你控制组件的预加载。
 links:
   - label: 源代码
