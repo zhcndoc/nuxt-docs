@@ -59,7 +59,7 @@ async function refreshAll () {
 
 ### 刷新特定数据
 
-下面的示例仅刷新与 `count` 匹配的键的数据。
+下面的示例仅刷新与 `count` and `user` 匹配的键的数据。
 
 ```vue [pages/some-page.vue]
 <script setup lang="ts">
@@ -68,7 +68,8 @@ const refreshing = ref(false)
 async function refresh () {
   refreshing.value = true
   try {
-    await refreshNuxtData('count')
+    // you could also pass an array of keys to refresh multiple data
+    await refreshNuxtData(['count', 'user'])
   } finally {
     refreshing.value = false
   }
@@ -76,8 +77,8 @@ async function refresh () {
 </script>
 
 <template>
-  <div>
-    {{ refreshing ? '加载中' : count }}
+  <div v-if="refreshing">
+    加载中
   </div>
   <button @click="refresh">刷新</button>
 </template>

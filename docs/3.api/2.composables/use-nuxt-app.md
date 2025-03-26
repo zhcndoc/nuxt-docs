@@ -255,7 +255,7 @@ Nuxt 在内部使用 [unjs/unctx](https://github.com/unjs/unctx) 来支持插件
 
 Nuxt 组合式函数的设计与 Vue 组合式 API 相同，因此需要类似的解决方案来魔法般地进行此转换。查看 [unjs/unctx#2](https://github.com/unjs/unctx/issues/2)（提案）、[unjs/unctx#4](https://github.com/unjs/unctx/pull/4)（转换实现）和 [nuxt/framework#3884](https://github.com/nuxt/framework/pull/3884)（与 Nuxt 集成）。
 
-Vue 目前仅支持针对 `<script setup>` 的异步上下文恢复，以用于 async/await 的使用。在 Nuxt 3 中，添加了 `defineNuxtPlugin()` 和 `defineNuxtRouteMiddleware()` 的转换支持，这意味着当你使用它们时，Nuxt 会自动执行上下文恢复的转换。
+Vue 目前仅支持针对 `<script setup>` 的异步上下文恢复，以用于 async/await 的使用。在 Nuxt 中，添加了 `defineNuxtPlugin()` 和 `defineNuxtRouteMiddleware()` 的转换支持，这意味着当你使用它们时，Nuxt 会自动执行上下文恢复的转换。
 
 #### 剩余问题
 

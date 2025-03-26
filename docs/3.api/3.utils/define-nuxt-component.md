@@ -13,7 +13,7 @@ links:
 ::
 
 ::note
-在 Nuxt 3 中，推荐使用 `<script setup lang="ts">` 声明 Vue 组件。
+在 Nuxt 中，推荐使用 `<script setup lang="ts">` 声明 Vue 组件。
 ::
 
 :read-more{to=/docs/getting-started/data-fetching}
