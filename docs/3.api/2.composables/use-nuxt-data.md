@@ -20,6 +20,8 @@ links:
 
 要使用 `useNuxtData`，请确保数据获取组合式 API（`useFetch`、`useAsyncData` 等）已使用显式提供的键进行调用。
 
+:video-accordion{title="Watch a video from LearnVue about useNuxtData" videoId="e-_u6swXRWk"}
+
 ## 参数
 
 - `key`: 用于标识缓存数据的唯一键。此键应与原始数据获取时使用的键匹配。

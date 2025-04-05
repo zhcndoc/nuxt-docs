@@ -138,9 +138,7 @@ Nuxt 通过 `ssrContext` 暴露以下属性：
 
   从 [Nuxt v3.4](https://nuxt.com/blog/v3-4#payload-enhancements) 开始，可以为 Nuxt 不支持的类型定义自己的 reducer/reviver。
 
-  ::tip{icon="i-lucide-video" to="https://www.youtube.com/watch?v=8w6ffRBs8a4" target="_blank"}
-  观看 Alexander Lichter 的视频，了解全球对序列化有效负载的关注，尤其是与类相关的部分。
-  ::
+  :video-accordion{title="Watch a video from Alexander Lichter about serializing payloads, especially with regards to classes" videoId="8w6ffRBs8a4"}
 
   在下面的示例中，我们使用有效负载插件定义了一个 reducer（或序列化器）和一个 reviver（或反序列化器）用于 [Luxon](https://moment.github.io/luxon/#/) 的 DateTime 类。
 

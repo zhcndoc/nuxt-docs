@@ -74,9 +74,7 @@ const { data, status, error, refresh, clear } = await useFetch('/api/auth/login'
 如果你发现 `useFetch`  destructed 的 `data` 变量返回一个字符串而不是解析后的 JSON 对象，那么请确保你的组件没有包含像 `import { useFetch } from '@vueuse/core'` 的导入语句。
 ::
 
-::tip{icon="i-lucide-video" to="https://www.youtube.com/watch?v=njsGVmcWviY" target="_blank"}
-观看 Alexander Lichter 的视频，避免错误使用 `useFetch`！
-::
+:video-accordion{title="Watch the video from Alexander Lichter to avoid using useFetch the wrong way" videoId="njsGVmcWviY"}
 
 :link-example{to="/docs/examples/advanced/use-custom-fetch-composable"}
 
@@ -131,9 +129,7 @@ const { data, status, error, refresh, clear } = await useFetch('/api/auth/login'
 如果你使用 `useFetch` 来调用开发中具有自签名证书的（外部）HTTPS URL，您需要在您的环境中设置 `NODE_TLS_REJECT_UNAUTHORIZED=0`。
 ::
 
-::tip{icon="i-simple-icons-youtube" to="https://www.youtube.com/watch?v=aQPR0xn-MMk" target="_blank"}
-了解如何使用 `transform` 和 `getCachedData` 避免对 API 进行多余的调用，并为客户缓存数据。
-::
+:video-accordion{title="Watch a video from Alexander Lichter about client-side caching with getCachedData" videoId="aQPR0xn-MMk"}
 
 ## 返回值
 

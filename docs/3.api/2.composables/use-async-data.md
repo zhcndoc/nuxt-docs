@@ -94,9 +94,7 @@ const { data: posts } = await useAsyncData(
 你可以使用 `useLazyAsyncData` 来实现与 `useAsyncData` 的 `lazy: true` 相同的行为。
 ::
 
-::tip{icon="i-simple-icons-youtube" to="https://www.youtube.com/watch?v=aQPR0xn-MMk" target="_blank"}
-了解如何使用 `transform` 和 `getCachedData` 来避免对 API 的多余调用并为客户端访客缓存数据。
-::
+:video-accordion{title="Watch a video from Alexander Lichter about client-side caching with getCachedData" videoId="aQPR0xn-MMk"}
 
 ## 返回值
 
