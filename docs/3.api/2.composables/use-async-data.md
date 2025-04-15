@@ -53,8 +53,25 @@ const { data: posts } = await useAsyncData(
 </script>
 ```
 
+### 响应式键
+
+你可以使用计算属性、普通引用或获取函数作为键，这样当键更改时可以自动更新数据获取：
+
+```vue [pages/[id\\].vue]
+<script setup lang="ts">
+const route = useRoute()
+const userId = computed(() => `user-${route.params.id}`)
+
+// 当路由变化且 userId 更新时，数据将自动重新获取
+const { data: user } = useAsyncData(
+  userId,
+  () => fetchUserById(route.params.id)
+)
+</script>
+```
+
 ::warning
-[`useAsyncData`](/docs/api/composables/use-async-data) 是一个被编译器转换的保留函数名，因此你不应该将自己的函数命名为 [`useAsyncData`](/docs/api/composables/use-async-data) 。
+[`useAsyncData`](/docs/api/composables/use-async-data) 是一个被编译器转换的保留函数名，因此你不应该将自己的函数命名为 [`useAsyncData`](/docs/api/composables/use-async-data)。
 ::
 
 :read-more{to="/docs/getting-started/data-fetching#useasyncdata"}
@@ -74,7 +91,7 @@ const { data: posts } = await useAsyncData(
   - `transform`: 一个可以在解析后用来更改 `handler` 函数结果的函数
   - `getCachedData`: 提供一个函数返回缓存数据。返回 `null` 或 `undefined` 将触发获取。默认情况下，这个函数是：
     ```ts
-    const getDefaultCachedData = (key, nuxtApp) => nuxtApp.isHydrating 
+    const getDefaultCachedData = (key, nuxtApp, ctx) => nuxtApp.isHydrating 
       ? nuxtApp.payload.data[key] 
       : nuxtApp.static.data[key]
     ```
@@ -94,23 +111,52 @@ const { data: posts } = await useAsyncData(
 你可以使用 `useLazyAsyncData` 来实现与 `useAsyncData` 的 `lazy: true` 相同的行为。
 ::
 
-:video-accordion{title="Watch a video from Alexander Lichter about client-side caching with getCachedData" videoId="aQPR0xn-MMk"}
+:video-accordion{title="观看 Alexander Lichter 关于使用 getCachedData 进行客户端缓存的视频" videoId="aQPR0xn-MMk"}
+
+### 共享状态和选项一致性
+
+当对多个 `useAsyncData` 调用使用相同的键时，它们将共享相同的 `data`、`error` 和 `status` refs。这确保了跨组件的一致性，但要求选项一致。
+
+以下选项 **必须在所有使用相同键的调用中一致**：
+- `handler` 函数
+- `deep` 选项
+- `transform` 函数
+- `pick` 数组
+- `getCachedData` 函数
+- `default` 值
+
+以下选项 **可以不同** 而不触发警告：
+- `server`
+- `lazy`
+- `immediate`
+- `dedupe`
+- `watch`
+
+```ts
+// ❌ 这将触发开发警告
+const { data: users1 } = useAsyncData('users', () => $fetch('/api/users'), { deep: false })
+const { data: users2 } = useAsyncData('users', () => $fetch('/api/users'), { deep: true })
+
+// ✅ 这是允许的
+const { data: users1 } = useAsyncData('users', () => $fetch('/api/users'), { immediate: true })
+const { data: users2 } = useAsyncData('users', () => $fetch('/api/users'), { immediate: false })
+```
 
 ## 返回值
 
 - `data`: 传入的异步函数的结果。
-- `refresh`/`execute`: 可以用来刷新 `handler` 函数返回的数据的函数。
+- `refresh`/`execute`: 一个可以用来刷新 `handler` 函数返回的数据的函数。
 - `error`: 如果数据获取失败，则为错误对象。
-- `status`: 指示数据请求状态的字符串：
-  - `idle`: 当请求尚未开始时，例如：
-    - 当 `execute` 尚未被调用且设置了 `{ immediate: false }`
-    - 当在服务器上渲染 HTML 时并且设置了 `{ server: false }`
+- `status`: 一个字符串，指示数据请求的状态：
+  - `idle`: 当请求尚未开始，例如：
+    - 当 `execute` 尚未被调用且 `{ immediate: false }` 被设置时
+    - 当在服务器上渲染 HTML 时且 `{ server: false }` 被设置时
   - `pending`: 请求正在进行中
   - `success`: 请求已成功完成
   - `error`: 请求失败
-- `clear`: 将 `data` 设置为 `undefined`，将 `error` 设置为 `null`，将 `status` 设置为 `'idle'`，并标记任何当前待处理的请求为已取消。
+- `clear`: 一个函数，该函数将 `data` 设置为 `undefined`，将 `error` 设置为 `null`，将 `status` 设置为 `'idle'`，并将任何当前待处理的请求标记为已取消。
 
-默认情况下，Nuxt 等待 `refresh` 完成后才能再次执行。
+默认情况下，Nuxt 会等待 `refresh` 完成后才能再次执行。
 
 ::note
 如果您尚未在服务器上获取数据（例如，使用 `server: false`），那么数据_不会_在水合完成之前被获取。这意味着即使您在客户端使用 await [`useAsyncData`](/docs/api/composables/use-async-data)，`data` 在 `<script setup>` 中仍将保持 `null`。
@@ -124,7 +170,7 @@ function useAsyncData<DataT, DataE>(
   options?: AsyncDataOptions<DataT>
 ): AsyncData<DataT, DataE>
 function useAsyncData<DataT, DataE>(
-  key: string,
+  key: string | Ref<string> | ComputedRef<string>,
   handler: (nuxtApp?: NuxtApp) => Promise<DataT>,
   options?: AsyncDataOptions<DataT>
 ): Promise<AsyncData<DataT, DataE>>
@@ -138,8 +184,13 @@ type AsyncDataOptions<DataT> = {
   default?: () => DataT | Ref<DataT> | null
   transform?: (input: DataT) => DataT | Promise<DataT>
   pick?: string[]
-  watch?: WatchSource[]
-  getCachedData?: (key: string, nuxtApp: NuxtApp) => DataT | undefined
+  watch?: WatchSource[] | false
+  getCachedData?: (key: string, nuxtApp: NuxtApp, ctx: AsyncDataRequestContext) => DataT | undefined
+}
+
+type AsyncDataRequestContext = {
+  /** 请求数据的原因 */
+  cause: 'initial' | 'refresh:manual' | 'refresh:hook' | 'watch'
 }
 
 type AsyncData<DataT, ErrorT> = {

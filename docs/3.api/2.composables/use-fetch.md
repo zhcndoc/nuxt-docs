@@ -66,6 +66,22 @@ const { data, status, error, refresh, clear } = await useFetch('/api/auth/login'
 })
 ```
 
+### 响应式键和共享状态
+
+您可以使用计算属性引用或普通引用作为 URL，允许动态数据获取，并在 URL 更改时自动更新：
+
+```vue [pages/[id\\].vue]
+<script setup lang="ts">
+const route = useRoute()
+const id = computed(() => route.params.id)
+
+// 当路由变化和 ID 更新时，数据将会自动重新获取。
+const { data: post } = await useFetch(() => `/api/posts/${id.value}`)
+</script>
+```
+
+在多个组件中使用相同的 URL 和选项时，`useFetch` 将共享相同的 `data`、`error` 和 `status` 引用。这确保了组件之间的一致性。
+
 ::warning
 `useFetch` 是一个被编译器保留的函数名称，因此你不应将自己的函数命名为 `useFetch`。
 ::
@@ -109,7 +125,7 @@ const { data, status, error, refresh, clear } = await useFetch('/api/auth/login'
   - `transform`: 一个函数，可以在解析后用于更改 `handler` 函数结果。
   - `getCachedData`: 提供一个返回缓存数据的函数。返回值为 `null` 或 `undefined` 将触发获取。默认值为：
     ```ts
-    const getDefaultCachedData = (key, nuxtApp) => nuxtApp.isHydrating 
+    const getDefaultCachedData = (key, nuxtApp, ctx) => nuxtApp.isHydrating 
       ? nuxtApp.payload.data[key] 
       : nuxtApp.static.data[key]
     ```
@@ -170,13 +186,18 @@ type UseFetchOptions<DataT> = {
   server?: boolean
   lazy?: boolean
   immediate?: boolean
-  getCachedData?: (key: string, nuxtApp: NuxtApp) => DataT | undefined
+  getCachedData?: (key: string, nuxtApp: NuxtApp, ctx: AsyncDataRequestContext) => DataT | undefined
   deep?: boolean
   dedupe?: 'cancel' | 'defer'
   default?: () => DataT
   transform?: (input: DataT) => DataT | Promise<DataT>
   pick?: string[]
   watch?: WatchSource[] | false
+}
+
+type AsyncDataRequestContext = {
+  /** The reason for this data request */
+  cause: 'initial' | 'refresh:manual' | 'refresh:hook' | 'watch'
 }
 
 type AsyncData<DataT, ErrorT> = {
