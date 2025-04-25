@@ -51,7 +51,6 @@ import { ResolveDeepImportsPlugin } from './plugins/resolve-deep-imports'
 import { ResolveExternalsPlugin } from './plugins/resolved-externals'
 import { PrehydrateTransformPlugin } from './plugins/prehydrate'
 import { VirtualFSPlugin } from './plugins/virtual'
-import { initParser } from './utils/parse'
 
 export function createNuxt (options: NuxtOptions): Nuxt {
   const hooks = createHooks<NuxtHooks>()
@@ -281,8 +280,6 @@ async function initNuxt (nuxt: Nuxt) {
       installNuxtModule('@nuxt/scripts')
     }
   }
-
-  await initParser()
 
   // Support Nuxt VFS
   addBuildPlugin(VirtualFSPlugin(nuxt, { mode: 'server' }), { client: false })
@@ -964,7 +961,7 @@ async function resolveModules (nuxt: Nuxt) {
     }
 
     // Secondly automatically register modules from layer's module directory
-    const modulesDir = (config.rootDir === nuxt.options.rootDir ? nuxt.options : config).dir?.modules || 'modules'
+    const modulesDir = (config.rootDir === nuxt.options.rootDir ? nuxt.options.dir : config.dir)?.modules || 'modules'
     const layerModules = await resolveFiles(config.srcDir, [
       `${modulesDir}/*{${nuxt.options.extensions.join(',')}}`,
       `${modulesDir}/*/index{${nuxt.options.extensions.join(',')}}`,
