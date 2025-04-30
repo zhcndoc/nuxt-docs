@@ -1,7 +1,7 @@
 import type { FetchError, FetchOptions } from 'ofetch'
 import type { $Fetch, H3Event$Fetch, NitroFetchRequest, TypedInternalResponse, AvailableRouterMethod as _AvailableRouterMethod } from 'nitro/types'
 import type { MaybeRef, MaybeRefOrGetter, Ref } from 'vue'
-import { computed, reactive, toValue } from 'vue'
+import { computed, reactive, toValue, watch } from 'vue'
 import { hash } from 'ohash'
 
 import { useRequestFetch } from './ssr'
@@ -97,15 +97,7 @@ export function useFetch<
 
   const _request = computed(() => toValue(request))
 
-  const _key = computed(() => toValue(opts.key) || hash([autoKey, typeof _request.value === 'string' ? _request.value : '', ...generateOptionSegments(opts)]))
-  if (!_key.value || typeof _key.value !== 'string') {
-    throw new TypeError('[nuxt] [useFetch] key must be a string: ' + _key.value)
-  }
-  if (!request) {
-    throw new Error('[nuxt] [useFetch] request is missing.')
-  }
-
-  const key = computed(() => _key.value === autoKey ? '$f' + _key.value : _key.value)
+  const key = computed(() => toValue(opts.key) || ('$f' + hash([autoKey, typeof _request.value === 'string' ? _request.value : '', ...generateOptionSegments(opts)])))
 
   if (!opts.baseURL && typeof _request.value === 'string' && (_request.value[0] === '/' && _request.value[1] === '/')) {
     throw new Error('[nuxt] [useFetch] the request URL must not start with "//".')
@@ -117,7 +109,7 @@ export function useFetch<
     default: defaultFn,
     transform,
     pick,
-    watch,
+    watch: watchSources,
     immediate,
     getCachedData,
     deep,
@@ -125,7 +117,7 @@ export function useFetch<
     ...fetchOptions
   } = opts
 
-  const _fetchOptions = reactive({
+  const _fetchOptions = reactive<typeof fetchOptions>({
     ...fetchDefaults,
     ...fetchOptions,
     cache: typeof opts.cache === 'boolean' ? undefined : opts.cache,
@@ -141,12 +133,19 @@ export function useFetch<
     getCachedData,
     deep,
     dedupe,
-    watch: watch === false ? [] : [_fetchOptions, _request, ...(watch || [])],
+    watch: watchSources === false ? [] : [...(watchSources || []), _fetchOptions],
   }
 
-  if (import.meta.dev && import.meta.server) {
+  if (import.meta.dev) {
     // @ts-expect-error private property
-    _asyncDataOptions._functionName = opts._functionName || 'useFetch'
+    _asyncDataOptions._functionName ||= 'useFetch'
+  }
+
+  // ensure that updates to watched sources trigger an update
+  if (watchSources !== false && !immediate) {
+    watch([...(watchSources || []), _fetchOptions], () => {
+      _asyncDataOptions.immediate = true
+    }, { flush: 'sync', once: true })
   }
 
   let controller: AbortController
@@ -239,7 +238,7 @@ export function useLazyFetch<
 ) {
   const [opts = {}, autoKey] = typeof arg1 === 'string' ? [{}, arg1] : [arg1, arg2]
 
-  if (import.meta.dev && import.meta.server) {
+  if (import.meta.dev) {
     // @ts-expect-error private property
     opts._functionName ||= 'useLazyFetch'
   }
