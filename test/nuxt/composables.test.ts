@@ -694,6 +694,26 @@ describe('useFetch', () => {
     expect(error.value).toBe(undefined)
   })
 
+  it('should not trigger rerunning fetch if `watch: false`', async () => {
+    let count = 0
+    registerEndpoint('/api/rerun', defineEventHandler(() => ({ count: count++ })))
+
+    const q = ref('')
+    const { data } = await useFetch('/api/rerun', {
+      query: { q },
+      watch: false,
+    })
+
+    expect(data.value).toStrictEqual({ count: 0 })
+    q.value = 'test'
+
+    await flushPromises()
+    await nextTick()
+    await flushPromises()
+
+    expect(data.value).toStrictEqual({ count: 0 })
+  })
+
   it('should work with reactive keys and immediate: false', async () => {
     registerEndpoint('/api/immediate-false', defineEventHandler(() => ({ url: '/api/immediate-false' })))
 
@@ -754,10 +774,12 @@ describe('useFetch', () => {
 
   it('should handle complex objects in body', async () => {
     registerEndpoint('/api/complex-objects', defineEventHandler(() => ({ url: '/api/complex-objects' })))
+    const formData = new FormData()
+    formData.append('file', new File([], 'test.txt'))
     const testCases = [
       { ref: ref('test') },
       ref('test'),
-      new FormData(),
+      formData,
       new ArrayBuffer(),
     ]
     for (const value of testCases) {
