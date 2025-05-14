@@ -1,6 +1,7 @@
 name: ci
 
 on:
+  merge_group:
   push:
     paths-ignore:
       - "docs/**"
@@ -64,6 +65,7 @@ jobs:
           path: packages/*/dist
 
   codeql:
+    if: github.event_name != 'merge_group'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
