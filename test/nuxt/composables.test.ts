@@ -374,7 +374,6 @@ describe('useAsyncData', () => {
   it('should be refreshable with force and cache', async () => {
     await useAsyncData(uniqueKey, () => Promise.resolve('test'), {
       getCachedData: (key, nuxtApp, ctx) => {
-        console.log(key, ctx.cause)
         return ctx.cause
       },
     })
@@ -652,7 +651,6 @@ describe('useAsyncData', () => {
   it('duplicate calls are not made after first call has finished', async () => {
     const handler = vi.fn(() => Promise.resolve('hello'))
     const getCachedData = vi.fn((key: string, nuxtApp: NuxtApp) => {
-      console.log(nuxtApp.payload.data[key] ? 'has data' : 'does not have data')
       return nuxtApp.payload.data[key]
     })
 
@@ -1240,6 +1238,30 @@ describe('defineNuxtComponent', () => {
     nuxtApp.isHydrating = false
     nuxtApp.payload.serverRendered = false
   })
+
+  it('should support Options API refreshNuxtData', async () => {
+    let count = 0
+    const component = defineNuxtComponent({
+      asyncData: () => ({
+        number: count++,
+      }),
+      setup () {
+        const vm = getCurrentInstance()
+        return () => {
+          // @ts-expect-error go directly to jail 😈
+          return h('div', vm!.render.number.value)
+        }
+      },
+    })
+
+    const wrapper = await mountSuspended(component)
+    expect(wrapper.html()).toMatchInlineSnapshot(`"<div>0</div>"`)
+
+    await refreshNuxtData()
+
+    expect(wrapper.html()).toMatchInlineSnapshot(`"<div>1</div>"`)
+  })
+
   it.todo('should support Options API head')
 })
 

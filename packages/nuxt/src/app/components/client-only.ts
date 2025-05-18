@@ -12,7 +12,6 @@ const STATIC_DIV = '<div></div>'
 export default defineComponent({
   name: 'ClientOnly',
   inheritAttrs: false,
-
   props: ['fallback', 'placeholder', 'placeholderTag', 'fallbackTag'],
   setup (props, { slots, attrs }) {
     const mounted = ref(false)
@@ -29,7 +28,13 @@ export default defineComponent({
     }
     provide(clientOnlySymbol, true)
     return () => {
-      if (mounted.value) { return slots.default?.() }
+      if (mounted.value) {
+        const vnodes = slots.default?.()
+        if (vnodes && vnodes.length === 1) {
+          return [cloneVNode(vnodes[0]!, attrs)]
+        }
+        return vnodes
+      }
       const slot = slots.fallback || slots.placeholder
       if (slot) { return h(slot) }
       const fallbackStr = props.fallback || props.placeholder || ''
@@ -117,7 +122,10 @@ export function createClientOnly<T extends ComponentOptions> (component: T) {
       if (typeof setupState === 'function') {
         return (...args: any[]) => {
           if (mounted$.value) {
-            return h(setupState(...args), ctx.attrs)
+            const res = setupState(...args)
+            return (res.children === null || typeof res.children === 'string')
+              ? cloneVNode(res, ctx.attrs)
+              : h(res, ctx.attrs)
           }
           return elToStaticVNode(instance?.vnode.el, STATIC_DIV)
         }
