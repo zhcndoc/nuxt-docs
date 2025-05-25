@@ -64,4 +64,4 @@ export default defineNuxtRouteMiddleware((to, from) => {
 })
 ```
 
-[由 navigateTo](/docs/api/utils/navigate-to) 和 [abortNavigation](/docs/api/utils/abort-navigation) 都是全球可用的辅助函数，你可以在 `defineNuxtRouteMiddleware` 中使用它们。
+[由 navigateTo](/docs/api/utils/navigate-to) 和 [abortNavigation](/docs/api/utils/abort-navigation) 都是全局可用的辅助函数，你可以在 `defineNuxtRouteMiddleware` 中使用它们。
