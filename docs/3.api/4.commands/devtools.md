@@ -1,5 +1,5 @@
 ---
-title: "nuxi devtools"
+title: "nuxt devtools"
 description: devtools 命令允许你在每个项目的基础上启用或禁用 Nuxt DevTools。
 links:
   - label: 源代码
@@ -10,11 +10,11 @@ links:
 
 <!--devtools-cmd-->
 ```bash [终端]
-npx nuxi devtools <COMMAND> [ROOTDIR] [--cwd=<directory>]
+npx nuxt devtools <COMMAND> [ROOTDIR] [--cwd=<directory>]
 ```
 <!--/devtools-cmd-->
 
-运行 `nuxi devtools enable` 将全局安装 Nuxt DevTools，并且在你正在使用的特定项目内启用它。它会作为偏好保存到你的用户级 `.nuxtrc` 文件中。如果你想移除某个特定项目的 devtools 支持，可以运行 `nuxi devtools disable`。
+运行 `nuxt devtools enable` 将全局安装 Nuxt DevTools，并且在你正在使用的特定项目内启用它。它会作为偏好保存到你的用户级 `.nuxtrc` 文件中。如果你想移除某个特定项目的 devtools 支持，可以运行 `nuxt devtools disable`。
 
 ## 参数
 

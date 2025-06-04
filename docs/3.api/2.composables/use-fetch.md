@@ -132,7 +132,7 @@ const { data: post } = await useFetch(() => `/api/posts/${id.value}`)
     这只有在启用了 `nuxt.config` 的 `experimental.payloadExtraction` 时才会缓存数据。
   - `pick`: 从 `handler` 函数结果中仅挑选此数组中指定的键。
   - `watch`: 观察一组响应式源，当它们改变时自动刷新获取结果。默认情况下，会观察获取选项和 URL。你可以通过使用 `watch: false` 完全忽略响应式源。结合 `immediate: false`，这允许进行完全手动的 `useFetch`。（你可以 [在这里查看示例](/docs/getting-started/data-fetching#watch) 用于使用 `watch`。）
-  - `deep`: 以深度 ref 对象返回数据。默认值为 `false`，以便为性能返回浅层 ref 对象。
+  - `deep`: 返回深度引用对象中的数据。默认情况下为`false`，即返回浅层引用对象中的数据，若您的数据无需深度响应式处理，此模式可提升性能。
   - `dedupe`: 避免在同一时间获取同一键不超过一次（默认值为 `cancel`）。可能的选项：
     - `cancel` - 当发出新请求时取消现有请求。
     - `defer` - 如果有待处理的请求，则不发出新的请求。

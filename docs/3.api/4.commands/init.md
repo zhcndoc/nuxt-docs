@@ -1,5 +1,5 @@
 ---
-title: "nuxi init"
+title: "create nuxt"
 description: init 命令初始化一个崭新的 Nuxt 项目。
 links:
   - label: 源代码
@@ -10,11 +10,11 @@ links:
 
 <!--init-cmd-->
 ```bash [Terminal]
-npx nuxi init [DIR] [--cwd=<directory>] [-t, --template] [-f, --force] [--offline] [--preferOffline] [--no-install] [--gitInit] [--shell] [--packageManager]
+npm create nuxt@latest [DIR] [--cwd=<directory>] [-t, --template] [-f, --force] [--offline] [--preferOffline] [--no-install] [--gitInit] [--shell] [--packageManager]
 ```
 <!--/init-cmd-->
 
-`init` 命令使用 [unjs/giget](https://github.com/unjs/giget) 初始化一个崭新的 Nuxt 项目。
+`create-nuxt` 命令使用 [unjs/giget](https://github.com/unjs/giget) 初始化一个崭新的 Nuxt 项目。
 
 ## 参数
 

@@ -1,5 +1,5 @@
 ---
-title: 'nuxi prepare'
+title: 'nuxt prepare'
 description: prepare 命令在您的应用程序中创建一个 .nuxt 目录并生成类型。
 links:
   - label: 源码
@@ -10,7 +10,7 @@ links:
 
 <!--prepare-cmd-->
 ```bash [Terminal]
-npx nuxi prepare [ROOTDIR] [--dotenv] [--cwd=<directory>] [--logLevel=<silent|info|verbose>] [--envName]
+npx nuxt prepare [ROOTDIR] [--dotenv] [--cwd=<directory>] [--logLevel=<silent|info|verbose>] [--envName]
 ```
 <!--/prepare-cmd-->
 

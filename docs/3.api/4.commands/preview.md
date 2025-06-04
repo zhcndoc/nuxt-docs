@@ -1,5 +1,5 @@
 ---
-title: "nuxi preview"
+title: "nuxt preview"
 description: 预览命令在构建命令后启动一个服务器以预览您的应用程序。
 links:
   - label: 源代码
@@ -10,7 +10,7 @@ links:
 
 <!--preview-cmd-->
 ```bash [终端]
-npx nuxi preview [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>] [--envName] [--dotenv] [-p, --port]
+npx nuxt preview [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>] [--envName] [--dotenv] [-p, --port]
 ```
 <!--/preview-cmd-->
 
@@ -39,5 +39,5 @@ npx nuxi preview [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>
 此命令将 `process.env.NODE_ENV` 设置为 `production`。要覆盖此设置，可以在 `.env` 文件中或作为命令行参数定义 `NODE_ENV`。
 
 ::note
-为了方便，在预览模式下，您的 [`.env`](/docs/guide/directory-structure/env) 文件将被加载到 `process.env` 中。（但是，在生产环境中，您需要确保自行设置环境变量。）
+为了方便，在预览模式下，您的 [`.env`](/docs/guide/directory-structure/env) 文件将被加载到 `process.env` 中。（但是，在生产环境中，您需要确保自己设置环境变量。例如，在 Node.js 20+ 中，您可以通过运行 `node --env-file .env .output/server/index.mjs` 来启动您的服务器。）
 ::

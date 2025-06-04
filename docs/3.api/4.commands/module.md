@@ -1,5 +1,5 @@
 ---
-title: "nuxi module"
+title: "nuxt module"
 description: "使用命令行搜索和添加模块到你的 Nuxt 应用程序。"
 links:
   - label: 源代码
@@ -8,13 +8,13 @@ links:
     size: xs
 ---
 
-Nuxi 提供了一些工具，以无缝的方式与 [Nuxt 模块](/modules) 一起工作。
+Nuxt 提供了一些工具，以无缝的方式与 [Nuxt 模块](/modules) 一起工作。
 
-## nuxi module add
+## nuxt module add
 
 <!--module-add-cmd-->
 ```bash [Terminal]
-npx nuxi module add <MODULENAME> [--cwd=<directory>] [--logLevel=<silent|info|verbose>] [--skipInstall] [--skipConfig] [--dev]
+npx nuxt module add <MODULENAME> [--cwd=<directory>] [--logLevel=<silent|info|verbose>] [--skipInstall] [--skipConfig] [--dev]
 ```
 <!--/module-add-cmd-->
 
@@ -47,14 +47,14 @@ npx nuxi module add <MODULENAME> [--cwd=<directory>] [--logLevel=<silent|info|ve
 安装 [`Pinia`](/modules/pinia) 模块
 
 ```bash [Terminal]
-npx nuxi module add pinia
+npx nuxt module add pinia
 ```
 
-## nuxi module search
+## nuxt module search
 
 <!--module-search-cmd-->
 ```bash [Terminal]
-npx nuxi module search <QUERY> [--cwd=<directory>] [--nuxtVersion=<2|3>]
+npx nuxt module search <QUERY> [--cwd=<directory>] [--nuxtVersion=<2|3>]
 ```
 <!--/module-search-cmd-->
 
@@ -80,5 +80,5 @@ npx nuxi module search <QUERY> [--cwd=<directory>] [--nuxtVersion=<2|3>]
 **示例：**
 
 ```bash [Terminal]
-npx nuxi module search pinia
+npx nuxt module search pinia
 ```

@@ -1,5 +1,5 @@
 ---
-title: "nuxi add"
+title: "nuxt add"
 description: "将实体搭建到你的 Nuxt 应用中。"
 links:
   - label: 源代码
@@ -10,7 +10,7 @@ links:
 
 <!--add-cmd-->
 ```bash [Terminal]
-npx nuxi add <TEMPLATE> <NAME> [--cwd=<directory>] [--logLevel=<silent|info|verbose>] [--force]
+npx nuxt add <TEMPLATE> <NAME> [--cwd=<directory>] [--logLevel=<silent|info|verbose>] [--force]
 ```
 <!--/add-cmd-->
 
@@ -39,74 +39,74 @@ npx nuxi add <TEMPLATE> <NAME> [--cwd=<directory>] [--logLevel=<silent|info|verb
 
 ```bash [Terminal]
 # 生成 `/plugins/sockets.client.ts`
-npx nuxi add plugin sockets --client
+npx nuxt add plugin sockets --client
 ```
 
-## `nuxi add component`
+## `nuxt add component`
 
 * 修改器标志： `--mode client|server` 或 `--client` 或 `--server`
 
 ```bash [Terminal]
 # 生成 `components/TheHeader.vue`
-npx nuxi add component TheHeader
+npx nuxt add component TheHeader
 ```
 
-## `nuxi add composable`
+## `nuxt add composable`
 
 ```bash [Terminal]
 # 生成 `composables/foo.ts`
-npx nuxi add composable foo
+npx nuxt add composable foo
 ```
 
-## `nuxi add layout`
+## `nuxt add layout`
 
 ```bash [Terminal]
 # 生成 `layouts/custom.vue`
-npx nuxi add layout custom
+npx nuxt add layout custom
 ```
 
-## `nuxi add plugin`
+## `nuxt add plugin`
 
 * 修改器标志： `--mode client|server` 或 `--client` 或 `--server`
 
 ```bash [Terminal]
 # 生成 `plugins/analytics.ts`
-npx nuxi add plugin analytics
+npx nuxt add plugin analytics
 ```
 
-## `nuxi add page`
+## `nuxt add page`
 
 ```bash [Terminal]
 # 生成 `pages/about.vue`
-npx nuxi add page about
+npx nuxt add page about
 ```
 
 ```bash [Terminal]
 # 生成 `pages/category/[id].vue`
-npx nuxi add page "category/[id]"
+npx nuxt add page "category/[id]"
 ```
 
-## `nuxi add middleware`
+## `nuxt add middleware`
 
 * 修改器标志： `--global`
 
 ```bash [Terminal]
 # 生成 `middleware/auth.ts`
-npx nuxi add middleware auth
+npx nuxt add middleware auth
 ```
 
-## `nuxi add api`
+## `nuxt add api`
 
 * 修改器标志： `--method`（可以接受 `connect`、`delete`、`get`、`head`、`options`、`patch`、`post`、`put` 或 `trace`），或者您可以直接使用 `--get`、`--post` 等。
 
 ```bash [Terminal]
 # 生成 `server/api/hello.ts`
-npx nuxi add api hello
+npx nuxt add api hello
 ```
 
-## `nuxi add layer`
+## `nuxt add layer`
 
 ```bash [Terminal]
 # 生成 `layers/subscribe/nuxt.config.ts`
-npx nuxi add layer subscribe
+npx nuxt add layer subscribe
 ```

@@ -1,5 +1,5 @@
 ---
-title: "nuxi generate"
+title: "nuxt generate"
 description: 预渲染应用程序的每个路由，并将结果存储为普通的 HTML 文件。
 links:
   - label: 源代码
@@ -10,11 +10,11 @@ links:
 
 <!--generate-cmd-->
 ```bash [Terminal]
-npx nuxi generate [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>] [--preset] [--dotenv] [--envName]
+npx nuxt generate [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>] [--preset] [--dotenv] [--envName]
 ```
 <!--/generate-cmd-->
 
-`generate` 命令预渲染你的应用程序的每个路由，并将结果存储为普通的 HTML 文件，你可以在任何静态托管服务上部署这些文件。该命令触发 `nuxi build` 命令，并将 `prerender` 参数设置为 `true`。
+`generate` 命令预渲染你的应用程序的每个路由，并将结果存储为普通的 HTML 文件，你可以在任何静态托管服务上部署这些文件。该命令触发 `nuxt build` 命令，并将 `prerender` 参数设置为 `true`。
 
 ## 参数
 

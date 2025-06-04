@@ -3,12 +3,12 @@ import { genDynamicImport, genImport } from 'knitwork'
 import MagicString from 'magic-string'
 import { pascalCase } from 'scule'
 import { relative } from 'pathe'
-import type { Component, ComponentsOptions } from 'nuxt/schema'
 
 import { tryUseNuxt } from '@nuxt/kit'
 import { QUOTE_RE, SX_RE, isVue } from '../../core/utils'
 import { installNuxtModule } from '../../core/features'
 import { logger } from '../../utils'
+import type { Component, ComponentsOptions } from 'nuxt/schema'
 
 interface LoaderOptions {
   getComponents (): Component[]
@@ -54,7 +54,7 @@ export const LoaderPlugin = (options: LoaderOptions) => createUnplugin(() => {
         const component = normalComponent || modifierComponent
 
         if (component) {
-          // TODO: refactor to nuxi
+          // TODO: refactor to @nuxt/cli
           const internalInstall = ((component as any)._internal_install) as string
           if (internalInstall && nuxt?.options.test === false) {
             if (!nuxt.options.dev) {

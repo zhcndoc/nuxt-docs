@@ -1,5 +1,5 @@
 ---
-title: 'nuxi build-module'
+title: 'nuxt build-module'
 description: 'Nuxt 命令，用于在发布前构建您的 Nuxt 模块。'
 links:
   - label: 源代码
@@ -10,7 +10,7 @@ links:
 
 <!--build-module-cmd-->
 ```bash [Terminal]
-npx nuxi build-module [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>] [--build] [--stub] [--sourcemap] [--prepare]
+npx nuxt build-module [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>] [--build] [--stub] [--sourcemap] [--prepare]
 ```
 <!--/build-module-cmd-->
 

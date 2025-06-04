@@ -1,5 +1,5 @@
 ---
-title: "nuxi typecheck"
+title: "nuxt typecheck"
 description: typecheck 命令运行 vue-tsc 以检查您应用程序中的类型。
 links:
   - label: 源代码
@@ -10,7 +10,7 @@ links:
 
 <!--typecheck-cmd-->
 ```bash [终端]
-npx nuxi typecheck [ROOTDIR] [--cwd=<目录>] [--logLevel=<silent|info|verbose>]
+npx nuxt typecheck [ROOTDIR] [--cwd=<目录>] [--logLevel=<silent|info|verbose>]
 ```
 <!--/typecheck-cmd-->
 

@@ -1,5 +1,5 @@
 ---
-title: 'nuxi dev'
+title: 'nuxt dev'
 description: dev 命令在 http://localhost:3000 启动一个带热模块替换的开发服务器
 links:
   - label: 源码
@@ -10,7 +10,7 @@ links:
 
 <!--dev-cmd-->
 ```bash [Terminal]
-npx nuxi dev [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>] [--dotenv] [--envName] [--no-clear] [--no-fork] [-p, --port] [-h, --host] [--clipboard] [-o, --open] [--https] [--publicURL] [--qr] [--public] [--tunnel] [--sslCert] [--sslKey]
+npx nuxt dev [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>] [--dotenv] [--envName] [--no-clear] [--no-fork] [-p, --port] [-h, --host] [--clipboard] [-o, --open] [--https] [--publicURL] [--qr] [--public] [--tunnel] [--sslCert] [--sslKey]
 ```
 <!--/dev-cmd-->
 
@@ -50,7 +50,7 @@ npx nuxi dev [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>] [-
 
 端口和主机也可以通过 NUXT_PORT、PORT、NUXT_HOST 或 HOST 环境变量设置。
 
-除了上述选项，`nuxi` 还可以将选项传递给 `listhen`，例如 `--no-qr` 可以关闭开发服务器的二维码。您可以在 [unjs/listhen](https://github.com/unjs/listhen) 文档中找到 `listhen` 选项的列表。
+除了上述选项，`@nuxt/cli` 还可以将选项传递给 `listhen`，例如 `--no-qr` 可以关闭开发服务器的二维码。您可以在 [unjs/listhen](https://github.com/unjs/listhen) 文档中找到 `listhen` 选项的列表。
 
 此命令将 `process.env.NODE_ENV` 设置为 `development`。
 

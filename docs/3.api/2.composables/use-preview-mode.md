@@ -103,8 +103,8 @@ const { data } = await useFetch('/api/preview', {
 现在您可以生成您的网站并提供服务：
 
 ```bash [Terminal]
-npx nuxi generate
-npx nuxi preview
+npx nuxt generate
+npx nuxt preview
 ```
 
 然后您可以通过将查询参数 `preview` 添加到您想查看的页面末尾来查看您的预览页面：
@@ -114,5 +114,5 @@ npx nuxi preview
 ```
 
 ::note
-`usePreviewMode` 应在本地使用 `nuxi generate` 然后 `nuxi preview` 测试，而不是 `nuxi dev`。（[预览命令](/docs/api/commands/preview) 与预览模式无关。）
+`usePreviewMode` 应在本地使用 `nuxt generate` 然后 `nuxt preview` 测试，而不是 `nuxt dev`。（[预览命令](/docs/api/commands/preview) 与预览模式无关。）
 ::
