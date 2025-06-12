@@ -2,7 +2,7 @@
 title: 'definePageMeta'
 description: '为你的页面组件定义元数据。'
 links:
-  - label: 源代码
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/pages/runtime/composables.ts
     size: xs

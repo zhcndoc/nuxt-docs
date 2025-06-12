@@ -2,7 +2,7 @@
 title: 'defineRouteRules'
 description: '在页面级别定义混合渲染的路由规则。'
 links:
-  - label: 来源
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/pages/runtime/composables.ts
     size: xs

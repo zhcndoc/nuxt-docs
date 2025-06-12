@@ -2,7 +2,7 @@
 title: 'clearNuxtData'
 description: 删除缓存数据、错误状态和 useAsyncData 及 useFetch 的挂起承诺。
 links:
-  - label: 源代码
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/asyncData.ts
     size: xs

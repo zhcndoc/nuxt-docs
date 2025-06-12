@@ -2,7 +2,7 @@
 title: 'useRequestURL'
 description: '通过 useRequestURL 组合式函数访问传入的请求 URL。'
 links:
-  - label: 来源
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/url.ts
     size: xs

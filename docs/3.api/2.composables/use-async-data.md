@@ -2,7 +2,7 @@
 title: 'useAsyncData'
 description: useAsyncData 提供对异步解析数据的访问，适用于 SSR 友好的组合式 API。
 links:
-  - label: 源代码
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/asyncData.ts
     size: xs

@@ -4,7 +4,7 @@ description: "在 SSR 或 CSR 期间仅运行给定函数或代码块一次。"
 navigation:
   badge: 新
 links:
-  - label: 源代码
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/once.ts
     size: xs

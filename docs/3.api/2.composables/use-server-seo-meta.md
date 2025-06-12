@@ -2,7 +2,7 @@
 title: 'useServerSeoMeta'
 description: useServerSeoMeta 可组合函数允许你将站点的 SEO 元标签定义为一个平面对象，全面支持 TypeScript。
 links:
-  - label: 源代码
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/unjs/unhead/blob/main/packages/vue/src/composables.ts
     size: xs

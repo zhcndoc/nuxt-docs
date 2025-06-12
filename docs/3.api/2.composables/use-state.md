@@ -2,7 +2,7 @@
 title: "useState"
 description: useState 组合函数创建一个响应式且支持 SSR 的共享状态。
 links:
-  - label: 源代码
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/state.ts
     size: xs

@@ -2,7 +2,7 @@
 title: "nuxt module"
 description: "使用命令行搜索和添加模块到你的 Nuxt 应用程序。"
 links:
-  - label: 源代码
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/module/
     size: xs

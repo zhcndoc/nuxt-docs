@@ -2,7 +2,7 @@
 title: "useError"
 description: useError 组合函数返回正在处理的全局 Nuxt 错误。
 links:
-  - label: 源代码
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/error.ts
     size: xs

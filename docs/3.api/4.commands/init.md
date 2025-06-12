@@ -2,7 +2,7 @@
 title: "create nuxt"
 description: init 命令初始化一个崭新的 Nuxt 项目。
 links:
-  - label: 源代码
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/init.ts
     size: xs

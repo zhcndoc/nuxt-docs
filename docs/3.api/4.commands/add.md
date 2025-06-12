@@ -2,7 +2,7 @@
 title: "nuxt add"
 description: "将实体搭建到你的 Nuxt 应用中。"
 links:
-  - label: 源代码
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/add.ts
     size: xs

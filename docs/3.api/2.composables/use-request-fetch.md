@@ -2,7 +2,7 @@
 title: 'useRequestFetch'
 description: '使用 useRequestFetch 组合函数转发请求上下文和服务器端 fetch 请求的头信息。'
 links:
-  - label: 源代码
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/ssr.ts
     size: xs

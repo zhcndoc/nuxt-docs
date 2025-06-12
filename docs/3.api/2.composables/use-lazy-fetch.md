@@ -2,7 +2,7 @@
 title: 'useLazyFetch'
 description: 这个包裹在 useFetch 周围的函数会立即触发导航。
 links:
-  - label: 源代码
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/fetch.ts
     size: xs

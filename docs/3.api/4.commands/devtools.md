@@ -2,7 +2,7 @@
 title: "nuxt devtools"
 description: devtools 命令允许你在每个项目的基础上启用或禁用 Nuxt DevTools。
 links:
-  - label: 源代码
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/devtools.ts
     size: xs

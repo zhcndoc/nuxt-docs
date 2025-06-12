@@ -4,7 +4,7 @@ description: "手动刷新 useCookie 值，当 cookie 更改时"
 navigation:
   badge: 新
 links:
-  - label: 源代码
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/cookie.ts
     size: xs

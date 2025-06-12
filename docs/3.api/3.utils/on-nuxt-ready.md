@@ -2,7 +2,7 @@
 title: "onNuxtReady"
 description: onNuxtReady 组合函数允许在您的应用初始化完成后运行回调。
 links:
-  - label: 源代码
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/ready.ts
     size: xs

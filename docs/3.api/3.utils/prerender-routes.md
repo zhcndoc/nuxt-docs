@@ -2,7 +2,7 @@
 title: 'prerenderRoutes'
 description: prerenderRoutes 提示 Nitro 预渲染额外的路由。
 links:
-  - label: 源代码
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/ssr.ts
     size: xs

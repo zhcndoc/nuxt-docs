@@ -2,7 +2,7 @@
 title: 'setPageLayout'
 description: setPageLayout 允许你动态更改页面的布局。
 links:
-  - label: 源代码
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/router.ts
     size: xs
