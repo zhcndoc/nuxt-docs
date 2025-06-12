@@ -1,14 +1,14 @@
 ---
 title: 'useNuxtApp'
-description: 'Access the shared runtime context of the Nuxt Application.'
+description: '访问 Nuxt 应用的共享运行时上下文。'
 links:
-  - label: Source
+  - label: 代码源
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/nuxt.ts
     size: xs
 ---
 
-`useNuxtApp` is a built-in composable that provides a way to access shared runtime context of Nuxt, also known as the [Nuxt context](/docs/guide/going-further/nuxt-app#the-nuxt-context), which is available on both client and server side (but not within Nitro routes). It helps you access the Vue app instance, runtime hooks, runtime config variables and internal states, such as `ssrContext` and `payload`.
+`useNuxtApp` 是一个内置的组合式函数，用于访问 Nuxt 的共享运行时上下文，也称为 [Nuxt 上下文](/docs/guide/going-further/nuxt-app#the-nuxt-context)，该上下文在客户端和服务器端都可用（但不包括 Nitro 路由中）。它帮助你访问 Vue 应用实例、运行时钩子、运行时配置变量以及内部状态，比如 `ssrContext` 和 `payload`。
 
 ```vue [app.vue]
 <script setup lang="ts">
@@ -16,46 +16,46 @@ const nuxtApp = useNuxtApp()
 </script>
 ```
 
-If runtime context is unavailable in your scope, `useNuxtApp` will throw an exception when called. You can use [`tryUseNuxtApp`](#tryusenuxtapp) instead for composables that do not require `nuxtApp`, or to simply check if context is available or not without an exception.
+如果当前作用域中无法获取运行时上下文，调用 `useNuxtApp` 会抛出异常。你可以改用 [`tryUseNuxtApp`](#tryusenuxtapp)，适用于不需要 `nuxtApp` 的组合式函数，或仅检查上下文是否可用而不抛出异常。
 
 <!--
 note
-By default, the shared runtime context of Nuxt is namespaced under the [`buildId`](/docs/api/nuxt-config#buildid) option. It allows the support of multiple runtime contexts.
+默认情况下，Nuxt 的共享运行时上下文会以 [`buildId`](/docs/api/nuxt-config#buildid) 选项作为命名空间。这支持多运行时上下文。
 
-## Params
+## 参数
 
-- `appName`: an optional application name. If you do not provide it, the Nuxt `buildId` option is used. Otherwise, it must match with an existing `buildId`. -->
+- `appName`：可选的应用名。如果未提供，则使用 Nuxt 的 `buildId` 选项。否则必须与已有的 `buildId` 匹配。 -->
 
-## Methods
+## 方法
 
 ### `provide (name, value)`
 
-`nuxtApp` is a runtime context that you can extend using [Nuxt plugins](/docs/guide/directory-structure/plugins). Use the `provide` function to create Nuxt plugins to make values and helper methods available in your Nuxt application across all composables and components.
+`nuxtApp` 是一个运行时上下文，你可以通过 [Nuxt 插件](/docs/guide/directory-structure/plugins) 扩展它。使用 `provide` 函数可以创建 Nuxt 插件，使得某些值和辅助方法在你的 Nuxt 应用的所有组合式函数和组件中可用。
 
-`provide` function accepts `name` and `value` parameters.
+`provide` 函数接收两个参数：`name` 和 `value`。
 
 ```js
 const nuxtApp = useNuxtApp()
 nuxtApp.provide('hello', (name) => `Hello ${name}!`)
 
-// Prints "Hello name!"
+// 打印 "Hello name!"
 console.log(nuxtApp.$hello('name'))
 ```
 
-As you can see in the example above, `$hello` has become the new and custom part of `nuxtApp` context and it is available in all places where `nuxtApp` is accessible.
+如上例所示，`$hello` 成为了 `nuxtApp` 上新的自定义部分，并且在所有能访问到 `nuxtApp` 的地方可用。
 
 ### `hook(name, cb)`
 
-Hooks available in `nuxtApp` allows you to customize the runtime aspects of your Nuxt application. You can use runtime hooks in Vue.js composables and [Nuxt plugins](/docs/guide/directory-structure/plugins) to hook into the rendering lifecycle.
+`nuxtApp` 中可用的钩子支持你自定义 Nuxt 应用的运行时行为。你可以在 Vue.js 组合式函数和 [Nuxt 插件](/docs/guide/directory-structure/plugins) 中使用运行时钩子，挂载在渲染生命周期的特定阶段。
 
-`hook` function is useful for adding custom logic by hooking into the rendering lifecycle at a specific point. `hook` function is mostly used when creating Nuxt plugins.
+`hook` 函数用于通过挂钩渲染生命周期中的某一点来添加自定义逻辑。它主要用于创建 Nuxt 插件时。
 
-See [Runtime Hooks](/docs/api/advanced/hooks#app-hooks-runtime) for available runtime hooks called by Nuxt.
+请参阅 [运行时钩子](/docs/api/advanced/hooks#app-hooks-runtime) 了解 Nuxt 调用的可用运行时钩子。
 
 ```ts [plugins/test.ts]
 export default defineNuxtPlugin((nuxtApp) => {
   nuxtApp.hook('page:start', () => {
-    /* your code goes here */
+    /* 在这里编写你的代码 */
   })
   nuxtApp.hook('vue:error', (..._args) => {
     console.log('vue:error')
@@ -68,42 +68,42 @@ export default defineNuxtPlugin((nuxtApp) => {
 
 ### `callHook(name, ...args)`
 
-`callHook` returns a promise when called with any of the existing hooks.
+调用已存在的钩子，`callHook` 会返回一个 Promise。
 
 ```ts
 await nuxtApp.callHook('my-plugin:init')
 ```
 
-## Properties
+## 属性
 
-`useNuxtApp()` exposes the following properties that you can use to extend and customize your app and share state, data and variables.
+`useNuxtApp()` 会暴露下述属性，供你拓展、定制应用以及共享状态、数据和变量。
 
 ### `vueApp`
 
-`vueApp` is the global Vue.js [application instance](https://vuejs.org/api/application.html#application-api) that you can access through `nuxtApp`.
+`vueApp` 是全局的 Vue.js [应用实例](https://vue.zhcndoc.com/api/application.html#application-api)，你可以通过 `nuxtApp` 访问它。
 
-Some useful methods:
-- [`component()`](https://vuejs.org/api/application.html#app-component) - Registers a global component if passing both a name string and a component definition, or retrieves an already registered one if only the name is passed.
-- [`directive()`](https://vuejs.org/api/application.html#app-directive) - Registers a global custom directive if passing both a name string and a directive definition, or retrieves an already registered one if only the name is passed[(example)](/docs/guide/directory-structure/plugins#vue-directives).
-- [`use()`](https://vuejs.org/api/application.html#app-use) - Installs a **[Vue.js Plugin](https://vuejs.org/guide/reusability/plugins.html)** [(example)](/docs/guide/directory-structure/plugins#vue-plugins).
+一些有用的方法：
+- [`component()`](https://vue.zhcndoc.com/api/application.html#app-component) — 如果传入组件名和定义，则注册全局组件；如果只传入组件名，则获取已注册的组件。
+- [`directive()`](https://vue.zhcndoc.com/api/application.html#app-directive) — 如果传入指令名和定义，则注册全局自定义指令；如果只传入指令名，则获取已注册的指令[(示例)](/docs/guide/directory-structure/plugins#vue-directives)。
+- [`use()`](https://vue.zhcndoc.com/api/application.html#app-use) — 安装 **[Vue.js 插件](https://vue.zhcndoc.com/guide/reusability/plugins.html)** [(示例)](/docs/guide/directory-structure/plugins#vue-plugins)。
 
-:read-more{icon="i-simple-icons-vuedotjs" to="https://vuejs.org/api/application.html#application-api"}
+:read-more{icon="i-simple-icons-vuedotjs" to="https://vue.zhcndoc.com/api/application.html#application-api"}
 
 ### `ssrContext`
 
-`ssrContext` is generated during server-side rendering and it is only available on the server side.
+`ssrContext` 在服务端渲染过程中生成，仅在服务端可用。
 
-Nuxt exposes the following properties through `ssrContext`:
-- `url` (string) -  Current request url.
-- `event` ([unjs/h3](https://github.com/unjs/h3) request event) - Access the request & response of the current route.
-- `payload` (object) - NuxtApp payload object.
+Nuxt 通过 `ssrContext` 暴露如下属性：
+- `url`（字符串）— 当前请求的 URL。
+- `event`（[unjs/h3](https://github.com/unjs/h3) 请求事件）— 访问当前路由的请求与响应。
+- `payload`（对象）— NuxtApp 的负载对象。
 
 ### `payload`
 
-`payload` exposes data and state variables from server side to client side. The following keys will be available on the client after they have been passed from the server side:
+`payload` 将服务端的数据和状态变量暴露给客户端。下列键将在客户端可用，前提是它们已从服务端传递过来：
 
-- `serverRendered` (boolean) - Indicates if response is server-side-rendered.
-- `data` (object) - When you fetch the data from an API endpoint using either [`useFetch`](/docs/api/composables/use-fetch) or [`useAsyncData`](/docs/api/composables/use-async-data) , resulting payload can be accessed from the `payload.data`. This data is cached and helps you prevent fetching the same data in case an identical request is made more than once.
+- `serverRendered`（布尔值）— 指示响应是否为服务端渲染。
+- `data`（对象）— 当你使用 [`useFetch`](/docs/api/composables/use-fetch) 或 [`useAsyncData`](/docs/api/composables/use-async-data) 从 API 端点获取数据时，结果负载可通过 `payload.data` 访问。该数据被缓存，有助于避免重复请求相同数据。
 
   ::code-group
   ```vue [app.vue]
@@ -118,11 +118,11 @@ Nuxt exposes the following properties through `ssrContext`:
   ```
   ::
 
-  After fetching the value of `count` using [`useAsyncData`](/docs/api/composables/use-async-data) in the example above, if you access `payload.data`, you will see `{ count: 1 }` recorded there.
+  上例中，使用 [`useAsyncData`](/docs/api/composables/use-async-data) 获取的 `count` 值，会在 `payload.data` 中以 `{ count: 1 }` 形式保存。
 
-  When accessing the same `payload.data` from [`ssrcontext`](#ssrcontext), you can access the same value on the server side as well.
+  通过 [`ssrContext`](#ssrcontext) 访问同样的 `payload.data`，可在服务端读取相同的值。
 
-- `state` (object) - When you use [`useState`](/docs/api/composables/use-state) composable in Nuxt to set shared state, this state data is accessed through `payload.state.[name-of-your-state]`.
+- `state`（对象）— 当你在 Nuxt 中使用 [`useState`](/docs/api/composables/use-state) 组合式函数设置共享状态时，该状态数据通过 `payload.state.[你的状态名]` 访问。
 
   ```ts [plugins/my-plugin.ts]
   export const useColor = () => useState<string>('color', () => 'pink')
@@ -134,21 +134,20 @@ Nuxt exposes the following properties through `ssrContext`:
   })
   ```
 
-  It is also possible to use more advanced types, such as `ref`, `reactive`, `shallowRef`, `shallowReactive` and `NuxtError`.
+  也可以使用更高级的类型，比如 `ref`、`reactive`、`shallowRef`、`shallowReactive` 和 `NuxtError`。
 
-  Since [Nuxt v3.4](https://nuxt.com/blog/v3-4#payload-enhancements), it is possible to define your own reducer/reviver for types that are not supported by Nuxt.
+  从 [Nuxt v3.4](https://nuxt.com/blog/v3-4#payload-enhancements) 开始，可以为 Nuxt 不支持的类型自定义 reducer/reviver。
 
-  :video-accordion{title="Watch a video from Alexander Lichter about serializing payloads, especially with regards to classes" videoId="8w6ffRBs8a4"}
+  :video-accordion{title="观看 Alexander Lichter 关于序列化负载的讲解视频，特别是关于类的处理" videoId="8w6ffRBs8a4"}
 
-  In the example below, we define a reducer (or a serializer) and a reviver (or deserializer) for the [Luxon](https://moment.github.io/luxon/#/) DateTime class, using a payload plugin.
+  下例中，定义了一个用于 [Luxon](https://moment.github.io/luxon/#/) DateTime 类的 reducer（序列化器）和 reviver（反序列化器），通过负载插件实现。
 
   ```ts [plugins/date-time-payload.ts]
   /**
-   * This kind of plugin runs very early in the Nuxt lifecycle, before we revive the payload.
-   * You will not have access to the router or other Nuxt-injected properties.
+   * 这种插件会非常早地在 Nuxt 生命周期运行，在负载复原之前。
+   * 你将无法访问路由器或其他 Nuxt 注入的属性。
    *
-   * Note that the "DateTime" string is the type identifier and must
-   * be the same on both the reducer and the reviver.
+   * 注意 "DateTime" 是类型标识符，在 reducer 和 reviver 中必须相同。
    */
   export default definePayloadPlugin((nuxtApp) => {
     definePayloadReducer('DateTime', (value) => {
@@ -162,7 +161,7 @@ Nuxt exposes the following properties through `ssrContext`:
 
 ### `isHydrating`
 
-Use `nuxtApp.isHydrating` (boolean) to check if the Nuxt app is hydrating on the client side.
+使用 `nuxtApp.isHydrating`（布尔值）判断 Nuxt 应用是否在客户端进行激活（hydrate）。
 
 ```ts [components/nuxt-error-boundary.ts]
 export default defineComponent({
@@ -180,10 +179,10 @@ export default defineComponent({
 ### `runWithContext`
 
 ::note
-You are likely here because you got a "Nuxt instance unavailable" message. Please use this method sparingly, and report examples that are causing issues, so that it can ultimately be solved at the framework level.
+你可能是因为看到 “Nuxt 实例不可用” 的提示来到这里。请谨慎使用此方法，并反馈会导致问题的示例，以便在框架层面最终解决。
 ::
 
-The `runWithContext` method is meant to be used to call a function and give it an explicit Nuxt context. Typically, the Nuxt context is passed around implicitly and you do not need to worry about this. However, when working with complex `async`/`await` scenarios in middleware/plugins, you can run into instances where the current instance has been unset after an async call.
+`runWithContext` 方法用于以显式的 Nuxt 上下文调用函数。通常，Nuxt 上下文是隐式传递的，无需你操心。然而，在中间件/插件中使用复杂的 `async`/`await` 场景时，可能会遇到异步调用后当前实例被取消的问题。
 
 ```ts [middleware/auth.ts]
 export default defineNuxtRouteMiddleware(async (to, from) => {
@@ -191,96 +190,96 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   let user
   try {
     user = await fetchUser()
-    // the Vue/Nuxt compiler loses context here because of the try/catch block.
+    // 因 try/catch，Vue/Nuxt 编译器在此处丢失上下文。
   } catch (e) {
     user = null
   }
   if (!user) {
-    // apply the correct Nuxt context to our `navigateTo` call.
+    // 为 `navigateTo` 应用正确的 Nuxt 上下文。
     return nuxtApp.runWithContext(() => navigateTo('/auth'))
   }
 })
 ```
 
-#### Usage
+#### 用法
 
 ```js
 const result = nuxtApp.runWithContext(() => functionWithContext())
 ```
 
-- `functionWithContext`: Any function that requires the context of the current Nuxt application. This context will be correctly applied automatically.
+- `functionWithContext`：任何需要当前 Nuxt 应用上下文的函数。该上下文将自动正确应用。
 
-`runWithContext` will return whatever is returned by `functionWithContext`.
+`runWithContext` 会返回 `functionWithContext` 的返回值。
 
-#### A Deeper Explanation of Context
+#### 深入解析上下文
 
-Vue.js Composition API (and Nuxt composables similarly) work by depending on an implicit context. During the lifecycle, Vue sets the temporary instance of the current component (and Nuxt temporary instance of nuxtApp) to a global variable and unsets it in same tick. When rendering on the server side, there are multiple requests from different users and nuxtApp running in a same global context. Because of this, Nuxt and Vue immediately unset this global instance to avoid leaking a shared reference between two users or components.
+Vue.js 的 Composition API（以及 Nuxt 的组合式函数）依赖于隐式上下文。在生命周期中，Vue 会将当前组件的临时实例（以及 Nuxt 的 `nuxtApp` 临时实例）设置为全局变量，并在同一个事件循环中取消设置它。当服务端渲染时，存在多个不同用户的请求，所有 `nuxtApp` 共享同一全局上下文。为此，Nuxt 和 Vue 立即取消这个全局实例，以避免不同用户或组件间共享引用。
 
-What it does mean? The Composition API and Nuxt Composables are only available during lifecycle and in same tick before any async operation:
+这意味着 Composition API 和 Nuxt 组合式函数仅在生命周期内且在异步操作之前的同一个事件循环中可用：
 
 ```js
-// --- Vue internal ---
+// --- Vue 内部 ---
 const _vueInstance = null
 const getCurrentInstance = () => _vueInstance
 // ---
 
-// Vue / Nuxt sets a global variable referencing to current component in _vueInstance when calling setup()
+// Vue / Nuxt 在调用 setup() 时设置全局变量引用当前组件
 async function setup() {
-  getCurrentInstance() // Works
-  await someAsyncOperation() // Vue unsets the context in same tick before async operation!
+  getCurrentInstance() // 有效
+  await someAsyncOperation() // Vue 在异步之前同一个 tick 清空上下文
   getCurrentInstance() // null
 }
 ```
 
-The classic solution to this, is caching the current instance on first call to a local variable like `const instance = getCurrentInstance()` and use it in the next composable call but the issue is that any nested composable calls now needs to explicitly accept the instance as an argument and not depend on the implicit context of composition-api. This is design limitation with composables and not an issue per-se.
+传统的解决方案是首次调用时缓存实例变量 `const instance = getCurrentInstance()`，在之后的组合式函数调用时传入该实例，但缺点是嵌套调用需要显式传参，无法依赖 Composition API 的隐式上下文。这是组合式函数的设计限制，而不是一个问题。
 
-To overcome this limitation, Vue does some behind the scenes work when compiling our application code and restores context after each call for `<script setup>`:
+为克服此限制，Vue 在编译应用代码时进行了幕后处理，在每次异步调用后恢复上下文（针对 `<script setup>`）：
 
 ```js
-const __instance = getCurrentInstance() // Generated by Vue compiler
-getCurrentInstance() // Works!
-await someAsyncOperation() // Vue unsets the context
-__restoreInstance(__instance) // Generated by Vue compiler
-getCurrentInstance() // Still works!
+const __instance = getCurrentInstance() // Vue 编译器生成
+getCurrentInstance() // 有效
+await someAsyncOperation() // Vue 清空上下文
+__restoreInstance(__instance) // Vue 编译器生成，恢复上下文
+getCurrentInstance() // 仍然有效
 ```
 
-For a better description of what Vue actually does, see [unjs/unctx#2 (comment)](https://github.com/unjs/unctx/issues/2#issuecomment-942193723).
+更多详情请参见 [unjs/unctx#2 (comment)](https://github.com/unjs/unctx/issues/2#issuecomment-942193723)。
 
-#### Solution
+#### 解决方案
 
-This is where `runWithContext` can be used to restore context, similarly to how `<script setup>` works.
+这正是 `runWithContext` 可用来恢复上下文的场景，类似于 `<script setup>` 的上下文恢复。
 
-Nuxt internally uses [unjs/unctx](https://github.com/unjs/unctx) to support composables similar to Vue for plugins and middleware. This enables composables like `navigateTo()` to work without directly passing `nuxtApp` to them - bringing the DX and performance benefits of Composition API to the whole Nuxt framework.
+Nuxt 内部使用了 [unjs/unctx](https://github.com/unjs/unctx) 来支持与 Vue 类似的组合式函数插件和中间件。这让像 `navigateTo()` 这样的组合式函数可以无需显式传入 `nuxtApp`，提升了开发体验和性能。
 
-Nuxt composables have the same design as the Vue Composition API and therefore need a similar solution to magically do this transform. Check out [unjs/unctx#2](https://github.com/unjs/unctx/issues/2) (proposal), [unjs/unctx#4](https://github.com/unjs/unctx/pull/4) (transform implementation), and [nuxt/framework#3884](https://github.com/nuxt/framework/pull/3884) (Integration to Nuxt).
+Nuxt 组合式函数的设计与 Vue Composition API 一致，所以需要类似的上下文恢复方案。详见：[unjs/unctx#2](https://github.com/unjs/unctx/issues/2)（提案），[unjs/unctx#4](https://github.com/unjs/unctx/pull/4)（转换实现），以及 [nuxt/framework#3884](https://github.com/nuxt/framework/pull/3884)（集成到 Nuxt）。
 
-Vue currently only supports async context restoration for `<script setup>` for async/await usage. In Nuxt, the transform support for `defineNuxtPlugin()` and `defineNuxtRouteMiddleware()` was added, which means when you use them Nuxt automatically transforms them with context restoration.
+Vue 目前仅支持 `<script setup>` 中使用 async/await 时的异步上下文恢复。Nuxt 为 `defineNuxtPlugin()` 和 `defineNuxtRouteMiddleware()` 添加了转换支持，因此使用这两者时 Nuxt 会自动转换以恢复上下文。
 
-#### Remaining Issues
+#### 遗留问题
 
-The `unjs/unctx` transformation to automatically restore context seems buggy with `try/catch` statements containing `await` which ultimately needs to be solved in order to remove the requirement of the workaround suggested above.
+`unjs/unctx` 的转换在包含 `await` 的 `try/catch` 语句中表现不稳定，需要解决此问题以移除上述变通方案的必要性。
 
-#### Native Async Context
+#### 原生异步上下文
 
-Using a new experimental feature, it is possible to enable native async context support using [Node.js `AsyncLocalStorage`](https://nodejs.org/api/async_context.html#class-asynclocalstorage) and new unctx support to make async context available **natively** to **any nested async composable** without needing a transform or manual passing/calling with context.
+使用新的实验性特性，可以启用基于 [Node.js 的 `AsyncLocalStorage`](https://node.zhcndoc.com/api/async_context.html#class-asynclocalstorage) 和 unctx 新支持的原生异步上下文，使得异步上下文**原生**对**任意嵌套异步组合式函数**有效，无需转换或手动传递/调用上下文。
 
 ::tip
-Native async context support works currently in Bun and Node.
+原生异步上下文支持目前在 Bun 和 Node 环境可用。
 ::
 
 :read-more{to="/docs/guide/going-further/experimental-features#asynccontext"}
 
 ## tryUseNuxtApp
 
-This function works exactly the same as `useNuxtApp`, but returns `null` if context is unavailable instead of throwing an exception.
+此函数与 `useNuxtApp` 功能相同，但在上下文不可用时返回 `null`，而不是抛出异常。
 
-You can use it for composables that do not require `nuxtApp`, or to simply check if context is available or not without an exception.
+适用于不依赖 `nuxtApp` 的组合式函数，或仅用来检查上下文是否可用而不抛异常。
 
-Example usage:
+示例用法：
 
 ```ts [composable.ts]
 export function useStandType() {
-  // Always works on the client
+  // 在客户端总是有效
   if (tryUseNuxtApp()) {
     return useRuntimeConfig().public.STAND_TYPE
   } else {
@@ -289,6 +288,6 @@ export function useStandType() {
 }
 ```
 
-<!-- ### Params
+<!-- ### 参数
 
-- `appName`: an optional application name. If you do not provide it, the Nuxt `buildId` option is used. Otherwise, it must match with an existing `buildId`. -->
+- `appName`：可选应用名称。如果未提供，默认使用 Nuxt 的 `buildId` 选项。否则必须与已有 `buildId` 匹配。 -->

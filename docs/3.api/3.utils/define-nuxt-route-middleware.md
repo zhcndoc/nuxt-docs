@@ -1,16 +1,16 @@
 ---
 title: "defineNuxtRouteMiddleware"
-description: "Create named route middleware using defineNuxtRouteMiddleware helper function."
+description: "使用 defineNuxtRouteMiddleware 辅助函数创建命名路由中间件。"
 links:
-  - label: Source
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/router.ts
     size: xs
 ---
 
-Route middleware are stored in the [`middleware/`](/docs/guide/directory-structure/middleware) of your Nuxt application (unless [set otherwise](/docs/api/nuxt-config#middleware)).
+路由中间件存储在 Nuxt 应用的 [`middleware/`](/docs/guide/directory-structure/middleware) 文件夹中（除非[另有配置](/docs/api/nuxt-config#middleware)）。
 
-## Type
+## 类型
 
 ```ts
 defineNuxtRouteMiddleware(middleware: RouteMiddleware) => RouteMiddleware
@@ -20,35 +20,35 @@ interface RouteMiddleware {
 }
 ```
 
-## Parameters
+## 参数
 
 ### `middleware`
 
-- **Type**: `RouteMiddleware`
+- **类型**: `RouteMiddleware`
 
-A function that takes two Vue Router's route location objects as parameters: the next route `to` as the first, and the current route `from` as the second.
+一个函数，接受两个 Vue Router 的路由位置对象作为参数：第一个是目标路由 `to`，第二个是当前路由 `from`。
 
-Learn more about available properties of `RouteLocationNormalized` in the **[Vue Router docs](https://router.vuejs.org/api/#RouteLocationNormalized)**.
+关于 `RouteLocationNormalized` 可用属性的更多信息，请参阅 **[Vue Router 文档](https://router.vuejs.org/api/#RouteLocationNormalized)**。
 
-## Examples
+## 示例
 
-### Showing Error Page
+### 显示错误页面
 
-You can use route middleware to throw errors and show helpful error messages:
+你可以使用路由中间件抛出错误并显示有用的错误信息：
 
 ```ts [middleware/error.ts]
 export default defineNuxtRouteMiddleware((to) => {
   if (to.params.id === '1') {
-    throw createError({ statusCode: 404, statusMessage: 'Page Not Found' })
+    throw createError({ statusCode: 404, statusMessage: '页面未找到' })
   }
 })
 ```
 
-The above route middleware will redirect a user to the custom error page defined in the `~/error.vue` file, and expose the error message and code passed from the middleware.
+上述路由中间件会将用户重定向到在 `~/error.vue` 文件中定义的自定义错误页面，并暴露从中间件传递的错误信息和代码。
 
-### Redirection
+### 重定向
 
-Use [`useState`](/docs/api/composables/use-state) in combination with `navigateTo` helper function inside the route middleware to redirect users to different routes based on their authentication status:
+结合在路由中间件中使用 [`useState`](/docs/api/composables/use-state) 和 `navigateTo` 辅助函数，根据用户的认证状态将其重定向到不同的路由：
 
 ```ts [middleware/auth.ts]
 export default defineNuxtRouteMiddleware((to, from) => {
@@ -64,4 +64,4 @@ export default defineNuxtRouteMiddleware((to, from) => {
 })
 ```
 
-Both [navigateTo](/docs/api/utils/navigate-to) and [abortNavigation](/docs/api/utils/abort-navigation) are globally available helper functions that you can use inside `defineNuxtRouteMiddleware`.
+`[navigateTo](/docs/api/utils/navigate-to)` 和 `[abortNavigation](/docs/api/utils/abort-navigation)` 是全局可用的辅助函数，可以在 `defineNuxtRouteMiddleware` 中使用。

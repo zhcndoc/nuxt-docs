@@ -1,8 +1,8 @@
 ---
 title: "usePreviewMode"
-description: "Use usePreviewMode to check and control preview mode in Nuxt"
+description: "使用 usePreviewMode 在 Nuxt 中检测和控制预览模式"
 links:
-  - label: Source
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/preview.ts
     size: xs
@@ -10,19 +10,19 @@ links:
 
 # `usePreviewMode`
 
-Preview mode allows you to see how your changes would be displayed on a live site without revealing them to users.
+预览模式允许你查看更改在在线站点上如何显示，而不会向用户公开这些更改。
 
-You can use the built-in `usePreviewMode` composable to access and control preview state in Nuxt. If the composable detects preview mode it will automatically force any updates necessary for [`useAsyncData`](/docs/api/composables/use-async-data) and [`useFetch`](/docs/api/composables/use-fetch) to rerender preview content.
+你可以使用内置的 `usePreviewMode` 组合式函数在 Nuxt 中访问和控制预览状态。如果该组合式函数检测到预览模式，它会自动强制任何 [`useAsyncData`](/docs/api/composables/use-async-data) 和 [`useFetch`](/docs/api/composables/use-fetch) 的更新以重新渲染预览内容。
 
 ```js
 const { enabled, state } = usePreviewMode()
 ```
 
-## Options
+## 选项
 
-### Custom `enable` check
+### 自定义 `enable` 检查
 
-You can specify a custom way to enable preview mode. By default the `usePreviewMode` composable will enable preview mode if there is a `preview` param in url that is equal to `true` (for example, `http://localhost:3000?preview=true`). You can wrap the `usePreviewMode` into custom composable, to keep options consistent across usages and prevent any errors.
+你可以指定自定义的方式来启用预览模式。默认情况下，如果 URL 中存在且等于 `true` 的 `preview` 参数（例如，`http://localhost:3000?preview=true`），`usePreviewMode` 组合式函数会启用预览模式。你可以将 `usePreviewMode` 封装成自定义组合式函数，以保持使用中的选项一致，避免任何错误。
 
 ```js
 export function useMyPreviewMode () {
@@ -34,9 +34,9 @@ export function useMyPreviewMode () {
 }
 ```
 
-### Modify default state
+### 修改默认状态
 
-`usePreviewMode` will try to store the value of a `token` param from url in state. You can modify this state and it will be available for all [`usePreviewMode`](/docs/api/composables/use-preview-mode) calls.
+`usePreviewMode` 会尝试将 URL 中的 `token` 参数的值存储在状态中。你可以修改这个状态，这个状态将在所有 [`usePreviewMode`](/docs/api/composables/use-preview-mode) 调用中可用。
 
 ```js
 const data1 = ref('data1')
@@ -49,31 +49,31 @@ const { enabled, state } = usePreviewMode({
 ```
 
 ::note
-The `getState` function will append returned values to current state, so be careful not to accidentally overwrite important state.
+`getState` 函数会将返回的值追加到当前状态中，因此请注意不要意外覆盖重要状态。
 ::
 
-### Customize the `onEnable` and `onDisable` callbacks
+### 自定义 `onEnable` 和 `onDisable` 回调
 
-By default, when `usePreviewMode` is enabled, it will call `refreshNuxtData()` to re-fetch all data from the server.
+默认情况下，当启用 `usePreviewMode` 时，它会调用 `refreshNuxtData()` 来重新从服务器获取所有数据。
 
-When preview mode is disabled, the composable will attach a callback to call `refreshNuxtData()` to run after a subsequent router navigation.
+当禁用预览模式时，该组合式函数会附加一个回调，在随后的路由导航后调用 `refreshNuxtData()`。
 
-You can specify custom callbacks to be triggered by providing your own functions for the `onEnable` and `onDisable` options.
+你可以通过为 `onEnable` 和 `onDisable` 选项提供自定义函数，指定自定义回调。
 
 ```js
 const { enabled, state } = usePreviewMode({
   onEnable: () => {
-    console.log('preview mode has been enabled')
+    console.log('预览模式已启用')
   },
   onDisable: () => {
-    console.log('preview mode has been disabled')
+    console.log('预览模式已禁用')
   }
 })
 ```
 
-## Example
+## 示例
 
-The example below creates a page where part of a content is rendered only in preview mode.
+下面的示例创建了一个页面，其中部分内容仅在预览模式下渲染。
 
 ```vue [pages/some-page.vue]
 <script setup>
@@ -88,31 +88,31 @@ const { data } = await useFetch('/api/preview', {
 
 <template>
   <div>
-    Some base content
+    一些基础内容
     <p v-if="enabled">
-      Only preview content: {{ state.token }}
+      仅预览内容：{{ state.token }}
       <br>
       <button @click="enabled = false">
-        disable preview mode
+        禁用预览模式
       </button>
     </p>
   </div>
 </template>
 ```
 
-Now you can generate your site and serve it:
+现在你可以生成站点并进行服务：
 
 ```bash [Terminal]
 npx nuxt generate
 npx nuxt preview
 ```
 
-Then you can see your preview page by adding the query param `preview` to the end of the page you want to see once:
+然后，你可以通过在要查看的页面末尾添加查询参数 `preview` 来访问预览页面：
 
 ```js
 ?preview=true
 ```
 
 ::note
-`usePreviewMode` should be tested locally with `nuxt generate` and then `nuxt preview` rather than `nuxt dev`. (The [preview command](/docs/api/commands/preview) is not related to preview mode.)
+`usePreviewMode` 应该在本地使用 `nuxt generate` 然后 `nuxt preview` 进行测试，而不是使用 `nuxt dev`。（[preview 命令](/docs/api/commands/preview) 与预览模式无关。）
 ::

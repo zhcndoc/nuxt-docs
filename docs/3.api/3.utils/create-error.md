@@ -1,55 +1,55 @@
 ---
 title: 'createError'
-description: Create an error object with additional metadata.
+description: 创建一个带有附加元数据的错误对象。
 links:
-  - label: Source
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/error.ts
     size: xs
 ---
 
-You can use this function to create an error object with additional metadata. It is usable in both the Vue and Nitro portions of your app, and is meant to be thrown.
+您可以使用此函数创建带有附加元数据的错误对象。它既可用于您的应用中的 Vue 部分，也可用于 Nitro 部分，且旨在被抛出。
 
-## Parameters
+## 参数
 
 - `err`: `string | { cause, data, message, name, stack, statusCode, statusMessage, fatal }`
 
-You can pass either a string or an object to the `createError` function. If you pass a string, it will be used as the error `message`, and the `statusCode` will default to `500`. If you pass an object, you can set multiple properties of the error, such as `statusCode`, `message`, and other error properties.
+您可以向 `createError` 函数传入字符串或对象。如果传入字符串，则它将用作错误的 `message`，`statusCode` 默认为 `500`。如果传入对象，则可以设置错误的多个属性，例如 `statusCode`、`message` 及其他错误属性。
 
-## In Vue App
+## 在 Vue 应用中
 
-If you throw an error created with `createError`:
+如果您抛出了使用 `createError` 创建的错误：
 
-- on server-side, it will trigger a full-screen error page which you can clear with `clearError`.
-- on client-side, it will throw a non-fatal error for you to handle. If you need to trigger a full-screen error page, then you can do this by setting `fatal: true`.
+- 在服务端，它将触发全屏错误页面，您可以使用 `clearError` 清除该错误。
+- 在客户端，它会抛出一个非致命错误，供您处理。如果您需要触发全屏错误页面，可以通过设置 `fatal: true` 来实现。
 
-### Example
+### 示例
 
 ```vue [pages/movies/[slug\\].vue]
 <script setup lang="ts">
 const route = useRoute()
 const { data } = await useFetch(`/api/movies/${route.params.slug}`)
 if (!data.value) {
-  throw createError({ statusCode: 404, statusMessage: 'Page Not Found' })
+  throw createError({ statusCode: 404, statusMessage: '页面未找到' })
 }
 </script>
 ```
 
-## In API Routes
+## 在 API 路由中
 
-Use `createError` to trigger error handling in server API routes.
+使用 `createError` 可触发服务器 API 路由中的错误处理。
 
-### Example
+### 示例
 
 ```ts [server/api/error.ts]
 export default eventHandler(() => {
   throw createError({
     statusCode: 404,
-    statusMessage: 'Page Not Found'
+    statusMessage: '页面未找到'
   })
 })
 ```
 
-In API routes, using `createError` by passing an object with a short `statusMessage` is recommended because it can be accessed on the client side. Otherwise, a `message` passed to `createError` on an API route will not propagate to the client. Alternatively, you can use the `data` property to pass data back to the client. In any case, always consider avoiding to put dynamic user input to the message to avoid potential security issues.
+在 API 路由中，建议通过传入带有简短 `statusMessage` 的对象来使用 `createError`，因为它可以在客户端访问。否则，传给 API 路由的 `createError` 的 `message` 将不会传递到客户端。或者，您可以使用 `data` 属性将数据传回客户端。无论如何，请始终考虑避免将动态用户输入写入消息，以避免潜在的安全问题。
 
 :read-more{to="/docs/getting-started/error-handling"}

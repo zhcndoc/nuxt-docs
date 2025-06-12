@@ -1,8 +1,8 @@
 ---
 title: "nuxt preview"
-description: The preview command starts a server to preview your application after the build command.
+description: 预览命令在执行构建命令后启动一个服务器来预览你的应用程序。
 links:
-  - label: Source
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/preview.ts
     size: xs
@@ -14,30 +14,30 @@ npx nuxt preview [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>
 ```
 <!--/preview-cmd-->
 
-The `preview` command starts a server to preview your Nuxt application after running the `build` command. The `start` command is an alias for `preview`. When running your application in production refer to the [Deployment section](/docs/getting-started/deployment).
+`preview` 命令在运行 `build` 命令后启动一个服务器来预览你的 Nuxt 应用。`start` 命令是 `preview` 的别名。生产环境运行你的应用时，请参考[部署章节](/docs/getting-started/deployment)。
 
-## Arguments
+## 参数
 
 <!--preview-args-->
-Argument | Description
+参数 | 说明
 --- | ---
-`ROOTDIR="."` | Specifies the working directory (default: `.`)
+`ROOTDIR="."` | 指定工作目录（默认值：`.`）
 <!--/preview-args-->
 
-## Options
+## 选项
 
 <!--preview-opts-->
-Option | Default | Description
+选项 | 默认值 | 说明
 --- | --- | ---
-`--cwd=<directory>` |  | Specify the working directory, this takes precedence over ROOTDIR (default: `.`)
-`--logLevel=<silent\|info\|verbose>` |  | Specify build-time log level
-`--envName` |  | The environment to use when resolving configuration overrides (default is `production` when building, and `development` when running the dev server)
-`--dotenv` |  | Path to `.env` file to load, relative to the root directory
-`-p, --port` |  | Port to listen on (default: `NUXT_PORT \|\| NITRO_PORT \|\| PORT`)
+`--cwd=<directory>` |  | 指定工作目录，此选项优先于 ROOTDIR（默认：`.`）
+`--logLevel=<silent\|info\|verbose>` |  | 指定构建时日志级别
+`--envName` |  | 解析配置覆盖时使用的环境（构建时默认是 `production`，开发服务器运行时默认是 `development`）
+`--dotenv` |  | 要加载的 `.env` 文件路径，相对于根目录
+`-p, --port` |  | 监听端口（默认：`NUXT_PORT \|\| NITRO_PORT \|\| PORT`）
 <!--/preview-opts-->
 
-This command sets `process.env.NODE_ENV` to `production`. To override, define `NODE_ENV` in a `.env` file or as command-line argument.
+此命令会将 `process.env.NODE_ENV` 设置为 `production`。如需覆盖，请在 `.env` 文件或命令行参数中定义 `NODE_ENV`。
 
 ::note
-For convenience, in preview mode, your [`.env`](/docs/guide/directory-structure/env) file will be loaded into `process.env`. (However, in production you will need to ensure your environment variables are set yourself. For example, with Node.js 20+ you could do this by running `node --env-file .env .output/server/index.mjs` to start your server.)
+为了方便，在预览模式下，你的[`.env`](/docs/guide/directory-structure/env) 文件将被加载到 `process.env` 中。（不过在生产环境中，你需要自行确保环境变量的设置。例如，在 Node.js 20+ 中，可以通过运行 `node --env-file .env .output/server/index.mjs` 来启动服务器。）
 ::

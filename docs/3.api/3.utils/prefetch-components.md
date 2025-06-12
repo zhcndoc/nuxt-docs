@@ -1,17 +1,17 @@
 ---
 title: 'prefetchComponents'
-description: Nuxt provides utilities to give you control over prefetching components.
+description: Nuxt 提供工具让你可以控制组件的预取。
 links:
-  - label: Source
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/preload.ts
     size: xs
 ---
 
 
-Prefetching component downloads the code in the background, this is based on the assumption that the component will likely be used for rendering, enabling the component to load instantly if and when the user requests it. The component is downloaded and cached for anticipated future use without the user making an explicit request for it.
+预取组件会在后台下载代码，这基于组件可能会被用于渲染的假设，使得当用户请求时组件能够即时加载。组件会被下载并缓存，以备将来使用，无需用户的显式请求。
 
-Use `prefetchComponents` to manually prefetch individual components that have been registered globally in your Nuxt app. By default Nuxt registers these as async components. You must use the Pascal-cased version of the component name.
+使用 `prefetchComponents` 来手动预取在你的 Nuxt 应用中全局注册的单个组件。默认情况下，Nuxt 将这些注册为异步组件。你必须使用 Pascal 命名法的组件名称。
 
 ```ts
 await prefetchComponents('MyGlobalComponent')
@@ -20,9 +20,9 @@ await prefetchComponents(['MyGlobalComponent1', 'MyGlobalComponent2'])
 ```
 
 ::note
-Current implementation behaves exactly the same as [`preloadComponents`](/docs/api/utils/preload-components) by preloading components instead of just prefetching we are working to improve this behavior.
+当前实现行为与 [`preloadComponents`](/docs/api/utils/preload-components) 完全相同，都是通过预加载组件而非仅仅预取组件，我们正在努力改进此行为。
 ::
 
 ::note
-On server, `prefetchComponents` will have no effect.
+在服务器端，`prefetchComponents` 不会产生任何效果。
 ::

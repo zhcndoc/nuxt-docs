@@ -1,28 +1,28 @@
 ---
 title: 'preloadRouteComponents'
-description: preloadRouteComponents allows you to manually preload individual pages in your Nuxt app.
+description: preloadRouteComponents 允许你在 Nuxt 应用中手动预加载单个页面。
 links:
-  - label: Source
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/preload.ts
     size: xs
 ---
 
-Preloading routes loads the components of a given route that the user might navigate to in future. This ensures that the components are available earlier and less likely to block the navigation, improving performance.
+预加载路由会加载用户未来可能访问的指定路由的组件。这确保组件更早可用，从而减少阻塞导航的可能性，提升性能。
 
 ::tip{icon="i-lucide-rocket"}
-Nuxt already automatically preloads the necessary routes if you're using the `NuxtLink` component.
+如果你使用 `NuxtLink` 组件，Nuxt 已经会自动预加载必要的路由。
 ::
 
 :read-more{to="/docs/api/components/nuxt-link"}
 
-## Example
+## 示例
 
-Preload a route when using `navigateTo`.
+在使用 `navigateTo` 时预加载路由。
 
 ```ts
-// we don't await this async function, to avoid blocking rendering
-// this component's setup function
+// 我们不会等待这个异步函数，以避免阻塞渲染
+// 当前组件的 setup 函数
 preloadRouteComponents('/dashboard')
 
 const submit = async () => {
@@ -37,5 +37,5 @@ const submit = async () => {
 :read-more{to="/docs/api/utils/navigate-to"}
 
 ::note
-On server, `preloadRouteComponents` will have no effect.
+在服务器端，`preloadRouteComponents` 不会生效。
 ::

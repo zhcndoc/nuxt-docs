@@ -1,8 +1,8 @@
 ---
 title: 'nuxt dev'
-description: The dev command starts a development server with hot module replacement at http://localhost:3000
+description: dev 命令启动一个带有热模块替换的开发服务器，地址为 http://localhost:3000
 links:
-  - label: Source
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/dev.ts
     size: xs
@@ -14,46 +14,46 @@ npx nuxt dev [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>] [-
 ```
 <!--/dev-cmd-->
 
-The `dev` command starts a development server with hot module replacement at [http://localhost:3000](https://localhost:3000)
+`dev` 命令启动一个带有热模块替换的开发服务器，访问地址为 [http://localhost:3000](https://localhost:3000)
 
-## Arguments
+## 参数
 
 <!--dev-args-->
-Argument | Description
+参数 | 描述
 --- | ---
-`ROOTDIR="."` | Specifies the working directory (default: `.`)
+`ROOTDIR="."` | 指定工作目录（默认: `.`）
 <!--/dev-args-->
 
-## Options
+## 选项
 
 <!--dev-opts-->
-Option | Default | Description
+选项 | 默认值 | 描述
 --- | --- | ---
-`--cwd=<directory>` |  | Specify the working directory, this takes precedence over ROOTDIR (default: `.`)
-`--logLevel=<silent\|info\|verbose>` |  | Specify build-time log level
-`--dotenv` |  | Path to `.env` file to load, relative to the root directory
-`--envName` |  | The environment to use when resolving configuration overrides (default is `production` when building, and `development` when running the dev server)
-`--no-clear` |  | Disable clear console on restart
-`--no-fork` |  | Disable forked mode
-`-p, --port` |  | Port to listen on (default: `NUXT_PORT \|\| NITRO_PORT \|\| PORT \|\| nuxtOptions.devServer.port`)
-`-h, --host` |  | Host to listen on (default: `NUXT_HOST \|\| NITRO_HOST \|\| HOST \|\| nuxtOptions._layers?.[0]?.devServer?.host`)
-`--clipboard` | `false` | Copy the URL to the clipboard
-`-o, --open` | `false` | Open the URL in the browser
-`--https` |  | Enable HTTPS
-`--publicURL` |  | Displayed public URL (used for QR code)
-`--qr` |  | Display The QR code of public URL when available
-`--public` |  | Listen to all network interfaces
-`--tunnel` |  | Open a tunnel using https://github.com/unjs/untun
-`--sslCert` |  | (DEPRECATED) Use `--https.cert` instead.
-`--sslKey` |  | (DEPRECATED) Use `--https.key` instead.
+`--cwd=<directory>` |  | 指定工作目录，优先级高于 ROOTDIR（默认: `.`）
+`--logLevel=<silent\|info\|verbose>` |  | 指定构建时日志级别
+`--dotenv` |  | 加载的 `.env` 文件路径，基于根目录
+`--envName` |  | 解析配置覆盖时使用的环境（构建时默认是 `production`，运行开发服务器时默认是 `development`）
+`--no-clear` |  | 禁用重启时清除控制台
+`--no-fork` |  | 禁用 fork 模式
+`-p, --port` |  | 监听端口（默认：`NUXT_PORT || NITRO_PORT || PORT || nuxtOptions.devServer.port`）
+`-h, --host` |  | 监听主机（默认：`NUXT_HOST || NITRO_HOST || HOST || nuxtOptions._layers?.[0]?.devServer?.host`）
+`--clipboard` | `false` | 将 URL 复制到剪贴板
+`-o, --open` | `false` | 在浏览器中打开 URL
+`--https` |  | 启用 HTTPS
+`--publicURL` |  | 显示的公共 URL（用于二维码）
+`--qr` |  | 可用时显示公共 URL 的二维码
+`--public` |  | 监听所有网络接口
+`--tunnel` |  | 使用 https://github.com/unjs/untun 打开隧道
+`--sslCert` |  | （已废弃）请使用 `--https.cert`
+`--sslKey` |  | （已废弃）请使用 `--https.key`
 <!--/dev-opts-->
 
-The port and host can also be set via NUXT_PORT, PORT, NUXT_HOST or HOST environment variables.
+端口和主机也可以通过环境变量 NUXT_PORT、PORT、NUXT_HOST 或 HOST 设置。
 
-Additionally to the above options, `@nuxt/cli` can pass options through to `listhen`, e.g. `--no-qr` to turn off the dev server QR code. You can find the list of `listhen` options in the [unjs/listhen](https://github.com/unjs/listhen) docs.
+除了上述选项外，`@nuxt/cli` 还可以将选项传递给 `listhen`，例如 `--no-qr` 来关闭开发服务器二维码。您可以在 [unjs/listhen](https://github.com/unjs/listhen) 文档中找到 `listhen` 的所有选项。
 
-This command sets `process.env.NODE_ENV` to `development`.
+该命令会将 `process.env.NODE_ENV` 设置为 `development`。
 
 ::note
-If you are using a self-signed certificate in development, you will need to set `NODE_TLS_REJECT_UNAUTHORIZED=0` in your environment.
+如果您在开发中使用自签名证书，需要在环境变量中设置 `NODE_TLS_REJECT_UNAUTHORIZED=0`。
 ::

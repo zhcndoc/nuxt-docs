@@ -1,18 +1,18 @@
 ---
 title: 'useServerSeoMeta'
-description: The useServerSeoMeta composable lets you define your site's SEO meta tags as a flat object with full TypeScript support.
+description: useServerSeoMeta 组合函数让你以扁平对象的形式定义站点的 SEO 元标签，并提供完整的 TypeScript 支持。
 links:
-  - label: Source
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/unjs/unhead/blob/main/packages/vue/src/composables.ts
     size: xs
 ---
 
-Just like [`useSeoMeta`](/docs/api/composables/use-seo-meta), `useServerSeoMeta` composable lets you define your site's SEO meta tags as a flat object with full TypeScript support.
+就像 [`useSeoMeta`](/docs/api/composables/use-seo-meta) 一样，`useServerSeoMeta` 组合函数让你以扁平对象的形式定义站点的 SEO 元标签，并提供完整的 TypeScript 支持。
 
 :read-more{to="/docs/api/composables/use-seo-meta"}
 
-In most instances, the meta doesn't need to be reactive as robots will only scan the initial load. So we recommend using [`useServerSeoMeta`](/docs/api/composables/use-server-seo-meta) as a performance-focused utility that will not do anything (or return a `head` object) on the client.
+在大多数情况下，meta 不需要是响应式的，因为爬虫只会扫描初始加载内容。因此我们推荐将 [`useServerSeoMeta`](/docs/api/composables/use-server-seo-meta) 用作性能优化的工具，它在客户端不会执行任何操作（也不会返回 `head` 对象）。
 
 ```vue [app.vue]
 <script setup lang="ts">
@@ -22,6 +22,6 @@ useServerSeoMeta({
 </script>
 ```
 
-Parameters are exactly the same as with [`useSeoMeta`](/docs/api/composables/use-seo-meta)
+参数与 [`useSeoMeta`](/docs/api/composables/use-seo-meta) 完全相同。
 
 :read-more{to="/docs/getting-started/seo-meta"}

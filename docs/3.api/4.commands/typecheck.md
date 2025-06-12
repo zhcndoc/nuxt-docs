@@ -1,42 +1,42 @@
 ---
 title: "nuxt typecheck"
-description: The typecheck command runs vue-tsc to check types throughout your app.
+description: typecheck 命令运行 vue-tsc 来检查整个应用的类型。
 links:
-  - label: Source
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/typecheck.ts
     size: xs
 ---
 
 <!--typecheck-cmd-->
-```bash [Terminal]
+```bash [终端]
 npx nuxt typecheck [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>]
 ```
 <!--/typecheck-cmd-->
 
-The `typecheck` command runs [`vue-tsc`](https://github.com/vuejs/language-tools/tree/master/packages/tsc) to check types throughout your app.
+`typecheck` 命令运行 [`vue-tsc`](https://github.com/vuejs/language-tools/tree/master/packages/tsc) 来检查整个应用的类型。
 
-## Arguments
+## 参数
 
 <!--typecheck-args-->
-Argument | Description
+参数 | 描述
 --- | ---
-`ROOTDIR="."` | Specifies the working directory (default: `.`)
+`ROOTDIR="."` | 指定工作目录（默认值：`.`）
 <!--/typecheck-args-->
 
-## Options
+## 选项
 
 <!--typecheck-opts-->
-Option | Default | Description
+选项 | 默认值 | 描述
 --- | --- | ---
-`--cwd=<directory>` |  | Specify the working directory, this takes precedence over ROOTDIR (default: `.`)
-`--logLevel=<silent\|info\|verbose>` |  | Specify build-time log level
+`--cwd=<directory>` |  | 指定工作目录，此选项优先于 ROOTDIR（默认值：`.`）
+`--logLevel=<silent\|info\|verbose>` |  | 指定构建时的日志级别
 <!--/typecheck-opts-->
 
 ::note
-This command sets `process.env.NODE_ENV` to `production`. To override, define `NODE_ENV` in a [`.env`](/docs/guide/directory-structure/env) file or as a command-line argument.
+此命令会将 `process.env.NODE_ENV` 设置为 `production`。若想覆盖，请在 [`.env`](/docs/guide/directory-structure/env) 文件中定义 `NODE_ENV` 或作为命令行参数传入。
 ::
 
 ::read-more{to="/docs/guide/concepts/typescript#type-checking"}
-Read more on how to enable type-checking at build or development time.
+了解更多关于如何在构建或开发时启用类型检查的信息。
 ::

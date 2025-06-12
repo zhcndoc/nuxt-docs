@@ -1,20 +1,20 @@
 ---
 title: "useRoute"
-description: The useRoute composable returns the current route.
+description: useRoute 组合函数返回当前路由。
 links:
-  - label: Source
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/router.ts
     size: xs
 ---
 
 ::note
-Within the template of a Vue component, you can access the route using `$route`.
+在 Vue 组件的模板中，你可以通过 `$route` 访问路由。
 ::
 
-## Example
+## 示例
 
-In the following example, we call an API via [`useFetch`](/docs/api/composables/use-fetch) using a dynamic page parameter - `slug` - as part of the URL.
+在下面的示例中，我们通过 [`useFetch`](/docs/api/composables/use-fetch) 调用一个接口，使用动态页面参数 `slug` 作为 URL 的一部分。
 
 ```html [~/pages/[slug\\].vue]
 <script setup lang="ts">
@@ -30,23 +30,23 @@ const { data: mountain } = await useFetch(`/api/mountains/${route.params.slug}`)
 </template>
 ```
 
-If you need to access the route query parameters (for example `example` in the path `/test?example=true`), then you can use `useRoute().query` instead of `useRoute().params`.
+如果你需要访问路由的查询参数（例如路径 `/test?example=true` 中的 `example`），可以使用 `useRoute().query`，而非 `useRoute().params`。
 
 ## API
 
-Apart from dynamic parameters and query parameters, `useRoute()` also provides the following computed references related to the current route:
+除了动态参数和查询参数，`useRoute()` 还提供以下与当前路由相关的计算引用：
 
-- `fullPath`: encoded URL associated with the current route that contains path, query and hash
-- `hash`: decoded hash section of the URL that starts with a #
-- `query`: access route query parameters
-- `matched`: array of normalized matched routes with current route location
-- `meta`: custom data attached to the record
-- `name`: unique name for the route record
-- `path`: encoded pathname section of the URL
-- `redirectedFrom`: route location that was attempted to access before ending up on the current route location
+- `fullPath`：包含路径、查询和哈希的当前路由对应的编码后的 URL
+- `hash`：URL 中以 # 开头的解码哈希部分
+- `query`：访问路由查询参数
+- `matched`：当前路由位置匹配的标准化路由数组
+- `meta`：附加到路由记录的自定义数据
+- `name`：路由记录的唯一名称
+- `path`：URL 编码的路径名部分
+- `redirectedFrom`：在最终到达当前路由位置前尝试访问的路由位置
 
 ::note
-Browsers don't send [URL fragments](https://url.spec.whatwg.org/#concept-url-fragment) (for example `#foo`) when making requests. So using `route.fullPath` in your template can trigger hydration issues because this will include the fragment on client but not the server.
+浏览器在发起请求时不会发送 [URL 片段](https://url.spec.whatwg.org/#concept-url-fragment)（例如 `#foo`）。因此在模板中使用 `route.fullPath` 可能会引发 hydration 问题，因为它在客户端包括了片段，但服务器端不包含。
 ::
 
 :read-more{icon="i-simple-icons-vuedotjs" to="https://router.vuejs.org/api/#RouteLocationNormalizedLoaded"}

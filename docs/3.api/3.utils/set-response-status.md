@@ -1,36 +1,36 @@
 ---
 title: 'setResponseStatus'
-description: setResponseStatus sets the statusCode (and optionally the statusMessage) of the response.
+description: setResponseStatus 设置响应的 statusCode（以及可选的 statusMessage）。
 links:
-  - label: Source
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/ssr.ts
     size: xs
 ---
 
-Nuxt provides composables and utilities for first-class server-side-rendering support.
+Nuxt 提供了组合函数和工具，以支持一流的服务端渲染。
 
-`setResponseStatus` sets the statusCode (and optionally the statusMessage) of the response.
+`setResponseStatus` 用于设置响应的 statusCode（以及可选的 statusMessage）。
 
 ::important
-`setResponseStatus` can only be called in the [Nuxt context](/docs/guide/going-further/nuxt-app#the-nuxt-context).
+`setResponseStatus` 只能在 [Nuxt 上下文](/docs/guide/going-further/nuxt-app#the-nuxt-context) 中调用。
 ::
 
 ```js
 const event = useRequestEvent()
 
-// event will be undefined in the browser
+// 在浏览器中 event 将是 undefined
 if (event) {
-  // Set the status code to 404 for a custom 404 page
+  // 为自定义的 404 页面设置状态码为 404
   setResponseStatus(event, 404)
 
-  // Set the status message as well
-  setResponseStatus(event, 404, 'Page Not Found')
+  // 也可以同时设置状态信息
+  setResponseStatus(event, 404, '页面未找到')
 }
 ```
 
 ::note
-In the browser, `setResponseStatus` will have no effect.
+在浏览器中，`setResponseStatus` 不会生效。
 ::
 
 :read-more{to="/docs/getting-started/error-handling"}
