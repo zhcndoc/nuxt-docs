@@ -154,7 +154,7 @@ const { data: users2 } = useAsyncData('users', () => $fetch('/api/users'), { imm
   - `pending`: 请求正在进行中
   - `success`: 请求已成功完成
   - `error`: 请求失败
-- `clear`: 一个函数，该函数将 `data` 设置为 `undefined`，将 `error` 设置为 `null`，将 `status` 设置为 `'idle'`，并将任何当前待处理的请求标记为已取消。
+- `clear`: 一个可以用于将 `data` 设置为 `undefined`（如果提供了，则为 `options.default()` 的值）、将 `error` 设置为 `undefined`、将 `status` 设置为 `idle`，并将任何当前待处理的请求标记为已取消的函数。
 
 默认情况下，Nuxt 会等待 `refresh` 完成后才能再次执行。
 

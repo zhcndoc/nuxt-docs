@@ -90,82 +90,9 @@ const { data: post } = await useFetch(() => `/api/posts/${id.value}`)
 如果你发现 `useFetch`  destructed 的 `data` 变量返回一个字符串而不是解析后的 JSON 对象，那么请确保你的组件没有包含像 `import { useFetch } from '@vueuse/core'` 的导入语句。
 ::
 
-:video-accordion{title="Watch the video from Alexander Lichter to avoid using useFetch the wrong way" videoId="njsGVmcWviY"}
-
-:link-example{to="/docs/examples/advanced/use-custom-fetch-composable"}
+:video-accordion{title="观看 Alexander Lichter 的视频，避免错误使用 useFetch" videoId="njsGVmcWviY"}
 
 :read-more{to="/docs/getting-started/data-fetching"}
-
-:link-example{to="/docs/examples/features/data-fetching"}
-
-## 参数
-
-- `URL`: 要获取的 URL。
-- `Options`（扩展自 [unjs/ofetch](https://github.com/unjs/ofetch) 选项 & [AsyncDataOptions](/docs/api/composables/use-async-data#params)）：
-  - `method`: 请求方法。
-  - `query`: 使用 [ufo](https://github.com/unjs/ufo) 向 URL 添加查询搜索参数。
-  - `params`: `query` 的别名。
-  - `body`: 请求体 - 会自动字符串化（如果传递了对象）。
-  - `headers`: 请求头。
-  - `baseURL`: 请求的基本 URL。
-  - `timeout`: 自动中止请求的毫秒数。
-  - `cache`: 根据 [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/fetch#cache) 处理缓存控制。
-    - 你可以传递布尔值以禁用缓存，或者可以传递以下值之一：`default`、`no-store`、`reload`、`no-cache`、`force-cache` 和 `only-if-cached`。
-
-::note
-所有获取选项都可以给定一个 `computed` 或 `ref` 值。如果它们被更新，这些将被观察到，并且会自动发出新的请求。
-::
-
-- `Options`（来自 [`useAsyncData`](/docs/api/composables/use-async-data)）：
-  - `key`: 一个唯一键，确保数据获取可以在请求间正确去重，如果没有提供，它将基于 URL 和获取选项自动生成。
-  - `server`: 是否在服务器上获取数据（默认值为 `true`）。
-  - `lazy`: 是否在加载路由后解析异步函数，而不是阻塞客户端导航（默认值为 `false`）。
-  - `immediate`: 设置为 `false` 时，将阻止请求立即发出。（默认值为 `true`）。
-  - `default`: 一个工厂函数，用于在异步函数解析之前设置 `data` 的默认值 - 适用于 `lazy: true` 或 `immediate: false` 选项。
-  - `transform`: 一个函数，可以在解析后用于更改 `handler` 函数结果。
-  - `getCachedData`: 提供一个返回缓存数据的函数。返回值为 `null` 或 `undefined` 将触发获取。默认值为：
-    ```ts
-    const getDefaultCachedData = (key, nuxtApp, ctx) => nuxtApp.isHydrating 
-      ? nuxtApp.payload.data[key] 
-      : nuxtApp.static.data[key]
-    ```
-    这只有在启用了 `nuxt.config` 的 `experimental.payloadExtraction` 时才会缓存数据。
-  - `pick`: 从 `handler` 函数结果中仅挑选此数组中指定的键。
-  - `watch`: 观察一组响应式源，当它们改变时自动刷新获取结果。默认情况下，会观察获取选项和 URL。你可以通过使用 `watch: false` 完全忽略响应式源。结合 `immediate: false`，这允许进行完全手动的 `useFetch`。（你可以 [在这里查看示例](/docs/getting-started/data-fetching#watch) 用于使用 `watch`。）
-  - `deep`: 返回深度引用对象中的数据。默认情况下为`false`，即返回浅层引用对象中的数据，若您的数据无需深度响应式处理，此模式可提升性能。
-  - `dedupe`: 避免在同一时间获取同一键不超过一次（默认值为 `cancel`）。可能的选项：
-    - `cancel` - 当发出新请求时取消现有请求。
-    - `defer` - 如果有待处理的请求，则不发出新的请求。
-
-::note
-如果你提供一个函数或 ref 作为 `url` 参数，或者如果你向 `options` 参数提供函数作为参数，则 `useFetch` 调用将不会与代码库中其他地方的 `useFetch` 调用匹配，即使选项似乎相同。如果你希望强制匹配，可以在 `options` 中提供自己的键。
-::
-
-::note
-如果你使用 `useFetch` 来调用开发中具有自签名证书的（外部）HTTPS URL，您需要在您的环境中设置 `NODE_TLS_REJECT_UNAUTHORIZED=0`。
-::
-
-:video-accordion{title="Watch a video from Alexander Lichter about client-side caching with getCachedData" videoId="aQPR0xn-MMk"}
-
-## 返回值
-
-- `data`: 传入的异步函数的结果。
-- `refresh`/`execute`: 可以用来刷新 `handler` 函数返回的数据的函数。
-- `error`: 如果数据获取失败，则返回一个错误对象。
-- `status`: 表示数据请求状态的字符串：
-  - `idle`: 当请求尚未开始时，例如：
-    - 当 `execute` 尚未被调用，并且设置了 `{ immediate: false }`。
-    - 当在服务器上渲染 HTML 并且设置了 `{ server: false }`。
-  - `pending`: 请求正在进行中。
-  - `success`: 请求已成功完成。
-  - `error`: 请求失败。
-- `clear`: 一个将 `data` 设置为 `undefined`，将 `error` 设置为 `null`，将 `status` 设置为 `'idle'` 的函数，并标记任何当前待处理的请求为已取消。
-
-默认情况下，Nuxt 等待 `refresh` 完成后才能再次执行。
-
-::note
-如果您在服务器上没有获取数据（例如，使用 `server: false`），那么数据 _不会_ 在水合完成之前获取。这意味着即使你在客户端等待 `useFetch`，在 `<script setup>` 中，`data` 将保持为 null。
-::
 
 ## 类型
 
@@ -196,7 +123,7 @@ type UseFetchOptions<DataT> = {
 }
 
 type AsyncDataRequestContext = {
-  /** The reason for this data request */
+  /** 请求数据的原因 */
   cause: 'initial' | 'refresh:manual' | 'refresh:hook' | 'watch'
 }
 
@@ -215,3 +142,73 @@ interface AsyncDataExecuteOptions {
 
 type AsyncDataRequestStatus = 'idle' | 'pending' | 'success' | 'error'
 ```
+
+## 参数说明
+
+- `URL` (`string | Request | Ref<string | Request> | () => string | Request`): 需要获取的 URL 或请求。可以是字符串、Request 对象、Vue 的 ref，或返回字符串/Request 的函数。支持响应式，以便动态端点。
+
+- `options` (对象): 获取请求的配置。继承自 [unjs/ofetch](https://github.com/unjs/ofetch) 选项和 [`AsyncDataOptions`](/docs/api/composables/use-async-data#params)。所有选项都可以是静态值、`ref` 或计算属性。
+
+| 选项 | 类型 | 默认 | 描述 |
+| ---| --- | --- | --- |
+| `key` | `string` | 自动生成 | 唯一键用于去重。如果未提供，将基于 URL 和选项自动生成。 |
+| `method` | `string` | `'GET'` | HTTP 请求方法。 |
+| `query` | `object` | - | 查询参数，附加到 URL 上。别名：`params`。支持 refs/计算属性。 |
+| `params` | `object` | - | `query` 的别名。 |
+| `body` | `RequestInit['body'] \| Record<string, any>` | - | 请求体。对象会自动序列化。支持 refs/计算属性。 |
+| `headers` | `Record<string, string> \| [key, value][] \| Headers` | - | 请求头。 |
+| `baseURL` | `string` | - | 请求的基础 URL。 |
+| `timeout` | `number` | - | 毫秒数，超过则中止请求。 |
+| `cache` | `boolean \| string` | - | 缓存控制。布尔值关闭缓存，或使用 Fetch API 支持的值：`default`、`no-store` 等。 |
+| `server` | `boolean` | `true` | 是否在服务器端执行请求。 |
+| `lazy` | `boolean` | `false` | 若为 true，则在路由加载后解析（不会阻塞导航）。 |
+| `immediate` | `boolean` | `true` | 若为 false，阻止立即发起请求。 |
+| `default` | `() => DataT` | - | 在异步完成前提供 `data` 的默认值工厂函数。 |
+| `transform` | `(input: DataT) => DataT \| Promise<DataT>` | - | 解析结果后进行转换的函数。 |
+| `getCachedData`| `(key, nuxtApp, ctx) => DataT \| undefined` | - | 用于返回缓存数据的函数。见下文默认实现。 |
+| `pick` | `string[]` | - | 只选择结果中的指定键。 |
+| `watch` | `WatchSource[] \| false` | - | 响应式源数组，用于监听并自动刷新。设置为 `false` 可禁用监听。 |
+| `deep` | `boolean` | `false` | 数据以深度响应式对象返回。 |
+| `dedupe` | `'cancel' \| 'defer'` | `'cancel'` | 避免对相同 key 同时发起重复请求。 |
+| `$fetch` | `typeof $fetch` | - | 自定义的 $fetch 实现。 |
+
+::note
+所有获取选项均可使用计算属性或 ref 值。这些值会被监听，更新时会自动发起新请求。
+::
+
+**getCachedData 默认实现：**
+
+```ts
+const getDefaultCachedData = (key, nuxtApp, ctx) => nuxtApp.isHydrating 
+ ? nuxtApp.payload.data[key] 
+ : nuxtApp.static.data[key]
+```
+此缓存仅在 `nuxt.config` 中启用 `experimental.payloadExtraction` 时生效。
+
+## 返回值
+
+| 名称 | 类型 | 描述 |
+| --- | --- |--- |
+| `data` | `Ref<DataT \| null>` | 异步获取结果。 |
+| `refresh` | `(opts?: AsyncDataExecuteOptions) => Promise<void>` | 手动刷新数据的函数。默认情况下，Nuxt 会等待刷新完成后才能再次执行刷新。 |
+| `execute` | `(opts?: AsyncDataExecuteOptions) => Promise<void>` | `refresh` 的别名。 |
+| `error` | `Ref<ErrorT \| null>` | 如果数据获取失败，包含错误对象。 |
+| `status` | `Ref<'idle' \| 'pending' \| 'success' \| 'error'>` | 数据请求的状态。请见下方状态说明。 |
+| `clear` | `() => void` | 重置 `data` 为 `undefined`（或 `options.default()` 的返回值）、`error` 为 `undefined`，将状态设为 `idle`，并取消任何挂起的请求。 |
+
+### 状态说明
+
+- `idle`: 请求未开始（例如 `{ immediate: false }` 或服务器渲染时 `{ server: false }`）
+- `pending`: 请求进行中
+- `success`: 请求成功完成
+- `error`: 请求失败
+
+::note
+如果你在服务器端没有获取数据（例如设置了 `server: false`），那么数据不会被立即获取，直到 hydration 完成。这意味着即使你在客户端使用 `await useFetch`，`data` 在 `<script setup>` 中仍然可能是 null。
+::
+
+### 示例
+
+:link-example{to="/docs/examples/advanced/use-custom-fetch-composable"}
+
+:link-example{to="/docs/examples/features/data-fetching"}

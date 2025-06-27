@@ -8,25 +8,48 @@ links:
     size: xs
 ---
 
-该组合函数返回正在处理的全局 Nuxt 错误，并且在客户端和服务器上均可用。
+## 用法
+
+`useError` 组合函数返回正在处理的全局 Nuxt 错误，既可在客户端也可在服务器端使用。它为您的应用提供了一个响应式且支持 SSR 的错误状态。
 
 ```ts
 const error = useError()
 ```
 
-`useError` 在状态中设置一个错误，并创建一个响应式的、适合 SSR 的全局 Nuxt 错误，供组件使用。
+您可以在组件、页面或插件中使用此组合函数以访问或响应当前的 Nuxt 错误。
 
-Nuxt 错误具有以下属性：
+## 类型
 
 ```ts
-interface {
-  // HTTP 响应状态码
+interface NuxtError<DataT = unknown> {
   statusCode: number
-  // HTTP 响应状态信息
   statusMessage: string
-  // 错误信息
   message: string
+  data?: DataT
+  error?: true
 }
+
+export const useError: () => Ref<NuxtError | undefined>
+```
+
+## 参数
+
+此组合函数不接受任何参数。
+
+## 返回值
+
+返回一个包含当前 Nuxt 错误（如果没有错误则为 `undefined`）的 `Ref`。错误对象是响应式的，会在错误状态发生变化时自动更新。
+
+## 示例
+
+```ts
+<script setup lang="ts">
+const error = useError()
+
+if (error.value) {
+  console.error('Nuxt 错误:', error.value)
+}
+</script>
 ```
 
 :read-more{to="/docs/getting-started/error-handling"}

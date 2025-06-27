@@ -8,7 +8,9 @@ links:
     size: xs
 ---
 
-在您的页面、组件和插件中，您可以使用 `useCookie`，这是一个支持 SSR 的组合式 API，用于读取和写入 cookies。
+## 用法
+
+在你的页面、组件和插件中，可以使用 `useCookie` 以支持 SSR 的方式读取和写入 cookies。
 
 ```ts
 const cookie = useCookie(name, options)
@@ -19,12 +21,64 @@ const cookie = useCookie(name, options)
 ::
 
 ::tip
-`useCookie` 引用将自动将 cookie 值序列化和反序列化为 JSON。
+返回的 ref 会自动将 cookie 值序列化和反序列化为 JSON。
 ::
+
+## 类型
+
+```ts [Signature]
+import type { Ref } from 'vue'
+import type { CookieParseOptions, CookieSerializeOptions } from 'cookie-es'
+
+export interface CookieOptions<T = any> extends Omit<CookieSerializeOptions & CookieParseOptions, 'decode' | 'encode'> {
+  decode?(value: string): T
+  encode?(value: T): string
+  default?: () => T | Ref<T>
+  watch?: boolean | 'shallow'
+  readonly?: boolean
+}
+
+export interface CookieRef<T> extends Ref<T> {}
+
+export function useCookie<T = string | null | undefined>(
+  name: string,
+  options?: CookieOptions<T>
+): CookieRef<T>
+```
+
+## 参数
+
+`name`：cookie 的名称。
+
+`options`：控制 cookie 行为的选项。该对象可以包含以下属性：
+
+大部分选项将直接传递给 [cookie](https://github.com/jshttp/cookie) 包。
+
+| 属性 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `decode` | `(value: string) => T` | `decodeURIComponent` + [destr](https://github.com/unjs/destr) | 自定义函数，用于解码 cookie 值。由于 cookie 的值字符集有限（且必须是简单字符串），此函数可以将先前编码的 cookie 值解码为 JavaScript 字符串或其他对象。<br/>**注意：** 如果该函数抛出错误，cookie 的值将返回为原始未解码的字符串。 |
+| `encode` | `(value: T) => string` | `JSON.stringify` + `encodeURIComponent` | 自定义函数，用于编码 cookie 值。由于 cookie 的值字符集有限（必须是简单字符串），此函数能将值编码成适合 cookie 的字符串。 |
+| `default` | `() => T | Ref<T>` | `undefined` | 当 cookie 不存在时返回默认值的函数。该函数也可以返回一个 `Ref`。 |
+| `watch` | `boolean | 'shallow'` | `true` | 是否监听变化并更新 cookie。`true` 为深度监听，`'shallow'` 为浅层监听（只监视顶层属性变更），`false` 禁用监听。<br/>**注意：** 当 cookie 改变时，需通过 [`refreshCookie`](/docs/api/utils/refresh-cookie) 手动刷新 `useCookie` 的值。 |
+| `readonly` | `boolean` | `false` | 若为 `true`，则禁用写入 cookie。 |
+| `maxAge` | `number` | `undefined` | cookie 的最大存活时间（秒），即 [`Max-Age` `Set-Cookie` 属性](https://tools.ietf.org/html/rfc6265#section-5.2.2)的值。会向下取整为整数。默认不设置最大年龄。 |
+| `expires` | `Date` | `undefined` | cookie 的过期时间。默认不设置，大多数客户端会将其视为“非持久 cookie”，并在关闭浏览器时删除。<br/>**注意：** [cookie 存储模型规范](https://tools.ietf.org/html/rfc6265#section-5.3)说明若同时设置了 `expires` 和 `maxAge`，`maxAge` 优先，但非所有客户端都会遵守，若同时设置应确保两个时间相同。<br/>若两者均未设置，cookie 为会话级，浏览器关闭后删除。 |
+| `httpOnly` | `boolean` | `false` | 设置 HttpOnly 属性。<br/>**注意：** 设置为 `true` 后，符合规范的客户端不允许客户端 JavaScript 在 `document.cookie` 中访问该 cookie。 |
+| `secure` | `boolean` | `false` | 设置 [`Secure` `Set-Cookie` 属性](https://tools.ietf.org/html/rfc6265#section-5.2.5)。<br/>**注意：** 设置为 `true` 后，若浏览器非 HTTPS 连接，将不会发送 cookie，可能导致水合错误。 |
+| `partitioned` | `boolean` | `false` | 设置 [`Partitioned` `Set-Cookie` 属性](https://datatracker.ietf.org/doc/html/draft-cutler-httpbis-partitioned-cookies#section-2.1)。<br/>**注意：** 该属性尚未完全标准化，未来可能更改，且许多客户端可能暂时忽略。<br/>更多信息参见 [提案](https://github.com/privacycg/CHIPS)。 |
+| `domain` | `string` | `undefined` | 设置 [`Domain` `Set-Cookie` 属性](https://tools.ietf.org/html/rfc6265#section-5.2.3)。默认不设置，大多数客户端默认只对当前域应用该 cookie。 |
+| `path` | `string` | `'/'` | 设置 [`Path` `Set-Cookie` 属性](https://tools.ietf.org/html/rfc6265#section-5.2.4)。默认路径为 ["默认路径"](https://tools.ietf.org/html/rfc6265#section-5.1.4)。 |
+| `sameSite` | `boolean | string` | `undefined` | 设置 [`SameSite` `Set-Cookie` 属性](https://tools.ietf.org/html/draft-ietf-httpbis-rfc6265bis-03#section-4.1.2.7)。<br/>- `true` 设置 `SameSite=Strict`，严格同站策略。<br/>- `false` 不设置 `SameSite` 属性。<br/>- `'lax'` 设置 `SameSite=Lax`，宽松同站策略。<br/>- `'none'` 设置 `SameSite=None`，允许跨站 cookie。<br/>- `'strict'` 设置 `SameSite=Strict`，严格同站策略。 |
+
+## 返回值
+
+返回一个 Vue `Ref<T>` 表示 cookie 值。更新该 ref 会更新 cookie（除非设置了 `readonly`）。该 ref 支持 SSR，可在客户端和服务端使用。
 
 ## 示例
 
-下面的示例创建了一个名为 `counter` 的 cookie。如果 cookie 不存在，它会最初设置为一个随机值。每当我们更新 `counter` 变量时，cookie 也会相应地更新。
+### 基本用法
+
+以下示例创建了一个名为 `counter` 的 cookie。如果 cookie 不存在，初始会设置为一个随机值。每次更新 `counter` 变量时，cookie 也会相应更新。
 
 ```vue [app.vue]
 <script setup lang="ts">
@@ -43,120 +97,7 @@ counter.value = counter.value || Math.round(Math.random() * 1000)
 </template>
 ```
 
-:link-example{to="/docs/examples/advanced/use-cookie"}
-
-::note
-当 cookie 更改时，通过 [`refreshCookie`](/docs/api/utils/refresh-cookie) 手动刷新 `useCookie` 值。
-::
-
-## 选项
-
-cookie 组合式 API 接受多个选项，您可以通过这些选项修改 cookie 的行为。
-
-大多数选项将被直接传递给 [cookie](https://github.com/jshttp/cookie) 包。
-
-### `maxAge` / `expires`
-
-使用这些选项设置 cookie 的过期时间。
-
-`maxAge`: 指定一个 `number`（以秒为单位），作为 [`Max-Age` `Set-Cookie` 属性](https://tools.ietf.org/html/rfc6265#section-5.2.2) 的值。
-给定的数字将通过向下取整转换为整数。 默认情况下，不设置最大年龄。
-
-`expires`: 指定一个 `Date` 对象作为 [`Expires` `Set-Cookie` 属性](https://tools.ietf.org/html/rfc6265#section-5.2.1) 的值。
-默认情况下，不设置过期。大多数客户端将把此视为“非持久 cookie”，并在关闭 web 浏览器应用程序时删除它。
-
-::note
-[cookie 存储模型规范](https://tools.ietf.org/html/rfc6265#section-5.3)规定，如果同时设置了 `expires` 和 `maxAge`，那么 `maxAge` 优先，但不是所有客户端都可能遵循这一点，因此如果同时设置了它们，应该指向同一日期和时间！
-::
-
-::note
-如果既未设置 `expires` 也未设置 `maxAge`，则 cookie 将仅限于会话，并在用户关闭浏览器时删除。
-::
-
-### `httpOnly`
-
-为 [`HttpOnly` `Set-Cookie` 属性](https://tools.ietf.org/html/rfc6265#section-5.2.6) 指定一个 `boolean` 值。当为真时，设置 `HttpOnly` 属性；否则不设置。默认为不设置 `HttpOnly` 属性。
-
-::warning
-小心将此设置为 `true`，因为合规的客户端将不允许客户端 JavaScript 在 `document.cookie` 中看到 cookie。
-::
-
-### `secure`
-
-为 [`Secure` `Set-Cookie` 属性](https://tools.ietf.org/html/rfc6265#section-5.2.5) 指定一个 `boolean` 值。当为真时，设置 `Secure` 属性；否则不设置。默认为不设置 `Secure` 属性。
-
-::warning
-小心将此设置为 `true`，因为合规的客户端如果浏览器没有 HTTPS 连接将不会将 cookie 发送回服务器。这可能导致水合错误。
-::
-
-### `partitioned`
-
-为 [`Partitioned` `Set-Cookie`](https://datatracker.ietf.org/doc/html/draft-cutler-httpbis-partitioned-cookies#section-2.1) 属性指定一个 `boolean` 值。当为真时，设置 `Partitioned` 属性；否则不设置。默认为不设置 `Partitioned` 属性。
-
-::note
-这是一个尚未完全标准化的属性，未来可能会改变。
-这也意味着许多客户端可能会在理解之前忽略此属性。
-
-更多信息可以在 [提案](https://github.com/privacycg/CHIPS) 中找到。
-::
-
-### `domain`
-
-为 [`Domain` `Set-Cookie` 属性](https://tools.ietf.org/html/rfc6265#section-5.2.3) 指定值。默认情况下不设置域，大多数客户端将只对当前域应用 cookie。
-
-### `path`
-
-为 [`Path` `Set-Cookie` 属性](https://tools.ietf.org/html/rfc6265#section-5.2.4) 指定值。默认情况下，路径被视为“默认路径”（https://tools.ietf.org/html/rfc6265#section-5.1.4）。
-
-### `sameSite`
-
-为 [`SameSite` `Set-Cookie` 属性](https://tools.ietf.org/html/draft-ietf-httpbis-rfc6265bis-03#section-4.1.2.7) 指定一个 `boolean` 或 `string` 值。
-
-- `true` 将 `SameSite` 属性设置为 `Strict` 以严格执行同站策略。
-- `false` 不设置 `SameSite` 属性。
-- `'lax'` 将 `SameSite` 属性设置为 `Lax` 以宽松执行同站策略。
-- `'none'` 将 `SameSite` 属性设置为 `None` 以显式定义跨站 cookie。
-- `'strict'` 将 `SameSite` 属性设置为 `Strict` 以严格执行同站策略。
-
-有关不同执行级别的更多信息，请参见 [规范](https://tools.ietf.org/html/draft-ietf-httpbis-rfc6265bis-03#section-4.1.2.7)。
-
-### `encode`
-
-指定一个将用于编码 cookie 值的函数。由于 cookie 的值具有有限的字符集（并且必须是简单字符串），此函数可以用于将值编码为适合 cookie 值的字符串。
-
-默认编码器是 `JSON.stringify` + `encodeURIComponent`。
-
-### `decode`
-
-指定一个将用于解码 cookie 值的函数。由于 cookie 的值具有有限的字符集（并且必须是简单字符串），此函数可以用于将先前编码的 cookie 值解码为 JavaScript 字符串或其他对象。
-
-默认解码器是 `decodeURIComponent` + [destr](https://github.com/unjs/destr)。
-
-::note
-如果此函数抛出错误，则将返回原始的、未解码的 cookie 值作为 cookie 的值。
-::
-
-### `default`
-
-指定一个返回 cookie 默认值的函数。该函数也可以返回一个 `Ref`。
-
-### `readonly`
-
-允许访问 cookie 值，而没有设置它的能力。
-
-### `watch`
-
-指定一个 `boolean` 或 `string` 值，用于 [watch](https://vue.zhcndoc.com/api/reactivity-core.html#watch) cookie 引用数据。
-
-- `true` - 将监视 cookie 引用数据的变化及其嵌套属性（默认）。
-- `shallow` - 仅监视 cookie 引用数据的顶层属性变化。
-- `false` - 不监视 cookie 引用数据的变化。
-
-::note
-当 cookie 更改时，通过 [`refreshCookie`](/docs/api/utils/refresh-cookie) 手动刷新 `useCookie` 值。
-::
-
-**示例 1:**
+### 只读 Cookies
 
 ```vue
 <script setup lang="ts">
@@ -169,7 +110,7 @@ const user = useCookie(
 )
 
 if (user.value) {
-  // the actual `userInfo` cookie will not be updated
+  // 实际的 `userInfo` cookie 不会被更新
   user.value.score++
 }
 </script>
@@ -179,7 +120,7 @@ if (user.value) {
 </template>
 ```
 
-**示例 2:**
+### 可写 Cookies
 
 ```vue
 <script setup lang="ts">
@@ -193,12 +134,12 @@ const list = useCookie(
 
 function add() {
   list.value?.push(Math.round(Math.random() * 1000))
-  // list cookie 不会随着这个变化而更新
+  // 该修改不会自动更新 list cookie
 }
 
 function save() {
   if (list.value) {
-    // the actual `list` cookie will be updated
+    // 这里将会更新实际的 `list` cookie
     list.value = [...list.value]
   }
 }
@@ -214,9 +155,9 @@ function save() {
 </template>
 ```
 
-## API 路由中的 Cookies
+### API 路由中的 Cookies
 
-您可以使用来自 [`h3`](https://github.com/unjs/h3) 包的 `getCookie` 和 `setCookie` 来设置服务器 API 路由中的 cookies。
+你可以使用 [`h3`](https://github.com/h3js/h3) 包中的 `getCookie` 和 `setCookie` 在服务端 API 路由中设置 cookie。
 
 ```ts [server/api/counter.ts]
 export default defineEventHandler(event => {
@@ -226,7 +167,7 @@ export default defineEventHandler(event => {
   // 将 counter cookie 增加 1
   setCookie(event, 'counter', ++counter)
 
-  // 发送 JSON 响应
+  // 返回 JSON 响应
   return { counter }
 })
 ```
