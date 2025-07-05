@@ -103,7 +103,7 @@ function useFetch<DataT, ErrorT>(
 ): Promise<AsyncData<DataT, ErrorT>>
 
 type UseFetchOptions<DataT> = {
-  key?: string
+  key?: MaybeRefOrGetter<string>
   method?: string
   query?: SearchParams
   params?: SearchParams
@@ -119,7 +119,8 @@ type UseFetchOptions<DataT> = {
   default?: () => DataT
   transform?: (input: DataT) => DataT | Promise<DataT>
   pick?: string[]
-  watch?: WatchSource[] | false
+  $fetch?: typeof globalThis.$fetch
+  watch?: MultiWatchSources | false
 }
 
 type AsyncDataRequestContext = {
@@ -128,11 +129,11 @@ type AsyncDataRequestContext = {
 }
 
 type AsyncData<DataT, ErrorT> = {
-  data: Ref<DataT | null>
+  data: Ref<DataT | undefined>
   refresh: (opts?: AsyncDataExecuteOptions) => Promise<void>
   execute: (opts?: AsyncDataExecuteOptions) => Promise<void>
   clear: () => void
-  error: Ref<ErrorT | null>
+  error: Ref<ErrorT | undefined>
   status: Ref<AsyncDataRequestStatus>
 }
 
@@ -151,7 +152,7 @@ type AsyncDataRequestStatus = 'idle' | 'pending' | 'success' | 'error'
 
 | 选项 | 类型 | 默认 | 描述 |
 | ---| --- | --- | --- |
-| `key` | `string` | 自动生成 | 唯一键用于去重。如果未提供，将基于 URL 和选项自动生成。 |
+| `key` | `MaybeRefOrGetter<string>` | 自动生成 | 唯一键用于去重。如果未提供，将基于 URL 和选项自动生成。 |
 | `method` | `string` | `'GET'` | HTTP 请求方法。 |
 | `query` | `object` | - | 查询参数，附加到 URL 上。别名：`params`。支持 refs/计算属性。 |
 | `params` | `object` | - | `query` 的别名。 |
@@ -167,10 +168,10 @@ type AsyncDataRequestStatus = 'idle' | 'pending' | 'success' | 'error'
 | `transform` | `(input: DataT) => DataT \| Promise<DataT>` | - | 解析结果后进行转换的函数。 |
 | `getCachedData`| `(key, nuxtApp, ctx) => DataT \| undefined` | - | 用于返回缓存数据的函数。见下文默认实现。 |
 | `pick` | `string[]` | - | 只选择结果中的指定键。 |
-| `watch` | `WatchSource[] \| false` | - | 响应式源数组，用于监听并自动刷新。设置为 `false` 可禁用监听。 |
+| `watch` | `MultiWatchSources \| false` | - | 响应式源数组，用于监听并自动刷新。设置为 `false` 可禁用监听。 |
 | `deep` | `boolean` | `false` | 数据以深度响应式对象返回。 |
 | `dedupe` | `'cancel' \| 'defer'` | `'cancel'` | 避免对相同 key 同时发起重复请求。 |
-| `$fetch` | `typeof $fetch` | - | 自定义的 $fetch 实现。 |
+| `$fetch` | `typeof globalThis.$fetch` | - | 自定义的 $fetch 实现。 |
 
 ::note
 所有获取选项均可使用计算属性或 ref 值。这些值会被监听，更新时会自动发起新请求。
@@ -189,10 +190,10 @@ const getDefaultCachedData = (key, nuxtApp, ctx) => nuxtApp.isHydrating
 
 | 名称 | 类型 | 描述 |
 | --- | --- |--- |
-| `data` | `Ref<DataT \| null>` | 异步获取结果。 |
+| `data` | `Ref<DataT \| undefined>` | 异步获取结果。 |
 | `refresh` | `(opts?: AsyncDataExecuteOptions) => Promise<void>` | 手动刷新数据的函数。默认情况下，Nuxt 会等待刷新完成后才能再次执行刷新。 |
 | `execute` | `(opts?: AsyncDataExecuteOptions) => Promise<void>` | `refresh` 的别名。 |
-| `error` | `Ref<ErrorT \| null>` | 如果数据获取失败，包含错误对象。 |
+| `error` | `Ref<ErrorT \| undefined>` | 如果数据获取失败，包含错误对象。 |
 | `status` | `Ref<'idle' \| 'pending' \| 'success' \| 'error'>` | 数据请求的状态。请见下方状态说明。 |
 | `clear` | `() => void` | 重置 `data` 为 `undefined`（或 `options.default()` 的返回值）、`error` 为 `undefined`，将状态设为 `idle`，并取消任何挂起的请求。 |
 
