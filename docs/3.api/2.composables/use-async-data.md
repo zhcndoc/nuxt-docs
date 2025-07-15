@@ -142,6 +142,10 @@ const { data: users1 } = useAsyncData('users', () => $fetch('/api/users'), { imm
 const { data: users2 } = useAsyncData('users', () => $fetch('/api/users'), { immediate: false })
 ```
 
+::tip
+使用 `useAsyncData` 创建的键控状态可以通过您的 Nuxt 应用程序使用 [`useNuxtData`](/docs/api/composables/use-nuxt-data) 进行检索。
+::
+
 ## 返回值
 
 - `data`: 传入的异步函数的结果。

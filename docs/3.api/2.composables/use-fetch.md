@@ -82,6 +82,10 @@ const { data: post } = await useFetch(() => `/api/posts/${id.value}`)
 
 在多个组件中使用相同的 URL 和选项时，`useFetch` 将共享相同的 `data`、`error` 和 `status` 引用。这确保了组件之间的一致性。
 
+::tip
+Keyed state created using `useFetch` can be retrieved across your Nuxt application using [`useNuxtData`](/docs/api/composables/use-nuxt-data).
+::
+
 ::warning
 `useFetch` 是一个被编译器保留的函数名称，因此你不应将自己的函数命名为 `useFetch`。
 ::

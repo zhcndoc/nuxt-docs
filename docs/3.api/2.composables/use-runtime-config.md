@@ -55,7 +55,7 @@ export default defineNuxtConfig({
 要访问运行时配置，我们可以使用 `useRuntimeConfig()` 组合式 API：
 
 ```ts [server/api/test.ts]
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event)
 
   // 访问公共变量
