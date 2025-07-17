@@ -38,6 +38,8 @@ npm create nuxt@latest [DIR] [--cwd=<directory>] [-t, --template] [-f, --force] 
 `--gitInit` |  | 初始化 git 仓库
 `--shell` |  | 安装后在项目目录中启动 shell
 `--packageManager` |  | 选择包管理器 (npm, pnpm, yarn, bun)
+`--modules` |  | 要安装的 Nuxt 模块（用逗号分隔，无空格）
+`--no-modules` |  | 跳过模块安装提示
 <!--/init-opts-->
 
 ## 环境变量

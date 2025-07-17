@@ -20,7 +20,7 @@ Nuxt 使用 [ofetch](https://github.com/unjs/ofetch) 在全局范围内暴露 `$
 
 ## 用法
 
-我们建议使用 [`useFetch`](/docs/api/composables/use-fetch) 或 [`useAsyncData`](/docs/api/composables/use-async-data) + `$fetch` 来防止在获取组件数据时重复请求。
+我们建议使用 [`useFetch`](/docs/api/composables/use-fetch) 或 [`useAsyncData`](/docs/api/composables/use-async-data) + `$fetch` 来防止在获取组件数据时发生双重数据获取。
 
 ```vue [app.vue]
 <script setup lang="ts">

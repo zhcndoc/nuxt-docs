@@ -15,7 +15,7 @@ links:
 您可以使用内置的 [`useResponseHeader`](/docs/api/composables/use-response-header) 组合函数，在您的页面、组件和插件中设置任何服务器响应头。
 
 ```ts
-// 设置自定义响应头
+// Set a custom response header
 const header = useResponseHeader('X-My-Header');
 header.value = 'my-value';
 ```
