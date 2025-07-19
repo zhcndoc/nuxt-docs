@@ -154,12 +154,12 @@ const { data: users2 } = useAsyncData('users', () => $fetch('/api/users'), { imm
   - `pending`：请求正在进行中
   - `success`：请求成功完成
   - `error`：请求失败
-- `clear`：将 `data` 设为 `undefined`，`error` 设为 `null`，`status` 设为 `'idle'`，并标记任何当前挂起请求为已取消的函数。
+- `clear`：一个可以用来将 `data` 设置为 `undefined`（如果提供了，则设置为 `options.default()` 的值）、将 `error` 设置为 `null`、将 `status` 设置为 `idle`，并将任何当前待处理的请求标记为已取消的函数。
 
 默认情况下，Nuxt 会等待一次 `refresh` 完成后才允许再次执行。
 
 ::note
-如果你没有在服务器端获取数据（例如设置了 `server: false`），则数据 **不会** 在水合前被获取。这意味着即使你在客户端 await 了 [`useAsyncData`](/docs/api/composables/use-async-data)，`data` 依然会在 `<script setup>` 中保持为 `null`。
+如果您没有在服务器上获取数据（例如，使用 `server: false`），那么数据_将不会_在水合完成之前被获取。这意味着即使您在客户端等待 [`useAsyncData`](/docs/api/composables/use-async-data)，`data` 在 `<script setup>` 中仍将保持 `undefined`。
 ::
 
 ## 类型
@@ -170,7 +170,7 @@ function useAsyncData<DataT, DataE>(
   options?: AsyncDataOptions<DataT>
 ): AsyncData<DataT, DataE>
 function useAsyncData<DataT, DataE>(
-  key: string | Ref<string> | ComputedRef<string>,
+  key: MaybeRefOrGetter<string>,
   handler: (nuxtApp?: NuxtApp) => Promise<DataT>,
   options?: AsyncDataOptions<DataT>
 ): Promise<AsyncData<DataT, DataE>>
@@ -184,7 +184,7 @@ type AsyncDataOptions<DataT> = {
   default?: () => DataT | Ref<DataT> | null
   transform?: (input: DataT) => DataT | Promise<DataT>
   pick?: string[]
-  watch?: WatchSource[] | false
+  watch?: MultiWatchSources | false
   getCachedData?: (key: string, nuxtApp: NuxtApp, ctx: AsyncDataRequestContext) => DataT | undefined
 }
 

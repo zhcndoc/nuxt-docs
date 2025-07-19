@@ -95,7 +95,7 @@ await nuxtApp.callHook('my-plugin:init')
 
 Nuxt 通过 `ssrContext` 暴露如下属性：
 - `url`（字符串）— 当前请求的 URL。
-- `event`（[unjs/h3](https://github.com/unjs/h3) 请求事件）— 访问当前路由的请求与响应。
+- `event`（[h3js/h3](https://github.com/h3js/h3) 请求事件）— 访问当前路由的请求与响应。
 - `payload`（对象）— NuxtApp 的负载对象。
 
 ### `payload`
