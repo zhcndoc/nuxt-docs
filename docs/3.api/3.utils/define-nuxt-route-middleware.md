@@ -28,7 +28,7 @@ interface RouteMiddleware {
 
 一个函数，它接受两个 Vue Router 的路由位置对象作为参数：下一个路由 `to` 作为第一个，当前路由 `from` 作为第二个。
 
-了解 `RouteLocationNormalized` 的可用属性，请参见 **[Vue Router 文档](https://router.vuejs.org/api/#RouteLocationNormalized)**。
+了解 `RouteLocationNormalized` 的可用属性，请参见 **[Vue Router 文档](https://router.vuejs.org/api/type-aliases/RouteLocationNormalized.html)**。
 
 ## 示例
 
