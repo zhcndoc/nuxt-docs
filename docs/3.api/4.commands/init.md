@@ -10,7 +10,7 @@ links:
 
 <!--init-cmd-->
 ```bash [Terminal]
-npm create nuxt@latest [DIR] [--cwd=<directory>] [-t, --template] [-f, --force] [--offline] [--preferOffline] [--no-install] [--gitInit] [--shell] [--packageManager]
+npm create nuxt@latest [DIR] [--cwd=<directory>] [-t, --template] [-f, --force] [--offline] [--preferOffline] [--no-install] [--gitInit] [--shell] [--packageManager] [--nightly]
 ```
 <!--/init-cmd-->
 
@@ -40,6 +40,7 @@ npm create nuxt@latest [DIR] [--cwd=<directory>] [-t, --template] [-f, --force] 
 `--packageManager` |  | 选择包管理器 (npm, pnpm, yarn, bun)
 `--modules` |  | 要安装的 Nuxt 模块（用逗号分隔，无空格）
 `--no-modules` |  | 跳过模块安装提示
+`--nightly` |  | 使用 Nuxt 夜间发布频道（3x 或最新版本）
 <!--/init-opts-->
 
 ## 环境变量
