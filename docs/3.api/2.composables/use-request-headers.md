@@ -28,7 +28,7 @@ const headers = useRequestHeaders(['cookie'])
 
 下面的示例将 `authorization` 请求头添加到一个同构的 `$fetch` 调用中。
 
-```vue [pages/some-page.vue]
+```vue [app/pages/some-page.vue]
 <script setup lang="ts">
 const { data } = await useFetch('/api/confidential', {
   headers: useRequestHeaders(['authorization'])

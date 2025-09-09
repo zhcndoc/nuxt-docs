@@ -8,9 +8,9 @@ links:
     size: xs
 ---
 
-`definePageMeta` 是一个编译器宏，你可以用它为位于 [`pages/`](/docs/guide/directory-structure/pages) 目录中的 **页面** 组件设置元数据（除非 [另有设置](/docs/api/nuxt-config#pages)）。通过这种方式，你可以为 Nuxt 应用程序的每个静态或动态路由设置自定义元数据。
+`definePageMeta` 是一个编译器宏，你可以用它为位于 [`app/pages/`](/docs/guide/directory-structure/app/pages) 目录中的 **页面** 组件设置元数据（除非 [另有设置](/docs/api/nuxt-config#pages)）。通过这种方式，你可以为 Nuxt 应用程序的每个静态或动态路由设置自定义元数据。
 
-```vue [pages/some-page.vue]
+```vue [app/pages/some-page.vue]
 <script setup lang="ts">
 definePageMeta({
   layout: 'default'
@@ -18,7 +18,7 @@ definePageMeta({
 </script>
 ```
 
-:read-more{to="/docs/guide/directory-structure/pages#page-metadata"}
+:read-more{to="/docs/guide/directory-structure/app/pages#page-metadata"}
 
 ## 类型
 
@@ -56,7 +56,7 @@ interface PageMeta {
 
   - **类型**: `string`
 
-    你可以为该页面的路由定义一个名称。默认情况下，名称是基于 [`pages/` 目录](/docs/guide/directory-structure/pages) 内的路径生成的。
+    你可以为该页面的路由定义一个名称。默认情况下，名称是基于 [`app/pages/` 目录](/docs/guide/directory-structure/app/pages) 内的路径生成的。
 
   **`path`**
 
@@ -104,7 +104,7 @@ interface PageMeta {
 
   - **类型**: `MiddlewareKey` | [`NavigationGuard`](https://router.vuejs.org/api/interfaces/NavigationGuard.html#navigationguard) | `Array<MiddlewareKey | NavigationGuard>`
 
-    在 `definePageMeta` 中直接定义匿名或命名的中间件。了解更多关于 [路由中间件](/docs/guide/directory-structure/middleware)。
+    在 `definePageMeta` 中直接定义匿名或命名的中间件。了解更多关于 [路由中间件](/docs/guide/directory-structure/app/middleware)。
 
   **`pageTransition`**
 
@@ -142,7 +142,7 @@ interface PageMeta {
 
   - **类型**: `any`
 
-    除上述属性外，你还可以设置 **自定义** 元数据。你可能希望以类型安全的方式做到这一点，通过 [增强 `meta` 对象的类型](/docs/guide/directory-structure/pages/#typing-custom-metadata)。
+    除上述属性外，你还可以设置 **自定义** 元数据。你可能希望以类型安全的方式做到这一点，通过 [增强 `meta` 对象的类型](/docs/guide/directory-structure/app/pages/#typing-custom-metadata)。
 
 ## 示例
 
@@ -154,7 +154,7 @@ interface PageMeta {
 - 如何确保在多个组件之间切换时 `keepalive` 属性使 `<modal>` 组件不会被缓存；
 - 添加 `pageType` 作为自定义属性：
 
-```vue [pages/some-page.vue]
+```vue [app/pages/some-page.vue]
 <script setup lang="ts">
 definePageMeta({
   key: (route) => route.fullPath,
@@ -170,9 +170,9 @@ definePageMeta({
 
 ### 定义中间件
 
-下面的示例展示了如何可以通过在 `definePageMeta` 中直接使用一个 `function` 来定义中间件，或者将其设置为一个匹配 `middleware/` 目录中间件文件名称的 `string`：
+下面的示例展示了如何可以通过在 `definePageMeta` 中直接使用一个 `function` 来定义中间件，或者将其设置为一个匹配 `app/middleware/` 目录中间件文件名称的 `string`：
 
-```vue [pages/some-page.vue]
+```vue [app/pages/some-page.vue]
 <script setup lang="ts">
 definePageMeta({
   // 将中间件定义为一个函数
@@ -207,7 +207,7 @@ definePageMeta({
 
 为了确保我们仅匹配 `[postId]-[postSlug]` 路由中的数字 (`\d+`)，我们可以在 `[postId]-[postSlug].vue` 页面模板中添加以下内容：
 
-```vue [pages/[postId\\]-[postSlug\\].vue]
+```vue [app/pages/[postId\\]-[postSlug\\].vue]
 <script setup lang="ts">
 definePageMeta({
   path: '/:postId(\\d+)-:postSlug' 
@@ -219,9 +219,9 @@ definePageMeta({
 
 ### 定义布局
 
-你可以定义与布局文件名称匹配的布局（默认位于 [`layouts/` 目录](/docs/guide/directory-structure/layouts)）。你还可以通过将 `layout` 设置为 `false` 来禁用布局：
+你可以定义与布局文件名称匹配的布局（默认位于 [`app/layouts/` 目录](/docs/guide/directory-structure/app/layouts)）。你还可以通过将 `layout` 设置为 `false` 来禁用布局：
 
-```vue [pages/some-page.vue]
+```vue [app/pages/some-page.vue]
 <script setup lang="ts">
 definePageMeta({
   // 设置自定义布局

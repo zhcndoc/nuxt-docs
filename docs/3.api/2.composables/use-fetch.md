@@ -17,7 +17,7 @@ links:
 
 ## 使用方法
 
-```vue [pages/modules.vue]
+```vue [app/pages/modules.vue]
 <script setup lang="ts">
 const { data, status, error, refresh, clear } = await useFetch('/api/modules', {
   pick: ['title']
@@ -70,7 +70,7 @@ const { data, status, error, refresh, clear } = await useFetch('/api/auth/login'
 
 您可以使用计算属性引用或普通引用作为 URL，允许动态数据获取，并在 URL 更改时自动更新：
 
-```vue [pages/[id\\].vue]
+```vue [app/pages/[id\\].vue]
 <script setup lang="ts">
 const route = useRoute()
 const id = computed(() => route.params.id)

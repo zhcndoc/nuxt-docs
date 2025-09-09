@@ -9,7 +9,7 @@ links:
 ---
 
 ::note
-路由中间件是导航守卫，存储在您的 Nuxt 应用程序的 [`middleware/`](/docs/guide/directory-structure/middleware) 目录中（除非 [另行设置](/docs/api/nuxt-config#middleware)）。
+路由中间件是导航守卫，存储在您的 Nuxt 应用程序的 [`app/middleware/`](/docs/guide/directory-structure/app/middleware) 目录中（除非 [另行设置](/docs/api/nuxt-config#middleware)）。
 ::
 
 ## 类型
@@ -51,7 +51,7 @@ interface AddRouteMiddlewareOptions {
 
 命名路由中间件通过提供一个字符串作为第一个参数和一个函数作为第二个参数来定义：
 
-```ts [plugins/my-plugin.ts]
+```ts [app/plugins/my-plugin.ts]
 export default defineNuxtPlugin(() => {
   addRouteMiddleware('named-middleware', () => {
     console.log('在 Nuxt 插件中添加的命名中间件')
@@ -59,7 +59,7 @@ export default defineNuxtPlugin(() => {
 })
 ```
 
-当在插件中定义时，它会覆盖 `middleware/` 目录中同名的任何现有中间件。
+当在插件中定义时，它会覆盖 `app/middleware/` 目录中同名的任何现有中间件。
 
 ### 全局路由中间件
 
@@ -67,7 +67,7 @@ export default defineNuxtPlugin(() => {
 
 - 直接将一个函数作为第一个参数传递而不指定名称。它将被自动视为全局中间件，并在每次路由变化时应用。
 
-  ```ts [plugins/my-plugin.ts]
+  ```ts [app/plugins/my-plugin.ts]
   export default defineNuxtPlugin(() => {
     addRouteMiddleware((to, from) => {
       console.log('每次路由变化时运行的匿名全局中间件')
@@ -77,7 +77,7 @@ export default defineNuxtPlugin(() => {
 
 - 设置一个可选的第三个参数 `{ global: true }` 以指示路由中间件是否为全局的。
 
-  ```ts [plugins/my-plugin.ts]
+  ```ts [app/plugins/my-plugin.ts]
   export default defineNuxtPlugin(() => {
     addRouteMiddleware('global-middleware', (to, from) => {
         console.log('每次路由变化时运行的全局中间件')

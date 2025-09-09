@@ -22,7 +22,7 @@ links:
 
 ## 用法
 
-```vue [app.vue]
+```vue [app/app.vue]
 <script setup lang="ts">
 const tokenCookie = useCookie('token')
 

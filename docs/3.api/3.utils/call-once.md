@@ -26,7 +26,7 @@ links:
 
 `callOnce` 的默认模式是只运行代码一次。例如，如果代码在服务器上运行，则它不会在客户端再次运行。如果你在客户端多次 `callOnce`，例如通过返回到此页面，则也不会再次运行。
 
-```vue [app.vue]
+```vue [app/app.vue]
 <script setup lang="ts">
 const websiteConfig = useState('config')
 
@@ -39,7 +39,7 @@ await callOnce(async () => {
 
 虽然默认情况下只会执行一次，但也可以在每次导航时运行，同时仍然避免初始的服务器/客户端双重加载。为此，可以使用 `navigation` 模式：
 
-```vue [app.vue]
+```vue [app/app.vue]
 <script setup lang="ts">
 const websiteConfig = useState('config')
 

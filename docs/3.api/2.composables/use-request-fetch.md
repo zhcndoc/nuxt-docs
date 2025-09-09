@@ -24,7 +24,7 @@ links:
 
 ::code-group
 
-```vue [pages/index.vue]
+```vue [app/pages/index.vue]
 <script setup lang="ts">
 // 这将把用户的头信息转发到 `/api/cookies` 事件处理程序
 // 结果: { cookies: { foo: 'bar' } }

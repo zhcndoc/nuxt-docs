@@ -20,7 +20,7 @@ links:
 
 ## 示例
 
-```vue [pages/index.vue]
+```vue [app/pages/index.vue]
 <script setup lang="ts">
 /* 导航将在获取完成之前发生。
   在组件的模板中直接处理 'pending' 和 'error' 状态

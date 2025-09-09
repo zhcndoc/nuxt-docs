@@ -47,21 +47,21 @@ npx nuxt add plugin sockets --client
 * 修改器标志： `--mode client|server` 或 `--client` 或 `--server`
 
 ```bash [Terminal]
-# 生成 `components/TheHeader.vue`
+# 生成 `app/components/TheHeader.vue`
 npx nuxt add component TheHeader
 ```
 
 ## `nuxt add composable`
 
 ```bash [Terminal]
-# 生成 `composables/foo.ts`
+# 生成 `app/composables/foo.ts`
 npx nuxt add composable foo
 ```
 
 ## `nuxt add layout`
 
 ```bash [Terminal]
-# 生成 `layouts/custom.vue`
+# 生成 `app/layouts/custom.vue`
 npx nuxt add layout custom
 ```
 
@@ -70,19 +70,19 @@ npx nuxt add layout custom
 * 修改器标志： `--mode client|server` 或 `--client` 或 `--server`
 
 ```bash [Terminal]
-# 生成 `plugins/analytics.ts`
+# 生成 `app/plugins/analytics.ts`
 npx nuxt add plugin analytics
 ```
 
 ## `nuxt add page`
 
 ```bash [Terminal]
-# 生成 `pages/about.vue`
+# 生成 `app/pages/about.vue`
 npx nuxt add page about
 ```
 
 ```bash [Terminal]
-# 生成 `pages/category/[id].vue`
+# 生成 `app/pages/category/[id].vue`
 npx nuxt add page "category/[id]"
 ```
 
@@ -91,7 +91,7 @@ npx nuxt add page "category/[id]"
 * 修改器标志： `--global`
 
 ```bash [Terminal]
-# 生成 `middleware/auth.ts`
+# 生成 `app/middleware/auth.ts`
 npx nuxt add middleware auth
 ```
 

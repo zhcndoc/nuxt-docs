@@ -75,7 +75,7 @@ const { enabled, state } = usePreviewMode({
 
 下面的示例创建了一个页面，其中部分内容仅在预览模式下渲染。
 
-```vue [pages/some-page.vue]
+```vue [app/pages/some-page.vue]
 <script setup>
 const { enabled, state } = usePreviewMode()
 

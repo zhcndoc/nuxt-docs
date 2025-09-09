@@ -34,14 +34,14 @@ links:
 
 下面的示例展示了如何在从服务器获取最新数据时使用缓存数据作为占位符。
 
-```vue [pages/posts.vue]
+```vue [app/pages/posts.vue]
 <script setup lang="ts">
 // 我们可以稍后使用 'posts' 键访问相同的数据
 const { data } = await useFetch('/api/posts', { key: 'posts' })
 </script>
 ```
 
-```vue [pages/posts/[id\\].vue]
+```vue [app/pages/posts/[id\\].vue]
 <script setup lang="ts">
 // 访问 posts.vue（父路由）中 useFetch 的缓存值
 const { data: posts } = useNuxtData('posts')
@@ -64,14 +64,14 @@ const { data } = useLazyFetch(`/api/posts/${route.params.id}`, {
 
 乐观更新是一种技术，其中用户界面会立即更新，假设服务器操作将成功。如果操作最终失败，用户界面将回滚到先前的状态。
 
-```vue [pages/todos.vue]
+```vue [app/pages/todos.vue]
 <script setup lang="ts">
 // 我们可以稍后使用 'todos' 键访问相同的数据
 const { data } = await useAsyncData('todos', () => $fetch('/api/todos'))
 </script>
 ```
 
-```vue [components/NewTodo.vue]
+```vue [app/components/NewTodo.vue]
 <script setup lang="ts">
 const newTodo = ref('')
 let previousTodos = []

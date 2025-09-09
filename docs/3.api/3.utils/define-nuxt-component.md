@@ -22,7 +22,7 @@ links:
 
 如果您选择不在应用中使用 `setup()`，可以在组件定义中使用 `asyncData()` 方法：
 
-```vue [pages/index.vue]
+```vue [app/pages/index.vue]
 <script lang="ts">
 export default defineNuxtComponent({
   async asyncData() {
@@ -40,7 +40,7 @@ export default defineNuxtComponent({
 
 如果您选择不在应用中使用 `setup()`，可以在组件定义中使用 `head()` 方法：
 
-```vue [pages/index.vue]
+```vue [app/pages/index.vue]
 <script lang="ts">
 export default defineNuxtComponent({
   head(nuxtApp) {

@@ -12,7 +12,7 @@ links:
 `setPageLayout` 允许你动态更改页面的布局。它依赖于对 Nuxt 上下文的访问，因此只能在 [Nuxt 上下文](/docs/guide/going-further/nuxt-app#the-nuxt-context) 内部调用。
 ::
 
-```ts [middleware/custom-layout.ts]
+```ts [app/middleware/custom-layout.ts]
 export default defineNuxtRouteMiddleware((to) => {
   // 在你导航到的路由上设置布局
   setPageLayout('other')

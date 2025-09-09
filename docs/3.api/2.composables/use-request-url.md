@@ -18,7 +18,7 @@ links:
 
 ::code-group
 
-```vue [pages/about.vue]
+```vue [app/pages/about.vue]
 <script setup lang="ts">
 const url = useRequestURL()
 </script>

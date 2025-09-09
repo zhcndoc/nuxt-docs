@@ -9,7 +9,7 @@ links:
 ---
 
 ::warning
-`abortNavigation` 只能在 [路由中间件处理程序](/docs/guide/directory-structure/middleware) 内使用。
+`abortNavigation` 只能在 [路由中间件处理程序](/docs/guide/directory-structure/app/middleware) 内使用。
 ::
 
 ## 类型
@@ -30,7 +30,7 @@ abortNavigation(err?: Error | string): false
 
 以下示例展示了如何在路由中间件中使用 `abortNavigation` 来防止未授权的路由访问：
 
-```ts [middleware/auth.ts]
+```ts [app/middleware/auth.ts]
 export default defineNuxtRouteMiddleware((to, from) => {
   const user = useState('user')
 
@@ -48,7 +48,7 @@ export default defineNuxtRouteMiddleware((to, from) => {
 
 您可以将错误作为字符串传递：
 
-```ts [middleware/auth.ts]
+```ts [app/middleware/auth.ts]
 export default defineNuxtRouteMiddleware((to, from) => {
   const user = useState('user')
 
@@ -62,7 +62,7 @@ export default defineNuxtRouteMiddleware((to, from) => {
 
 您可以将错误作为 [`Error`](https://developer.mozilla.org/pl/docs/Web/JavaScript/Reference/Global_Objects/Error) 对象传递，例如在 `catch` 块中捕获的：
 
-```ts [middleware/auth.ts]
+```ts [app/middleware/auth.ts]
 export default defineNuxtRouteMiddleware((to, from) => {
   try {
     /* 可能会抛出错误的代码 */

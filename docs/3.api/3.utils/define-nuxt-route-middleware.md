@@ -8,7 +8,7 @@ links:
     size: xs
 ---
 
-路由中间件存储在你的 Nuxt 应用程序的 [`middleware/`](/docs/guide/directory-structure/middleware) 中（除非 [另有设置](/docs/api/nuxt-config#middleware)）。
+路由中间件存储在你的 Nuxt 应用程序的 [`app/middleware/`](/docs/guide/directory-structure/app/middleware) 中（除非 [另有设置](/docs/api/nuxt-config#middleware)）。
 
 ## 类型
 
@@ -36,7 +36,7 @@ interface RouteMiddleware {
 
 你可以使用路由中间件来抛出错误并显示有用的错误消息：
 
-```ts [middleware/error.ts]
+```ts [app/middleware/error.ts]
 export default defineNuxtRouteMiddleware((to) => {
   if (to.params.id === '1') {
     throw createError({ statusCode: 404, statusMessage: '页面未找到' })
@@ -50,7 +50,7 @@ export default defineNuxtRouteMiddleware((to) => {
 
 结合使用 [`useState`](/docs/api/composables/use-state) 和 `navigateTo` 辅助函数，在路由中间件中重定向用户到不同的路由，基于他们的身份验证状态：
 
-```ts [middleware/auth.ts]
+```ts [app/middleware/auth.ts]
 export default defineNuxtRouteMiddleware((to, from) => {
   const auth = useState('auth')
 

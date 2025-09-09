@@ -90,7 +90,7 @@ const show = ref(false)
 
 使用 `Lazy` 前缀可以推迟组件代码的加载时机，有助于优化 JavaScript 包体积。
 
-:read-more{title="懒加载组件" to="/docs/guide/directory-structure/components#dynamic-imports"}
+:read-more{title="懒加载组件" to="/docs/guide/directory-structure/app/components#dynamic-imports"}
 
 ### 延迟水合
 
@@ -106,7 +106,7 @@ const show = ref(false)
 
 为优化应用，你可能希望延迟部分组件的水合，直到它们进入视口或浏览器完成更重要任务时。
 
-:read-more{title="延迟水合" to="/docs/guide/directory-structure/components#delayed-or-lazy-hydration"}
+:read-more{title="延迟水合" to="/docs/guide/directory-structure/app/components#delayed-or-lazy-hydration"}
 
 ### 数据获取
 

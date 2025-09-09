@@ -25,7 +25,7 @@ links:
 
 ### 示例
 
-```vue [pages/movies/[slug\\].vue]
+```vue [app/pages/movies/[slug\\].vue]
 <script setup lang="ts">
 const route = useRoute()
 const { data } = await useFetch(`/api/movies/${route.params.slug}`)

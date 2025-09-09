@@ -22,7 +22,7 @@ Nuxt 使用 [ofetch](https://github.com/unjs/ofetch) 在全局范围内暴露 `$
 
 我们建议使用 [`useFetch`](/docs/api/composables/use-fetch) 或 [`useAsyncData`](/docs/api/composables/use-async-data) + `$fetch` 来防止在获取组件数据时发生双重数据获取。
 
-```vue [app.vue]
+```vue [app/app.vue]
 <script setup lang="ts">
 // 在 SSR 期间，数据会被请求两次，一次在服务器上，一次在客户端。
 const dataTwice = await $fetch('/api/item')
@@ -39,7 +39,7 @@ const { data } = await useFetch('/api/item')
 
 您可以在仅在客户端执行的任何方法中使用 `$fetch`。
 
-```vue [pages/contact.vue]
+```vue [app/pages/contact.vue]
 <script setup lang="ts">
 async function contactForm() {
   await $fetch('/api/contact', {
@@ -70,7 +70,7 @@ async function contactForm() {
 
 ::code-group
 
-```vue [pages/index.vue]
+```vue [app/pages/index.vue]
 <script setup lang="ts">
 // 这不会在 SSR 期间转发头部或 cookies
 const { data } = await useAsyncData(() => $fetch('/api/cookies'))
@@ -87,7 +87,7 @@ export default defineEventHandler((event) => {
 
 如果您需要在服务器上转发头部和 cookies，必须手动传递它们：
 
-```vue [pages/index.vue]
+```vue [app/pages/index.vue]
 <script setup lang="ts">
 // 这将用户的头部和 cookies 转发到 `/api/cookies`
 const requestFetch = useRequestFetch()

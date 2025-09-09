@@ -80,7 +80,7 @@ export function useCookie<T = string | null | undefined>(
 
 以下示例创建了一个名为 `counter` 的 cookie。如果 cookie 不存在，初始会设置为一个随机值。每次更新 `counter` 变量时，cookie 也会相应更新。
 
-```vue [app.vue]
+```vue [app/app.vue]
 <script setup lang="ts">
 const counter = useCookie('counter')
 

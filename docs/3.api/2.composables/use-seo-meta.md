@@ -18,7 +18,7 @@ links:
 
 ## 用法
 
-```vue [app.vue]
+```vue [app/app.vue]
 <script setup lang="ts">
 useSeoMeta({
   title: '我的惊人网站',
@@ -33,7 +33,7 @@ useSeoMeta({
 
 在插入响应式标签时，您应该使用计算属性的获取器语法（`() => value`）：
 
-```vue [app.vue]
+```vue [app/app.vue]
 <script setup lang="ts">
 const title = ref('我的标题')
 
@@ -56,7 +56,7 @@ useSeoMeta({
 
 为了更好的性能，当元标签不需要响应式时，您可以将 `useSeoMeta` 调用包装在仅服务器的条件中：
 
-```vue [app.vue]
+```vue [app/app.vue]
 <script setup lang="ts">
 if (import.meta.server) {
   // 这些元标签将在服务器端渲染期间添加

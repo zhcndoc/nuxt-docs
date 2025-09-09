@@ -16,7 +16,7 @@ links:
 
 ## 使用方法
 
-```vue [pages/index.vue]
+```vue [app/pages/index.vue]
 <script setup lang="ts">
 const { data, status, error, refresh, clear } = await useAsyncData(
   'mountains',
@@ -37,7 +37,7 @@ const { data, status, error, refresh, clear } = await useAsyncData(
 
 内置的 `watch` 选项允许在检测到任何更改时自动重新运行获取函数。
 
-```vue [pages/index.vue]
+```vue [app/pages/index.vue]
 <script setup lang="ts">
 const page = ref(1)
 const { data: posts } = await useAsyncData(
@@ -57,7 +57,7 @@ const { data: posts } = await useAsyncData(
 
 你可以使用计算属性、普通引用或获取函数作为键，这样当键更改时可以自动更新数据获取：
 
-```vue [pages/[id\\].vue]
+```vue [app/pages/[id\\].vue]
 <script setup lang="ts">
 const route = useRoute()
 const userId = computed(() => `user-${route.params.id}`)

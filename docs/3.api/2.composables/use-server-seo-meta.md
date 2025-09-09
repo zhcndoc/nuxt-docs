@@ -14,7 +14,7 @@ links:
 
 在大多数情况下，元标签不需要响应式，因为爬虫只会扫描初始加载的内容。因此，我们推荐使用 [`useServerSeoMeta`](/docs/api/composables/use-server-seo-meta) 作为一种关注性能的工具，它在客户端不会执行任何操作（或返回 `head` 对象）。
 
-```vue [app.vue]
+```vue [app/app.vue]
 <script setup lang="ts">
 useServerSeoMeta({
   robots: 'index, follow'

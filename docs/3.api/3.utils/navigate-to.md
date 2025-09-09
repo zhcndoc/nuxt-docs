@@ -68,7 +68,7 @@ export default defineNuxtRouteMiddleware((to, from) => {
 
 在这种情况下，`navigateTo` 将被执行但未被返回，这可能导致意外行为。
 
-:read-more{to="/docs/guide/directory-structure/middleware"}
+:read-more{to="/docs/guide/directory-structure/app/middleware"}
 
 ### 导航到外部 URL
 

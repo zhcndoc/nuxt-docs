@@ -24,7 +24,7 @@ header.value = 'my-value';
 
 我们可以使用 `useResponseHeader` 在每个页面轻松设置响应头。
 
-```vue [pages/test.vue]
+```vue [app/pages/test.vue]
 <script setup>
 // pages/test.vue
 const header = useResponseHeader('X-My-Header');
@@ -37,9 +37,9 @@ header.value = 'my-value';
 </template>
 ```
 
-我们可以在 Nuxt [中间件](/docs/guide/directory-structure/middleware) 中使用 `useResponseHeader`，为所有页面设置响应头。
+我们可以在 Nuxt [中间件](/docs/guide/directory-structure/app/middleware) 中使用 `useResponseHeader`，为所有页面设置响应头。
 
-```ts [middleware/my-header-middleware.ts]
+```ts [app/middleware/my-header-middleware.ts]
 export default defineNuxtRouteMiddleware((to, from) => {
   const header = useResponseHeader('X-My-Always-Header');
   header.value = `我总是在这里！`;

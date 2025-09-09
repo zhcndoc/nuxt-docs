@@ -34,7 +34,7 @@ refreshNuxtData(keys?: string | string[])
 
 下面的示例刷新在 Nuxt 应用中使用 `useAsyncData` 和 `useFetch` 获取的所有数据。
 
-```vue [pages/some-page.vue]
+```vue [app/pages/some-page.vue]
 <script setup lang="ts">
 const refreshing = ref(false)
 
@@ -61,7 +61,7 @@ async function refreshAll () {
 
 下面的示例仅刷新与 `count` and `user` 匹配的键的数据。
 
-```vue [pages/some-page.vue]
+```vue [app/pages/some-page.vue]
 <script setup lang="ts">
 const refreshing = ref(false)
 

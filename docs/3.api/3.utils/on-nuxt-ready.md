@@ -13,7 +13,7 @@ links:
 它非常适合运行不应该阻塞您应用初始渲染的代码。
 ::
 
-```ts [plugins/ready.client.ts]
+```ts [app/plugins/ready.client.ts]
 export default defineNuxtPlugin(() => {
   onNuxtReady(async () => {
     const myAnalyticsLibrary = await import('my-big-analytics-library')

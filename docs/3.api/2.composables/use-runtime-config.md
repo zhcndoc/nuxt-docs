@@ -10,7 +10,7 @@ links:
 
 ## 使用方法
 
-```vue [app.vue]
+```vue [app/app.vue]
 <script setup lang="ts">
 const config = useRuntimeConfig()
 </script>

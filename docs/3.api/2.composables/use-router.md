@@ -8,7 +8,7 @@ links:
     size: xs
 ---
 
-```vue [pages/index.vue]
+```vue [app/pages/index.vue]
 <script setup lang="ts">
 const router = useRouter()
 </script>
@@ -16,13 +16,13 @@ const router = useRouter()
 
 如果你只需要在模板中使用路由实例，可以使用 `$router`：
 
-```vue [pages/index.vue]
+```vue [app/pages/index.vue]
 <template>
   <button @click="$router.back()">返回</button>
 </template>
 ```
 
-如果你有一个 `pages/` 目录，`useRouter` 的行为与 `vue-router` 提供的相同。
+如果你有一个 `app/pages/` 目录，`useRouter` 的行为与 `vue-router` 提供的相同。
 
 ::read-more{icon="i-simple-icons-vuedotjs" to="https://router.vuejs.org/api/interfaces/Router.html#Properties-currentRoute" target="_blank"}
 阅读 `vue-router` 文档关于 `Router` 接口的内容。
@@ -78,7 +78,7 @@ router.replace({ hash: "#bio" })
 
 然而，Nuxt 有一个 **路由中间件** 的概念，它简化了导航守卫的实现并提供了更好的开发体验。
 
-:read-more{to="/docs/guide/directory-structure/middleware"}
+:read-more{to="/docs/guide/directory-structure/app/middleware"}
 
 ## Promise 和错误处理
 
@@ -89,4 +89,4 @@ router.replace({ hash: "#bio" })
 
 ## 通用路由实例
 
-如果你没有 `pages/` 文件夹，则 [`useRouter`](/docs/api/composables/use-router) 将返回一个通用路由实例，具有类似的助手方法，但请注意，并非所有功能可能都会被支持或以完全相同的方式运作。
+如果你没有 `app/pages/` 文件夹，则 [`useRouter`](/docs/api/composables/use-router) 将返回一个通用路由实例，具有类似的助手方法，但请注意，并非所有功能可能都会被支持或以完全相同的方式运作。

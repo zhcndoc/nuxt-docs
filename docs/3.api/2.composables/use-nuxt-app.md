@@ -10,7 +10,7 @@ links:
 
 `useNuxtApp` 是一个内置的组合式函数，用于访问 Nuxt 的共享运行时上下文，也称为 [Nuxt 上下文](/docs/guide/going-further/nuxt-app#the-nuxt-context)，该上下文在客户端和服务器端均可用（但不包括 Nitro 路由）。它帮助你访问 Vue 应用程序实例、运行时钩子、运行时配置变量和内部状态，比如 `ssrContext` 和 `payload`。
 
-```vue [app.vue]
+```vue [app/app.vue]
 <script setup lang="ts">
 const nuxtApp = useNuxtApp()
 </script>
@@ -52,7 +52,7 @@ console.log(nuxtApp.$hello('name'))
 
 有关 Nuxt 调用的可用运行时钩子，请参见 [运行时钩子](/docs/api/advanced/hooks#app-hooks-runtime)。
 
-```ts [plugins/test.ts]
+```ts [app/plugins/test.ts]
 export default defineNuxtPlugin((nuxtApp) => {
   nuxtApp.hook('page:start', () => {
     /* 你的代码在这里 */
@@ -106,7 +106,7 @@ Nuxt 通过 `ssrContext` 暴露以下属性：
 - `data` (object) - 当你使用 [`useFetch`](/docs/api/composables/use-fetch) 或 [`useAsyncData`](/docs/api/composables/use-async-data) 从 API 端点获取数据时，结果有效负载可以通过 `payload.data` 访问。此数据会被缓存，帮助你避免在相同请求被多次发出时重复获取相同数据。
 
   ::code-group
-  ```vue [app.vue]
+  ```vue [app/app.vue]
   <script setup lang="ts">
   const { data } = await useAsyncData('count', () => $fetch('/api/count'))
   </script>
@@ -124,7 +124,7 @@ Nuxt 通过 `ssrContext` 暴露以下属性：
 
 - `state` (object) - 当你在 Nuxt 中使用 [`useState`](/docs/api/composables/use-state) 组合式函数设置共享状态时，可以通过 `payload.state.[name-of-your-state]` 访问此状态数据。
 
-  ```ts [plugins/my-plugin.ts]
+  ```ts [app/plugins/my-plugin.ts]
   export const useColor = () => useState<string>('color', () => 'pink')
 
   export default defineNuxtPlugin((nuxtApp) => {
@@ -142,7 +142,7 @@ Nuxt 通过 `ssrContext` 暴露以下属性：
 
   在下面的示例中，我们使用有效负载插件定义了一个 reducer（或序列化器）和一个 reviver（或反序列化器）用于 [Luxon](https://moment.github.io/luxon/#/) 的 DateTime 类。
 
-  ```ts [plugins/date-time-payload.ts]
+  ```ts [app/plugins/date-time-payload.ts]
   /**
    * 这种类型的插件在 Nuxt 生命周期早期运行，在我们恢复有效负载之前。
    * 你将无法访问路由器或其他 Nuxt 注入的属性。
@@ -163,7 +163,7 @@ Nuxt 通过 `ssrContext` 暴露以下属性：
 
 使用 `nuxtApp.isHydrating` (boolean) 检查 Nuxt 应用程序是否在客户端上进行水合。
 
-```ts [components/nuxt-error-boundary.ts]
+```ts [app/components/nuxt-error-boundary.ts]
 export default defineComponent({
   setup (_props, { slots, emit }) {
     const nuxtApp = useNuxtApp()
@@ -184,7 +184,7 @@ export default defineComponent({
 
 `runWithContext` 方法旨在调用函数并提供明确的 Nuxt 上下文。通常，Nuxt 上下文是隐式传递的，您无需担心这一点。然而，在中间件/插件中处理复杂的 `async`/`await` 情况时，您可能会遇到当前实例在异步调用后被取消设置的情况。
 
-```ts [middleware/auth.ts]
+```ts [app/middleware/auth.ts]
 export default defineNuxtRouteMiddleware(async (to, from) => {
   const nuxtApp = useNuxtApp()
   let user

@@ -25,7 +25,7 @@ const authorization = useRequestHeader('authorization')
 
 下面的示例读取 `authorization` 请求头，以确定一个人是否可以访问受限资源。
 
-```ts [middleware/authorized-only.ts]
+```ts [app/middleware/authorized-only.ts]
 export default defineNuxtRouteMiddleware((to, from) => {
   if (!useRequestHeader('authorization')) {
     return navigateTo('/not-authorized')
