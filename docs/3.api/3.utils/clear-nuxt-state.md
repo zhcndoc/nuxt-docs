@@ -1,23 +1,23 @@
 ---
 title: 'clearNuxtState'
-description: 删除 useState 的缓存状态。
+description: 删除 `useState` 的缓存状态。
 links:
-  - label: 源码
+  - label: 来源
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/state.ts
     size: xs
 ---
 
 ::note
-如果您想使 `useState` 的状态无效，此方法非常有用。
+此方法在你想使 `useState` 的状态失效时很有用。
 ::
 
-## 类型
+## Type
 
-```ts
-clearNuxtState (keys?: string | string[] | ((key: string) => boolean)): void
+```ts [Signature]
+export function clearNuxtState (keys?: string | string[] | ((key: string) => boolean)): void
 ```
 
-## 参数
+## Parameters
 
-- `keys`: 一个键或一个数组，表示在 [`useState`](/docs/api/composables/use-state) 中用于删除其缓存状态的键。如果未提供键，**所有状态** 将被使无效。
+- `keys`: 一个或多个在 [`useState`](/docs/4.x/api/composables/use-state) 中使用的键，用于删除它们的缓存状态。如果未提供键，则会使 **所有状态** 失效。

@@ -1,28 +1,28 @@
 ---
 title: 'preloadRouteComponents'
-description: preloadRouteComponents 允许您手动预加载您 Nuxt 应用中的单个页面。
+description: 'preloadRouteComponents 允许你在 Nuxt 应用中手动预加载单个页面。'
 links:
-  - label: 源码
+  - label: 源代码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/preload.ts
     size: xs
 ---
 
-预加载路由会加载用户可能未来会导航到的特定路由的组件。这确保组件能够更早地可用，并更不容易阻塞导航，从而提高性能。
+预加载路由会加载某个路由的组件，这些路由用户未来可能会导航到。这样可以更早获取组件，减少阻塞导航的可能性，从而提升性能。
 
 ::tip{icon="i-lucide-rocket"}
-如果您使用 `NuxtLink` 组件，Nuxt 已经会自动预加载必要的路由。
+如果你使用 `NuxtLink` 组件，Nuxt 已经会自动预加载必要的路由。
 ::
 
-:read-more{to="/docs/api/components/nuxt-link"}
+:read-more{to="/docs/4.x/api/components/nuxt-link"}
 
 ## 示例
 
-在使用 `navigateTo` 时预加载一个路由。
+在使用 `navigateTo` 时预加载路由。
 
 ```ts
-// 我们不等待这个异步函数，以避免阻塞渲染
-// 这个组件的 setup 函数
+// 我们不等待此异步函数，以避免阻塞渲染
+// 此组件的 setup 函数
 preloadRouteComponents('/dashboard')
 
 const submit = async () => {
@@ -34,8 +34,8 @@ const submit = async () => {
 }
 ```
 
-:read-more{to="/docs/api/utils/navigate-to"}
+:read-more{to="/docs/4.x/api/utils/navigate-to"}
 
 ::note
-在服务器上，`preloadRouteComponents` 将没有效果。
+在服务器端，`preloadRouteComponents` 不会生效。
 ::

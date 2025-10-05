@@ -1,123 +1,123 @@
 ---
 title: 'useAsyncData'
-description: useAsyncData 提供对异步解析数据的访问，适用于 SSR 友好的组合式 API。
+description: useAsyncData 提供对以异步方式解析的数据的访问，这是一个对 SSR 友好的组合式函数。
 links:
-  - label: 源码
+  - label: 来源
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/asyncData.ts
     size: xs
 ---
 
-在你的页面、组件和插件中，你可以使用 useAsyncData 访问异步解析的数据。
+在你的页面、组件和插件中，可以使用 useAsyncData 来获取以异步方式解析的数据。
 
 ::note
-[`useAsyncData`](/docs/api/composables/use-async-data) 是一个组合式 API，应该直接在 [Nuxt 上下文](/docs/guide/going-further/nuxt-app#the-nuxt-context) 中调用。它返回响应式组合式 API，并处理将响应添加到 Nuxt 负载中，以便在页面水合时能够从服务器传递到客户端 **而无需在客户端重新获取数据**。
+[`useAsyncData`](/docs/4.x/api/composables/use-async-data) 是一个应当直接在 [Nuxt 上下文](/docs/4.x/guide/going-further/nuxt-app#the-nuxt-context) 中调用的可组合函数。它返回响应式的组合式引用，并负责将响应添加到 Nuxt payload 中，以便在从服务端传到客户端时可以在页面水合时**不在客户端重新请求数据**。
 ::
 
-## 使用方法
+## 用法
 
-```vue [app/pages/index.vue]
+```vue
 <script setup lang="ts">
 const { data, status, error, refresh, clear } = await useAsyncData(
   'mountains',
-  () => $fetch('https://api.nuxtjs.dev/mountains')
+  () => $fetch('https://api.nuxtjs.dev/mountains'),
 )
 </script>
 ```
 
 ::warning
-如果你使用自定义的 useAsyncData 封装，请不要在组合式 API 中使用 await，这可能导致意外行为。有关如何创建自定义异步数据获取器的更多信息，请遵循 [这个食谱](/docs/guide/recipes/custom-usefetch#custom-usefetch) 。
+如果你使用自定义的 useAsyncData 包装器，请不要在组合式函数中对其使用 await，因为那可能导致意外行为。有关如何创建自定义异步数据获取器的更多信息，请参阅[此示例](/docs/4.x/guide/recipes/custom-usefetch#custom-usefetchuseasyncdata)。
 ::
 
 ::note
-`data`、`status` 和 `error` 是 Vue refs，在 `<script setup>` 中使用时应该通过 `.value` 来访问，而 `refresh`/`execute` 和 `clear` 是普通函数。
+`data`、`status` 和 `error` 是 Vue 的 ref，在 `<script setup>` 中使用时应通过 `.value` 访问，而 `refresh`/`execute` 和 `clear` 是普通函数。
 ::
 
-### 监视参数
+### 监听参数
 
 内置的 `watch` 选项允许在检测到任何更改时自动重新运行获取函数。
 
-```vue [app/pages/index.vue]
+```vue
 <script setup lang="ts">
 const page = ref(1)
 const { data: posts } = await useAsyncData(
   'posts',
   () => $fetch('https://fakeApi.com/posts', {
     params: {
-      page: page.value
-    }
+      page: page.value,
+    },
   }), {
-    watch: [page]
-  }
+    watch: [page],
+  },
 )
 </script>
 ```
 
 ### 响应式键
 
-你可以使用计算属性、普通引用或获取函数作为键，这样当键更改时可以自动更新数据获取：
+你可以使用计算 ref、普通 ref 或者一个 getter 函数作为键，从而实现动态的数据获取，当键改变时会自动更新：
 
-```vue [app/pages/[id\\].vue]
+```vue
 <script setup lang="ts">
 const route = useRoute()
 const userId = computed(() => `user-${route.params.id}`)
 
-// 当路由变化且 userId 更新时，数据将自动重新获取
+// 当路由变化且 userId 更新时，数据会自动重新获取
 const { data: user } = useAsyncData(
   userId,
-  () => fetchUserById(route.params.id)
+  () => fetchUserById(route.params.id),
 )
 </script>
 ```
 
 ::warning
-[`useAsyncData`](/docs/api/composables/use-async-data) 是一个被编译器转换的保留函数名，因此你不应该将自己的函数命名为 [`useAsyncData`](/docs/api/composables/use-async-data)。
+[`useAsyncData`](/docs/4.x/api/composables/use-async-data) 是一个由编译器转换的保留函数名，因此你不应将自己的函数命名为 [`useAsyncData`](/docs/4.x/api/composables/use-async-data)。
 ::
 
-:read-more{to="/docs/getting-started/data-fetching#useasyncdata"}
+:read-more{to="/docs/4.x/getting-started/data-fetching#useasyncdata"}
 
 ## 参数
 
-- `key`: 确保数据获取可以在请求之间正确去重的唯一键。如果没有提供键，将为您生成一个唯一于 `useAsyncData` 实例的文件名和行号的键。
-- `handler`: 一个必须返回真值（例如，它不应该是 `undefined` 或 `null`）的异步函数，否则请求可能在客户端重复。
+- `key`：一个唯一键，用于确保跨请求的数据获取可以正确去重。如果你不提供键，系统会为你生成一个基于文件名和该 useAsyncData 实例的行号的唯一键。
+- `handler`：一个异步函数，必须返回一个为真值的结果（例如，不应返回 `undefined` 或 `null`），否则在客户端可能会重复请求。
 ::warning
-`handler` 函数应是 **无副作用** 的，以确保 SSR 和 CSR 水合期间的可预测行为。如果需要触发副作用，请使用 [`callOnce`](/docs/api/utils/call-once) 工具来执行。
+`handler` 函数应当是**无副作用的**，以确保在 SSR 和 CSR 水合期间行为可预测。如果你需要触发副作用，请使用 [`callOnce`](/docs/4.x/api/utils/call-once) 工具来处理。
 ::
-- `options`:
-  - `server`: 是否在服务器上获取数据（默认为 `true`）
-  - `lazy`: 是否在加载路由后解析异步函数，而不是阻止客户端导航（默认为 `false`）
-  - `immediate`: 设置为 `false` 时，将阻止请求立即触发。（默认为 `true`）
-  - `default`: 在异步函数解析之前设置 `data` 的默认值的工厂函数 - 在 `lazy: true` 或 `immediate: false` 选项中很有用
-  - `transform`: 一个可以在解析后用来更改 `handler` 函数结果的函数
-  - `getCachedData`: 提供一个函数返回缓存数据。返回 `null` 或 `undefined` 将触发获取。默认情况下，这个函数是：
+- `options`：
+  - `server`：是否在服务器端获取数据（默认为 `true`）
+  - `lazy`：是否在路由加载后再解析异步函数，而不是阻塞客户端导航（默认为 `false`）
+  - `immediate`：若设置为 `false`，将阻止请求立即触发。（默认为 `true`）
+  - `default`：一个工厂函数，用于在异步函数解析之前设置 `data` 的默认值——在使用 `lazy: true` 或 `immediate: false` 时很有用
+  - `transform`：一个用于在解析后修改 `handler` 函数结果的函数
+  - `getCachedData`：提供一个返回缓存数据的函数。返回 `null` 或 `undefined` 将触发一次获取。默认实现为：
     ```ts
-    const getDefaultCachedData = (key, nuxtApp, ctx) => nuxtApp.isHydrating 
-      ? nuxtApp.payload.data[key] 
+    const getDefaultCachedData = (key, nuxtApp, ctx) => nuxtApp.isHydrating
+      ? nuxtApp.payload.data[key]
       : nuxtApp.static.data[key]
     ```
-    仅在启用 `nuxt.config` 的 `experimental.payloadExtraction` 时缓存数据。
-  - `pick`：仅从 `handler` 函数结果中挑选此数组中的指定键
+    该实现仅在 `nuxt.config` 中启用了 `experimental.payloadExtraction` 时缓存数据。
+  - `pick`：仅从 `handler` 函数结果中选取此数组中指定的键
   - `watch`：监听响应式源以自动刷新
-  - `deep`：返回深度引用对象中的数据。默认值为`false`，即返回浅引用对象中的数据，若您的数据无需深度响应式处理，此设定可提升性能。
-  - `dedupe`：避免同时多次获取相同的键（默认为 `cancel`）。可能的选项：
-    - `cancel` - 当发起新的请求时，取消现有请求
-    - `defer` - 如果有待处理的请求，则不发起新的请求
+  - `deep`：以深层 ref 对象返回数据。默认是 `false`，以浅层 ref 返回数据，当你的数据不需要深度响应时可提升性能。
+  - `dedupe`：避免在同一时间多次获取相同键（默认为 `cancel`）。可能的选项：
+    - `cancel` - 当发起新请求时取消已有的请求
+    - `defer` - 如果已有挂起请求，则不发起新请求
 
 ::note
-在底层，`lazy: false` 使用 `<Suspense>` 在数据获取之前阻止路由加载。考虑使用 `lazy: true` 并实现加载状态以提供更灵敏的用户体验。
+在内部，`lazy: false` 使用 `<Suspense>` 来在数据获取完成之前阻塞路由加载。考虑使用 `lazy: true` 并实现加载状态以获得更流畅的用户体验。
 ::
 
-::read-more{to="/docs/api/composables/use-lazy-async-data"}
-你可以使用 `useLazyAsyncData` 来实现与 `useAsyncData` 的 `lazy: true` 相同的行为。
+::read-more{to="/docs/4.x/api/composables/use-lazy-async-data"}
+你可以使用 `useLazyAsyncData` 来实现与 `useAsyncData` 中 `lazy: true` 相同的行为。
 ::
 
-:video-accordion{title="观看 Alexander Lichter 关于使用 getCachedData 进行客户端缓存的视频" videoId="aQPR0xn-MMk"}
+:video-accordion{title="观看 Alexander Lichter 关于使用 getCachedData 的客户端缓存的视频" videoId="aQPR0xn-MMk"}
 
-### 共享状态和选项一致性
+### 共享状态与选项一致性
 
-当对多个 `useAsyncData` 调用使用相同的键时，它们将共享相同的 `data`、`error` 和 `status` refs。这确保了跨组件的一致性，但要求选项一致。
+当对多个 useAsyncData 调用使用相同的键时，它们将共享相同的 `data`、`error` 和 `status` refs。这样可以确保组件之间的一致性，但要求选项保持一致。
 
-以下选项 **必须在所有使用相同键的调用中一致**：
+以下选项在使用相同键的所有调用中**必须保持一致**：
 - `handler` 函数
 - `deep` 选项
 - `transform` 函数
@@ -125,7 +125,7 @@ const { data: user } = useAsyncData(
 - `getCachedData` 函数
 - `default` 值
 
-以下选项 **可以不同** 而不触发警告：
+以下选项**可以不同**，不会触发警告：
 - `server`
 - `lazy`
 - `immediate`
@@ -133,7 +133,7 @@ const { data: user } = useAsyncData(
 - `watch`
 
 ```ts
-// ❌ 这将触发开发警告
+// ❌ 这会触发开发时警告
 const { data: users1 } = useAsyncData('users', () => $fetch('/api/users'), { deep: false })
 const { data: users2 } = useAsyncData('users', () => $fetch('/api/users'), { deep: true })
 
@@ -143,37 +143,37 @@ const { data: users2 } = useAsyncData('users', () => $fetch('/api/users'), { imm
 ```
 
 ::tip
-使用 `useAsyncData` 创建的键控状态可以通过您的 Nuxt 应用程序使用 [`useNuxtData`](/docs/api/composables/use-nuxt-data) 进行检索。
+使用 `useAsyncData` 创建的键控状态可以通过 [`useNuxtData`](/docs/4.x/api/composables/use-nuxt-data) 在你的 Nuxt 应用中检索到。
 ::
 
 ## 返回值
 
-- `data`: 传入的异步函数的结果。
-- `refresh`/`execute`: 一个可以用来刷新 `handler` 函数返回的数据的函数。
-- `error`: 如果数据获取失败，则为错误对象。
-- `status`: 一个字符串，指示数据请求的状态：
-  - `idle`: 当请求尚未开始，例如：
-    - 当 `execute` 尚未被调用且 `{ immediate: false }` 被设置时
-    - 当在服务器上渲染 HTML 时且 `{ server: false }` 被设置时
-  - `pending`: 请求正在进行中
-  - `success`: 请求已成功完成
-  - `error`: 请求失败
-- `clear`: 一个可以用于将 `data` 设置为 `undefined`（如果提供了，则为 `options.default()` 的值）、将 `error` 设置为 `undefined`、将 `status` 设置为 `idle`，并将任何当前待处理的请求标记为已取消的函数。
+- `data`：传入的异步函数的结果。
+- `refresh`/`execute`：可用于刷新 `handler` 函数返回的数据的函数。
+- `error`：如果数据获取失败，则为错误对象。
+- `status`：表示数据请求状态的字符串：
+  - `idle`：请求尚未开始，例如：
+    - 当 `execute` 尚未被调用且设置了 `{ immediate: false }`
+    - 在服务器渲染 HTML 时设置了 `{ server: false }`
+  - `pending`：请求正在进行中
+  - `success`：请求已成功完成
+  - `error`：请求失败
+- `clear`：一个函数，可用于将 `data` 设为 `undefined`（或如果提供了 `options.default()` 则设为其返回值）、将 `error` 设为 `undefined`、将 `status` 设为 `idle`，并将任何当前挂起的请求标记为已取消。
 
-默认情况下，Nuxt 会等待 `refresh` 完成后才能再次执行。
+默认情况下，Nuxt 会等待一次 `refresh` 完成后才能再次执行。
 
 ::note
-如果您没有在服务器上获取数据（例如，使用 `server: false`），则在水合完成之前不会获取数据。这意味着即使您在客户端等待 [`useAsyncData`](/docs/api/composables/use-async-data)，`data` 仍将在 `<script setup>` 中保持 `undefined` 状态。
+如果你未在服务器上获取数据（例如使用了 `server: false`），那么数据在水合完成之前**不会**被获取。这意味着即使你在客户端对 [`useAsyncData`](/docs/4.x/api/composables/use-async-data) 进行 await，在 `<script setup>` 中 `data` 仍将保持为 `undefined`。
 ::
 
 ## 类型
 
-```ts [Signature]
-function useAsyncData<DataT, DataE>(
+```ts
+export function useAsyncData<DataT, DataE> (
   handler: (nuxtApp?: NuxtApp) => Promise<DataT>,
   options?: AsyncDataOptions<DataT>
 ): AsyncData<DataT, DataE>
-function useAsyncData<DataT, DataE>(
+export function useAsyncData<DataT, DataE> (
   key: MaybeRefOrGetter<string>,
   handler: (nuxtApp?: NuxtApp) => Promise<DataT>,
   options?: AsyncDataOptions<DataT>
@@ -193,7 +193,7 @@ type AsyncDataOptions<DataT> = {
 }
 
 type AsyncDataRequestContext = {
-  /** 请求数据的原因 */
+  /** The reason for this data request */
   cause: 'initial' | 'refresh:manual' | 'refresh:hook' | 'watch'
 }
 
@@ -204,7 +204,7 @@ type AsyncData<DataT, ErrorT> = {
   clear: () => void
   error: Ref<ErrorT | undefined>
   status: Ref<AsyncDataRequestStatus>
-};
+}
 
 interface AsyncDataExecuteOptions {
   dedupe?: 'cancel' | 'defer'
@@ -213,4 +213,4 @@ interface AsyncDataExecuteOptions {
 type AsyncDataRequestStatus = 'idle' | 'pending' | 'success' | 'error'
 ```
 
-:read-more{to="/docs/getting-started/data-fetching"}
+:read-more{to="/docs/4.x/getting-started/data-fetching"}

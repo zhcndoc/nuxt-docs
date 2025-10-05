@@ -1,6 +1,6 @@
 ---
 title: "onNuxtReady"
-description: onNuxtReady 组合函数允许在您的应用初始化完成后运行回调。
+description: onNuxtReady 可组合函数允许在应用完成初始化后运行回调。
 links:
   - label: 源码
     icon: i-simple-icons-github
@@ -10,7 +10,7 @@ links:
 
 ::important
 `onNuxtReady` 仅在客户端运行。 :br
-它非常适合运行不应该阻塞您应用初始渲染的代码。
+它非常适合运行那些不应阻塞应用初始渲染的代码。
 ::
 
 ```ts [app/plugins/ready.client.ts]
@@ -22,4 +22,4 @@ export default defineNuxtPlugin(() => {
 })
 ```
 
-即使在您的应用初始化后运行也是“安全的”。在这种情况下，代码将注册在下一个空闲回调中运行。
+即使在应用已经初始化之后运行它也是“安全”的。在这种情况下，代码将被注册为在下一个空闲回调中运行。

@@ -1,68 +1,68 @@
 ---
-navigation.title: 'Nuxt and hydration'
-title: Nuxt and hydration
-description: Why fixing hydration issues is important
+navigation.title: 'Nuxt 与水合'
+title: Nuxt 与水合
+description: 为什么修复水合问题很重要
 ---
 
-When developing, you may face hydration issues. Don't ignore those warnings.
+在开发过程中，你可能会遇到水合（hydration）问题。不要忽视这些警告。
 
-# Why is it important to fix them?
+# 为什么修复它们很重要？
 
-Hydration mismatches are not just warnings - they are indicators of serious problems that can break your application:
+水合不匹配不仅仅是警告 —— 它们表明存在严重问题，可能会破坏你的应用：
 
-## Performance Impact
+## 性能影响
 
-- **Increased time to interactive**: Hydration errors force Vue to re-render the entire component tree, which will increase the time for your Nuxt app to become interactive
-- **Poor user experience**: Users may see content flashing or unexpected layout shifts
+- **增加可交互时间**：水合错误会迫使 Vue 重新渲染整个组件树，这会增加你的 Nuxt 应用变得可交互所需的时间
+- **糟糕的用户体验**：用户可能会看到内容闪烁或意外的布局位移
 
-## Functionality Issues
+## 功能问题
 
-- **Broken interactivity**: Event listeners may not attach properly, leaving buttons and forms non-functional
-- **State inconsistencies**: Application state can become out of sync between what the user sees and what the application thinks is rendered
-- **SEO problems**: Search engines may index different content than what users actually see
+- **交互失效**：事件监听器可能无法正确绑定，导致按钮和表单无法使用
+- **状态不一致**：应用状态可能在用户看到的内容和应用认为已渲染的内容之间不同步
+- **SEO 问题**：搜索引擎可能会索引与用户实际看到的不同的内容
 
-# How to detect them
+# 如何检测它们
 
-## Development Console Warnings
+## 开发时控制台警告
 
-Vue will log hydration mismatch warnings in the browser console during development:
+Vue 会在开发时在浏览器控制台记录水合不匹配的警告：
 
-![Screenshot of Vue hydration mismatch warning in the browser console](/assets/docs/best-practices/vue-console-hydration.png)
+![浏览器控制台中 Vue 水合不匹配警告的截图](/assets/docs/best-practices/vue-console-hydration.png)
 
-# Common reasons
+# 常见原因
 
-## Browser-only APIs in Server Context
+## 在服务器上下文中使用仅限浏览器的 API
 
-**Problem**: Using browser-specific APIs during server-side rendering.
+**问题**：在服务端渲染期间使用仅浏览器可用的 API。
 
 ```html
 <template>
-  <div>User preference: {{ userTheme }}</div>
+  <div>用户偏好：{{ userTheme }}</div>
 </template>
 
 <script setup>
-// This will cause hydration mismatch!
-// localStorage doesn't exist on the server!
+// 这会导致水合不匹配！
+// localStorage 在服务器上不存在！
 const userTheme = localStorage.getItem('theme') || 'light'
 </script>
 ```
 
-**Solution**: You can use [`useCookie`](/docs/api/composables/use-cookie):
+**解决方案**：你可以使用 [`useCookie`](/docs/4.x/api/composables/use-cookie)：
 
 ```html
 <template>
-  <div>User preference: {{ userTheme }}</div>
+  <div>用户偏好：{{ userTheme }}</div>
 </template>
 
 <script setup>
-// This works on both server and client
+// 这在服务端和客户端都能工作
 const userTheme = useCookie('theme', { default: () => 'light' })
 </script>
 ```
 
-## Inconsistent Data
+## 数据不一致
 
-**Problem**: Different data between server and client.
+**问题**：服务器与客户端之间的数据不同。
 
 ```html
 <template>
@@ -70,7 +70,7 @@ const userTheme = useCookie('theme', { default: () => 'light' })
 </template>
 ```
 
-**Solution**: Use SSR-friendly state:
+**解决方案**：使用对 SSR 友好的状态：
 
 ```html
 <template>
@@ -82,32 +82,32 @@ const state = useState('random', () => Math.random())
 </script>
 ```
 
-## Conditional Rendering Based on Client State
+## 基于客户端状态的条件渲染
 
-**Problem**: Using client-only conditions during SSR.
+**问题**：在服务端渲染期间使用仅客户端的条件。
 
 ```html
 <template>
   <div v-if="window?.innerWidth > 768">
-    Desktop content
+    桌面内容
   </div>
 </template>
 ```
 
-**Solution**: Use media queries or handle it client-side:
+**解决方案**：使用媒体查询或在客户端处理：
 
 ```html
 <template>
   <div class="responsive-content">
-    <div class="hidden md:block">Desktop content</div>
-    <div class="md:hidden">Mobile content</div>
+    <div class="hidden md:block">桌面内容</div>
+    <div class="md:hidden">移动端内容</div>
   </div>
 </template>
 ```
 
-## Third-party Libraries with Side Effects
+## 具有副作用的第三方库
 
-**Problem**: Libraries that modify the DOM or have browser dependencies (this happens a LOT with tag managers).
+**问题**：修改 DOM 或依赖浏览器的库（这在标签管理工具中很常见）。
 
 ```html
 <script setup>
@@ -118,7 +118,7 @@ if (import.meta.client) {
 </script>
 ```
 
-**Solution**: Initialise libraries after hydration has completed:
+**解决方案**：在完成水合后再初始化库：
 
 ```html
 <script setup>
@@ -129,9 +129,9 @@ onMounted(async () => {
 </script>
 ```
 
-## Dynamic Content Based on Time
+## 基于时间的动态内容
 
-**Problem**: Content that changes based on current time.
+**问题**：基于当前时间变化的内容。
 
 ```html
 <template>
@@ -144,7 +144,7 @@ const greeting = hour < 12 ? 'Good morning' : 'Good afternoon'
 </script>
 ```
 
-**Solution**: Use [`NuxtTime`](/docs/api/components/nuxt-time) component or handle it client-side:
+**解决方案**：使用 [`NuxtTime`](/docs/4.x/api/components/nuxt-time) 组件或在客户端处理：
 
 ```html
 <template>
@@ -160,29 +160,29 @@ const greeting = hour < 12 ? 'Good morning' : 'Good afternoon'
     <ClientOnly>
       {{ greeting }}
       <template #fallback>
-        Hello!
+        你好！
       </template>
     </ClientOnly>
   </div>
 </template>
 
 <script setup>
-const greeting = ref('Hello!')
+const greeting = ref('你好！')
 
 onMounted(() => {
   const hour = new Date().getHours()
-  greeting.value = hour < 12 ? 'Good morning' : 'Good afternoon'
+  greeting.value = hour < 12 ? '早上好' : '下午好'
 })
 </script>
 ```
 
-## In summary
+## 总结
 
-1. **Use SSR-friendly composables**: [`useFetch`](/docs/api/composables/use-fetch), [`useAsyncData`](/docs/api/composables/use-async-data), [`useState`](/docs/api/composables/use-state)
-2. **Wrap client-only code**: Use [`ClientOnly`](/docs/api/components/client-only) component for browser-specific content
-3. **Consistent data sources**: Ensure server and client uses the same data
-4. **Avoid side effects in setup**: Move browser-dependent code to `onMounted`
+1. **使用对 SSR 友好的组合式 API**：[`useFetch`](/docs/4.x/api/composables/use-fetch)、[`useAsyncData`](/docs/4.x/api/composables/use-async-data)、[`useState`](/docs/4.x/api/composables/use-state)
+2. **封装仅客户端代码**：对浏览器特有的内容使用 [`ClientOnly`](/docs/4.x/api/components/client-only) 组件
+3. **一致的数据源**：确保服务器和客户端使用相同的数据
+4. **避免在 setup 中产生副作用**：将依赖浏览器的代码移动到 `onMounted`
 
 ::tip
-You can read the [Vue documentation on SSR hydration mismatch](https://vuejs.org/guide/scaling-up/ssr.html#hydration-mismatch) for a better understanding of hydration.
+你可以阅读 [Vue 关于 SSR 水合不匹配的文档](https://vue.zhcndoc.com/guide/scaling-up/ssr.html#hydration-mismatch) 来更好地理解水合问题。
 ::

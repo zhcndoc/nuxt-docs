@@ -1,75 +1,75 @@
 ---
 title: 'useSeoMeta'
-description: useSeoMeta 组合函数允许您将网站的 SEO 元标签定义为一个扁平对象，并支持完整的 TypeScript。
+description: 该 useSeoMeta 可组合函数允许你以扁平对象定义站点的 SEO 元标签，并提供完整的 TypeScript 支持。
 links:
-  - label: 源码
+  - label: 来源
     icon: i-simple-icons-github
     to: https://github.com/unjs/unhead/blob/main/packages/vue/src/composables.ts
     size: xs
 ---
 
-这可以帮助您避免常见错误，例如使用 `name` 而不是 `property`，以及拼写错误 - 超过 100 个元标签均已完全类型化。
+这可以帮助你避免常见错误，例如使用 `name` 而不是 `property`，以及拼写错误 —— 提供对 100+ 元标签的完整类型支持。
 
 ::important
-这是向您的网站添加元标签的推荐方式，因为它是 XSS 安全的，并且支持完整的 TypeScript。
+这是向站点添加元标签的推荐方式，因为它是 XSS 安全的并且提供完整的 TypeScript 支持。
 ::
 
-:read-more{to="/docs/getting-started/seo-meta"}
+:read-more{to="/docs/4.x/getting-started/seo-meta"}
 
 ## 用法
 
 ```vue [app/app.vue]
 <script setup lang="ts">
 useSeoMeta({
-  title: '我的惊人网站',
-  ogTitle: '我的惊人网站',
-  description: '这是我的惊人网站，让我告诉您所有关于它的事情。',
-  ogDescription: '这是我的惊人网站，让我告诉您所有关于它的事情。',
+  title: 'My Amazing Site',
+  ogTitle: 'My Amazing Site',
+  description: 'This is my amazing site, let me tell you all about it.',
+  ogDescription: 'This is my amazing site, let me tell you all about it.',
   ogImage: 'https://example.com/image.png',
   twitterCard: 'summary_large_image',
 })
 </script>
 ```
 
-在插入响应式标签时，您应该使用计算属性的获取器语法（`() => value`）：
+在插入响应式标签时，应使用计算属性的 getter 语法（`() => value`）：
 
 ```vue [app/app.vue]
 <script setup lang="ts">
-const title = ref('我的标题')
+const title = ref('My title')
 
 useSeoMeta({
   title,
-  description: () => `这是 ${title.value} 页面的描述`
+  description: () => `This is a description for the ${title.value} page`,
 })
 </script>
 ```
 
 ## 参数
 
-有超过 100 个参数。请查看 [源代码中的完整参数列表](https://github.com/harlan-zw/zhead/blob/main/packages/zhead/src/metaFlat.ts#L1035)。
+有 100 多个参数。请参阅 [源代码中的完整参数列表](https://github.com/harlan-zw/zhead/blob/main/packages/zhead/src/metaFlat.ts#L1035)。
 
-:read-more{to="/docs/getting-started/seo-meta"}
+:read-more{to="/docs/4.x/getting-started/seo-meta"}
 
 ## 性能
 
-在大多数情况下，SEO 元标签不需要是响应式的，因为搜索引擎机器人主要扫描初始页面加载。
+在大多数情况下，SEO 元标签不需要是响应式的，因为搜索引擎爬虫主要会扫描初始页面加载内容。
 
-为了更好的性能，当元标签不需要响应式时，您可以将 `useSeoMeta` 调用包装在仅服务器的条件中：
+为了获得更好的性能，当元标签不需要是响应式时，你可以在仅服务器端的条件下包裹你的 `useSeoMeta` 调用：
 
 ```vue [app/app.vue]
 <script setup lang="ts">
 if (import.meta.server) {
-  // 这些元标签将在服务器端渲染期间添加
+  // These meta tags will only be added during server-side rendering
   useSeoMeta({
     robots: 'index, follow',
-    description: '静态描述，无需响应性',
+    description: 'Static description that does not need reactivity',
     ogImage: 'https://example.com/image.png',
-    // 其他静态元标签...
+    // other static meta tags...
   })
 }
 
-const dynamicTitle = ref('我的标题')
-// 仅在条件之外在必要时使用响应式元标签
+const dynamicTitle = ref('My title')
+// Only use reactive meta tags outside the condition when necessary
 useSeoMeta({
   title: () => dynamicTitle.value,
   ogTitle: () => dynamicTitle.value,
@@ -77,4 +77,4 @@ useSeoMeta({
 </script>
 ```
 
-这之前使用了 [`useServerSeoMeta`](/docs/api/composables/use-server-seo-meta) 组合函数，但它已被弃用，取而代之的是这种方法。
+以前这使用的是 [`useServerSeoMeta`](/docs/4.x/api/composables/use-server-seo-meta) 可组合函数，但它已弃用，推荐使用当前这种方式。

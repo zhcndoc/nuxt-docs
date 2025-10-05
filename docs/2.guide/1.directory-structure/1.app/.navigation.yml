@@ -1,0 +1,5 @@
+title: app
+titleTemplate: '%s - Nuxt 目录结构 - Nuxt 中文文档'
+head.title: "app/"
+defaultOpen: true
+icon: i-vscode-icons-folder-type-app

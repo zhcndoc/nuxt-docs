@@ -1,6 +1,6 @@
 ---
 title: 'showError'
-description: Nuxt 提供了一种快速简单的方法来显示全屏错误页面（如果需要的话）。
+description: Nuxt 提供了一种快速简单的方式在需要时显示全屏错误页面。
 links:
   - label: 源码
     icon: i-simple-icons-github
@@ -8,24 +8,24 @@ links:
     size: xs
 ---
 
-在 [Nuxt 上下文](/docs/guide/going-further/nuxt-app#the-nuxt-context) 中，您可以使用 `showError` 来显示错误。
+在 [Nuxt 上下文](/docs/4.x/guide/going-further/nuxt-app#the-nuxt-context) 中，你可以使用 `showError` 来显示一个错误。
 
 **参数：**
 
 - `error`: `string | Error | Partial<{ cause, data, message, name, stack, statusCode, statusMessage }>`
 
 ```ts
-showError("😱 哦不，发生了一个错误。")
+showError('😱 Oh no, an error has been thrown.')
 showError({
   statusCode: 404,
-  statusMessage: "页面未找到"
+  statusMessage: 'Page Not Found',
 })
 ```
 
-错误通过 [`useError()`](/docs/api/composables/use-error) 设置在状态中，以创建一个反应式且支持 SSR 的共享错误状态，跨组件使用。
+该错误通过使用 [`useError()`](/docs/4.x/api/composables/use-error) 在状态中设置，以便在组件之间创建一个响应式且对 SSR 友好的共享错误状态。
 
 ::tip
-`showError` 调用 `app:error` 钩子。
+`showError` 会调用 `app:error` 钩子。
 ::
 
-:read-more{to="/docs/getting-started/error-handling"}
+:read-more{to="/docs/4.x/getting-started/error-handling"}

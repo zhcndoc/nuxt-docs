@@ -1,6 +1,6 @@
 ---
 title: "onBeforeRouteUpdate"
-description: onBeforeRouteUpdate 组合式 API 允许在组件中注册路由守卫。
+description: onBeforeRouteUpdate 可组合函数允许在组件内注册路由守卫。
 links:
   - label: 源码
     icon: i-simple-icons-github
