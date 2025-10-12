@@ -102,6 +102,7 @@ const { data: user } = useAsyncData(
   - `dedupe`：避免在同一时间多次获取相同键（默认为 `cancel`）。可能的选项：
     - `cancel` - 当发起新请求时取消已有的请求
     - `defer` - 如果已有挂起请求，则不发起新请求
+  - `timeout` - 等待请求超时的毫秒数（默认为 `undefined`，这意味着没有超时）
 
 ::note
 在内部，`lazy: false` 使用 `<Suspense>` 来在数据获取完成之前阻塞路由加载。考虑使用 `lazy: true` 并实现加载状态以获得更流畅的用户体验。
@@ -170,12 +171,12 @@ const { data: users2 } = useAsyncData('users', () => $fetch('/api/users'), { imm
 
 ```ts
 export function useAsyncData<DataT, DataE> (
-  handler: (nuxtApp?: NuxtApp) => Promise<DataT>,
+  handler: (nuxtApp: NuxtApp, options: { signal: AbortSignal }) => Promise<DataT>,
   options?: AsyncDataOptions<DataT>
 ): AsyncData<DataT, DataE>
 export function useAsyncData<DataT, DataE> (
   key: MaybeRefOrGetter<string>,
-  handler: (nuxtApp?: NuxtApp) => Promise<DataT>,
+  handler: (nuxtApp: NuxtApp, options: { signal: AbortSignal }) => Promise<DataT>,
   options?: AsyncDataOptions<DataT>
 ): Promise<AsyncData<DataT, DataE>>
 
@@ -190,6 +191,7 @@ type AsyncDataOptions<DataT> = {
   pick?: string[]
   watch?: MultiWatchSources | false
   getCachedData?: (key: string, nuxtApp: NuxtApp, ctx: AsyncDataRequestContext) => DataT | undefined
+  timeout?: number
 }
 
 type AsyncDataRequestContext = {
@@ -208,6 +210,8 @@ type AsyncData<DataT, ErrorT> = {
 
 interface AsyncDataExecuteOptions {
   dedupe?: 'cancel' | 'defer'
+  timeout?: number
+  signal?: AbortSignal
 }
 
 type AsyncDataRequestStatus = 'idle' | 'pending' | 'success' | 'error'

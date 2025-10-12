@@ -145,6 +145,7 @@ type UseFetchOptions<DataT> = {
   getCachedData?: (key: string, nuxtApp: NuxtApp, ctx: AsyncDataRequestContext) => DataT | undefined
   deep?: boolean
   dedupe?: 'cancel' | 'defer'
+  timeout?: number
   default?: () => DataT
   transform?: (input: DataT) => DataT | Promise<DataT>
   pick?: string[]
@@ -169,6 +170,8 @@ type AsyncData<DataT, ErrorT> = {
 
 interface AsyncDataExecuteOptions {
   dedupe?: 'cancel' | 'defer'
+  timeout?: number
+  signal?: AbortSignal
 }
 
 type AsyncDataRequestStatus = 'idle' | 'pending' | 'success' | 'error'
@@ -195,6 +198,7 @@ type AsyncDataRequestStatus = 'idle' | 'pending' | 'success' | 'error'
 | `lazy` | `boolean` | `false` | 如果为 true，则在路由加载后解析（不会阻塞导航）。 |
 | `immediate` | `boolean` | `true` | 如果为 false，则阻止请求立即触发。 |
 | `default` | `() => DataT` | - | 在异步解析前为 `data` 提供默认值的工厂函数。 |
+| `timeout` | `number` | - | 超时的毫秒数，等待请求超时（默认为 `undefined`，这意味着没有超时） |
 | `transform` | `(input: DataT) => DataT \| Promise<DataT>` | - | 在结果解析后用于转换结果的函数。 |
 | `getCachedData`| `(key, nuxtApp, ctx) => DataT \| undefined` | - | 返回缓存数据的函数。见下方默认实现。 |
 | `pick` | `string[]` | - | 仅从结果中选择指定键。 |
