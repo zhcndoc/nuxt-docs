@@ -39,14 +39,17 @@ type RuntimeConfigNamespace = Record<string, unknown>
 export interface PublicRuntimeConfig extends RuntimeConfigNamespace { }
 
 export interface RuntimeConfig extends RuntimeConfigNamespace {
+  // eslint-disable-next-line @typescript-eslint/no-deprecated
   app: NitroRuntimeConfigApp
   /** Only available on the server. */
+  // eslint-disable-next-line @typescript-eslint/no-deprecated
   nitro?: NitroRuntimeConfig['nitro']
   public: PublicRuntimeConfig
 }
 
 // User configuration in `nuxt.config` file
-export interface NuxtConfig extends DeepPartial<Omit<ConfigSchema, 'vue' | 'vite' | 'runtimeConfig' | 'webpack' | 'nitro'>> {
+export interface NuxtConfig extends DeepPartial<Omit<ConfigSchema, 'components' | 'vue' | 'vite' | 'runtimeConfig' | 'webpack' | 'nitro'>> {
+  components?: ConfigSchema['components']
   vue?: Omit<DeepPartial<ConfigSchema['vue']>, 'config'> & { config?: Partial<Filter<VueAppConfig, string | boolean>> }
   // Avoid DeepPartial for vite config interface (#4772)
   vite?: ConfigSchema['vite']
@@ -88,7 +91,7 @@ export interface NuxtOptions extends Omit<ConfigSchema, 'vue' | 'sourcemap' | 'd
     $client: ConfigSchema['webpack']
     $server: ConfigSchema['webpack']
   }
-  _layers: NuxtConfigLayer[]
+  _layers: readonly NuxtConfigLayer[]
   $schema: SchemaDefinition
 }
 
@@ -130,6 +133,9 @@ export interface ViteConfig extends Omit<ViteUserConfig, 'publicDir'> {
    */
   publicDir?: never
 }
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface ViteOptions extends ViteConfig {}
 
 // App Config
 export interface CustomAppConfig {

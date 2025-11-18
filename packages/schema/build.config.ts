@@ -36,7 +36,6 @@ export default defineBuildConfig({
     'autoprefixer',
     'c12',
     'compatx',
-    'consola',
     'css-minimizer-webpack-plugin',
     'cssnano',
     'esbuild',
@@ -50,7 +49,7 @@ export default defineBuildConfig({
     'nitropack',
     'nuxt/app',
     'ofetch',
-    'pkg-types',
+    'oxc-transform',
     'postcss',
     'pug',
     'rollup-plugin-visualizer',
@@ -70,6 +69,5 @@ export default defineBuildConfig({
     // Implicit
     '@vue/compiler-core',
     '@vue/compiler-sfc',
-    '@vue/shared',
   ],
 })

@@ -2,11 +2,15 @@ import { pathToFileURL } from 'node:url'
 import { interopDefault } from 'mlly'
 import { resolveModulePath } from 'exsolve'
 import { createJiti } from 'jiti'
+import { getUserCaller, warn } from './trace'
+import { resolveAlias } from '../resolve'
 
 export interface ResolveModuleOptions {
   /** @deprecated use `url` with URLs pointing at a file - never a directory */
   paths?: string | string[]
   url?: URL | URL[]
+  /** @default ['.js', '.mjs', '.cjs', '.ts', '.mts', '.cts'] */
+  extensions?: string[]
 }
 
 export function directoryToURL (dir: string): URL {
@@ -32,8 +36,9 @@ export function tryResolveModule (id: string, url: string | string[] | URL | URL
 
 export function resolveModule (id: string, options?: ResolveModuleOptions) {
   return resolveModulePath(id, {
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
     from: options?.url ?? options?.paths ?? [import.meta.url],
-    extensions: ['.js', '.mjs', '.cjs', '.ts', '.mts', '.cts'],
+    extensions: options?.extensions ?? ['.js', '.mjs', '.cjs', '.ts', '.mts', '.cts'],
   })
 }
 
@@ -55,21 +60,19 @@ export function tryImportModule<T = unknown> (id: string, opts?: ImportModuleOpt
   }
 }
 
-const warnings = new Set<string>()
-
 /**
  * @deprecated Please use `importModule` instead.
  */
 export function requireModule<T = unknown> (id: string, opts?: ImportModuleOptions) {
-  if (!warnings.has(id)) {
-    // TODO: add more information on stack trace
-    console.warn('[@nuxt/kit] `requireModule` is deprecated. Please use `importModule` instead.')
-    warnings.add(id)
-  }
+  const caller = getUserCaller()
+  const explanation = caller ? ` (used at \`${resolveAlias(caller.source)}:${caller.line}:${caller.column}\`)` : ''
+  const warning = `[@nuxt/kit] \`requireModule\` is deprecated${explanation}. Please use \`importModule\` instead.`
+  warn(warning)
   const resolvedPath = resolveModule(id, opts)
   const jiti = createJiti(import.meta.url, {
     interopDefault: opts?.interopDefault !== false,
   })
+  // eslint-disable-next-line @typescript-eslint/no-deprecated
   return jiti(pathToFileURL(resolvedPath).href) as T
 }
 
@@ -78,6 +81,7 @@ export function requireModule<T = unknown> (id: string, opts?: ImportModuleOptio
  */
 export function tryRequireModule<T = unknown> (id: string, opts?: ImportModuleOptions) {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
     return requireModule<T>(id, opts)
   } catch {
     // intentionally empty as this is a `try-` function

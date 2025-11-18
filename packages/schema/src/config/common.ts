@@ -1,3 +1,4 @@
+import process from 'node:process'
 import { existsSync } from 'node:fs'
 import { readdir } from 'node:fs/promises'
 import { randomUUID } from 'node:crypto'
@@ -503,15 +504,17 @@ export default defineResolvers({
   alias: {
     $resolve: async (val, get) => {
       const [srcDir, rootDir, assetsDir, publicDir, buildDir, sharedDir] = await Promise.all([get('srcDir'), get('rootDir'), get('dir.assets'), get('dir.public'), get('buildDir'), get('dir.shared')])
+      const srcWithTrailingSlash = withTrailingSlash(srcDir)
+      const rootWithTrailingSlash = withTrailingSlash(rootDir)
       return {
-        '~': srcDir,
-        '@': srcDir,
-        '~~': rootDir,
-        '@@': rootDir,
-        '#shared': resolve(rootDir, sharedDir),
-        [basename(assetsDir)]: resolve(srcDir, assetsDir),
-        [basename(publicDir)]: resolve(srcDir, publicDir),
-        '#build': buildDir,
+        '~': srcWithTrailingSlash,
+        '@': srcWithTrailingSlash,
+        '~~': rootWithTrailingSlash,
+        '@@': rootWithTrailingSlash,
+        '#shared': withTrailingSlash(resolve(rootDir, sharedDir)),
+        [basename(assetsDir)]: withTrailingSlash(resolve(srcDir, assetsDir)),
+        [basename(publicDir)]: withTrailingSlash(resolve(srcDir, publicDir)),
+        '#build': withTrailingSlash(buildDir),
         '#internal/nuxt/paths': resolve(buildDir, 'paths.mjs'),
         ...typeof val === 'object' ? val : {},
       }
@@ -706,4 +709,8 @@ function provideFallbackValues (obj: Record<string, any>) {
       provideFallbackValues(obj[key])
     }
   }
+}
+
+function withTrailingSlash (str: string) {
+  return str.replace(/\/?$/, '/')
 }

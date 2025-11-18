@@ -3,7 +3,6 @@ import { fileURLToPath } from 'node:url'
 import { basename, isAbsolute, join, normalize, parse, relative, resolve } from 'pathe'
 import { hash } from 'ohash'
 import type { Nuxt, NuxtServerTemplate, NuxtTemplate, NuxtTypeTemplate, ResolvedNuxtTemplate, TSReference } from '@nuxt/schema'
-import { withTrailingSlash } from 'ufo'
 import { defu } from 'defu'
 import type { TSConfig } from 'pkg-types'
 import { gte } from 'semver'
@@ -16,6 +15,7 @@ import { directoryToURL } from './internal/esm'
 import { getDirectory } from './module/install'
 import { tryUseNuxt, useNuxt } from './context'
 import { resolveNuxtModule } from './resolve'
+import { getLayerDirectories } from './layers'
 
 /**
  * Renders given template during build into the virtual file system (and optionally to disk in the project `buildDir`)
@@ -27,7 +27,7 @@ export function addTemplate<T> (_template: NuxtTemplate<T> | string) {
   const template = normalizeTemplate(_template)
 
   // Remove any existing template with the same destination path
-  filterInPlace(nuxt.options.build.templates, p => normalizeTemplate(p).dst !== template.dst)
+  filterInPlace(nuxt.options.build.templates, p => (p.dst || normalizeTemplate(p).dst) !== template.dst)
 
   try {
     const distDir = distDirURL.toString()
@@ -81,6 +81,13 @@ export function addTypeTemplate<T> (_template: NuxtTypeTemplate<T>, context?: { 
   if (!context || context.nuxt) {
     nuxt.hook('prepare:types', ({ references }) => {
       references.push({ path: template.dst })
+    })
+
+    // expose global types to vue compiler
+    nuxt.options.vite.vue = defu(nuxt.options.vite.vue, {
+      script: {
+        globalTypeFiles: [template.dst],
+      },
     })
   }
   if (context?.nitro) {
@@ -153,6 +160,8 @@ export async function _generateTypes (nuxt: Nuxt) {
   const rootDirWithSlash = withTrailingSlash(nuxt.options.rootDir)
   const relativeRootDir = relativeWithDot(nuxt.options.buildDir, nuxt.options.rootDir)
 
+  const layerDirs = getLayerDirectories(nuxt)
+
   const include = new Set<string>([
     join(relativeRootDir, '**/*'),
     join(relativeRootDir, '.config/nuxt.*'),
@@ -167,10 +176,9 @@ export async function _generateTypes (nuxt: Nuxt) {
     include.add(join(relative(nuxt.options.buildDir, nuxt.options.workspaceDir), '**/*'))
   }
 
-  for (const layer of nuxt.options._layers) {
-    const srcOrCwd = layer.config.srcDir ?? layer.cwd
-    if (!srcOrCwd.startsWith(rootDirWithSlash) || srcOrCwd.includes('node_modules')) {
-      include.add(join(relative(nuxt.options.buildDir, srcOrCwd), '**/*'))
+  for (const dirs of layerDirs) {
+    if (!dirs.app.startsWith(rootDirWithSlash) || dirs.app.includes('node_modules')) {
+      include.add(join(relative(nuxt.options.buildDir, dirs.app), '**/*'))
     }
   }
 
@@ -181,14 +189,21 @@ export async function _generateTypes (nuxt: Nuxt) {
     relativeWithDot(nuxt.options.buildDir, resolve(nuxt.options.rootDir, '.data')),
   ])
 
+  const sourceDirs = layerDirs.map(d => d.app)
+
   for (const dir of nuxt.options.modulesDir) {
-    exclude.add(relativeWithDot(nuxt.options.buildDir, dir))
+    // we only need to exclude node_modules directories if they are
+    // being included automatically by being inside the source directory
+    if (!sourceDirs.some(srcDir => dir.startsWith(srcDir))) {
+      exclude.add(relativeWithDot(nuxt.options.buildDir, dir))
+    }
   }
 
   const moduleEntryPaths: string[] = []
   for (const m of nuxt.options._installedModules) {
-    if (m.entryPath) {
-      moduleEntryPaths.push(getDirectory(m.entryPath))
+    const path = m.meta?.rawPath || m.entryPath
+    if (path) {
+      moduleEntryPaths.push(getDirectory(path))
     }
   }
 
@@ -303,7 +318,7 @@ export async function _generateTypes (nuxt: Nuxt) {
     }
 
     const relativePath = relativeWithDot(nuxt.options.buildDir, absolutePath)
-    if (stats?.isDirectory()) {
+    if (stats?.isDirectory() || aliases[alias]!.endsWith('/')) {
       tsConfig.compilerOptions.paths[alias] = [relativePath]
       tsConfig.compilerOptions.paths[`${alias}/*`] = [`${relativePath}/*`]
 
@@ -425,4 +440,8 @@ function renderAttr (key: string, value?: string) {
 const RELATIVE_WITH_DOT_RE = /^([^.])/
 function relativeWithDot (from: string, to: string) {
   return relative(from, to).replace(RELATIVE_WITH_DOT_RE, './$1') || '.'
+}
+
+function withTrailingSlash (dir: string) {
+  return dir.replace(/[^/]$/, '$&/')
 }

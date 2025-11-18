@@ -617,7 +617,7 @@ export default defineResolvers({
 
     /**
      * Keep showing the spa-loading-template until suspense:resolve
-     * @see [Nuxt Issues #24770](https://github.com/nuxt/nuxt/issues/21721)
+     * @see [Nuxt Issues #21721](https://github.com/nuxt/nuxt/issues/21721)
      * @type {'body' | 'within'}
      */
     spaLoadingTemplateLocation: {
@@ -651,6 +651,13 @@ export default defineResolvers({
     browserDevtoolsTiming: {
       $resolve: async (val, get) => typeof val === 'boolean' ? val : await get('dev'),
     },
+
+    /**
+     * Enable integration with Chrome DevTools Workspaces
+     * for Nuxt projects.
+     * @see [Chrome DevTools Project Settings](https://docs.google.com/document/d/1rfKPnxsNuXhnF7AiQZhu9kIwdiMS5hnAI05HBwFuBSM)
+     */
+    chromeDevtoolsProjectSettings: true,
 
     /**
      * Record mutations to `nuxt.options` in module context, helping to debug configuration changes
@@ -797,6 +804,17 @@ export default defineResolvers({
     pendingWhenIdle: {
       $resolve: async (val, get) => {
         return typeof val === 'boolean' ? val : (await get('future')).compatibilityVersion !== 4
+      },
+    },
+    entryImportMap: true,
+    extractAsyncDataHandlers: {
+      $resolve: (val) => {
+        return typeof val === 'boolean' ? val : false
+      },
+    },
+    viteEnvironmentApi: {
+      $resolve: async (val, get) => {
+        return typeof val === 'boolean' ? val : (await get('future.compatibilityVersion')) >= 5
       },
     },
   },

@@ -384,7 +384,7 @@ export function defineNuxtLink (options: NuxtLinkOptions) {
       }
 
       if (import.meta.client) {
-        checkPropConflicts(props, 'prefetch', 'noPrefetch')
+        checkPropConflicts(props, 'noPrefetch', 'prefetch')
         if (shouldPrefetch('visibility')) {
           const nuxtApp = useNuxtApp()
           let idleId: number
@@ -471,7 +471,7 @@ export function defineNuxtLink (options: NuxtLinkOptions) {
           (isAbsoluteUrl.value || hasTarget.value) ? 'noopener noreferrer' : '',
         ) || null
 
-        // https://router.vuejs.org/api/#custom
+        // https://router.vuejs.org/api/interfaces/RouterLinkProps.html#custom-
         if (props.custom) {
           if (!slots.default) {
             return null
@@ -525,9 +525,8 @@ export function defineNuxtLink (options: NuxtLinkOptions) {
         }, slots.default?.())
       }
     },
-    // }) as unknown as DefineComponent<NuxtLinkProps, object, object, ComputedOptions, MethodOptions, object, object, EmitsOptions, string, object, NuxtLinkProps, object, SlotsType<NuxtLinkSlots>>
-  }) as unknown as (new<CustomProp extends boolean = false>(props: NuxtLinkProps<CustomProp>) => InstanceType<DefineSetupFnComponent<
-    NuxtLinkProps<CustomProp>,
+  }) as unknown as (new<CustomProp extends boolean = false>(props: NuxtLinkProps<CustomProp> & VNodeProps & AllowedComponentProps & Omit<AnchorHTMLAttributes, keyof NuxtLinkProps<CustomProp>>) => InstanceType<DefineSetupFnComponent<
+    NuxtLinkProps<CustomProp> & VNodeProps & AllowedComponentProps & Omit<AnchorHTMLAttributes, keyof NuxtLinkProps<CustomProp>>,
     [],
     SlotsType<NuxtLinkSlots<CustomProp>>
   >>) & Record<string, any>

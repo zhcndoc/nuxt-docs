@@ -6,7 +6,7 @@ import type { Manifest } from 'vue-bundle-renderer'
 import type { EventHandler } from 'h3'
 import type { Import, InlinePreset, Unimport } from 'unimport'
 import type { Compiler, Configuration, Stats } from 'webpack'
-import type { Nitro, NitroConfig } from 'nitropack'
+import type { Nitro, NitroConfig, NitroRouteConfig } from 'nitropack'
 import type { Schema, SchemaDefinition } from 'untyped'
 import type { RouteLocationRaw, RouteRecordRaw } from 'vue-router'
 import type { RawVueCompilerOptions } from '@vue/language-core'
@@ -35,6 +35,7 @@ export type NuxtPage = {
   redirect?: RouteLocationRaw
   children?: NuxtPage[]
   middleware?: string[] | string
+  rules?: NitroRouteConfig
   /**
    * Set the render mode.
    *
@@ -61,6 +62,9 @@ export type NuxtLayout = {
   file: string
 }
 
+/**
+ * @deprecated Use {@link InlinePreset}
+ */
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ImportPresetWithDeprecation extends InlinePreset {
 }
@@ -223,7 +227,7 @@ export interface NuxtHooks {
    * @param presets Array containing presets objects
    * @returns Promise
    */
-  'imports:sources': (presets: ImportPresetWithDeprecation[]) => HookResult
+  'imports:sources': (presets: InlinePreset[]) => HookResult
   /**
    * Called at setup allowing modules to extend imports.
    * @param imports Array containing the imports to extend
@@ -353,13 +357,15 @@ export interface NuxtHooks {
    * @param viteInlineConfig The vite inline config object
    * @param env Server or client
    * @returns Promise
+   * @deprecated
    */
-  'vite:extendConfig': (viteInlineConfig: ViteConfig, env: { isClient: boolean, isServer: boolean }) => HookResult
+  'vite:extendConfig': (viteInlineConfig: Readonly<ViteConfig>, env: { isClient: boolean, isServer: boolean }) => HookResult
   /**
    * Allows to read the resolved Vite config.
    * @param viteInlineConfig The vite inline config object
    * @param env Server or client
    * @returns Promise
+   * @deprecated
    */
   'vite:configResolved': (viteInlineConfig: Readonly<ViteConfig>, env: { isClient: boolean, isServer: boolean }) => HookResult
   /**

@@ -13,8 +13,8 @@ import type { H3CorsOptions } from 'h3'
 import type { NuxtLinkOptions } from 'nuxt/app'
 import type { FetchOptions } from 'ofetch'
 import type { NitroConfig, NitroDevEventHandler, NitroEventHandler } from 'nitropack'
-import type { Options as Options0 } from 'autoprefixer'
-import type { Options as Options1 } from 'cssnano'
+import type { Options as AutoprefixerOptions } from 'autoprefixer'
+import type { Options as CssnanoOptions } from 'cssnano'
 import type { TSConfig } from 'pkg-types'
 import type { RawVueCompilerOptions } from '@vue/language-core'
 import type { PluginOptions } from 'mini-css-extract-plugin'
@@ -24,9 +24,11 @@ import type { VueLoaderOptions } from 'vue-loader'
 import type { BasePluginOptions, DefinedDefaultMinimizerAndOptions } from 'css-minimizer-webpack-plugin'
 import type { Configuration, WebpackError } from 'webpack'
 import type { ProcessOptions } from 'postcss'
-import type { Options as Options3 } from 'webpack-dev-middleware'
+import type { Options as WebpackDevMiddlewareOptions } from 'webpack-dev-middleware'
 import type { ClientOptions, MiddlewareOptions } from 'webpack-hot-middleware'
 import type { AppConfig as VueAppConfig } from 'vue'
+import type { TransformOptions as OxcTransformOptions } from 'oxc-transform'
+import type { TransformOptions as EsbuildTransformOptions } from 'esbuild'
 
 import type { RouterConfigSerializable } from './router'
 import type { NuxtHooks } from './hooks'
@@ -34,7 +36,7 @@ import type { ModuleMeta, NuxtModule } from './module'
 import type { NuxtDebugOptions } from './debug'
 import type { Nuxt, NuxtPlugin, NuxtTemplate } from './nuxt'
 import type { SerializableHtmlAttributes } from './head'
-import type { AppConfig, NuxtAppConfig, NuxtOptions, RuntimeConfig, Serializable, ViteConfig } from './config'
+import type { AppConfig, NuxtAppConfig, NuxtOptions, RuntimeConfig, Serializable, ViteOptions } from './config'
 import type { ImportsOptions } from './imports'
 import type { ComponentsOptions } from './components'
 
@@ -312,8 +314,7 @@ export interface ConfigSchema {
     spaLoaderTag: string
 
     /**
-     * Customize Nuxt Nuxt SpaLoader element attributes.
-     *
+     * Customize Nuxt SPA loading template element attributes.
      */
     spaLoaderAttrs: SerializableHtmlAttributes
   }
@@ -1455,6 +1456,11 @@ export interface ConfigSchema {
     cookieStore: boolean
 
     /**
+     * Enable experimental Vite Environment API
+     */
+    viteEnvironmentApi: boolean
+
+    /**
      * This allows specifying the default options for core Nuxt components and composables.
      *
      * These options will likely be moved elsewhere in the future, such as into `app.config` or into the `app/` directory.
@@ -1590,6 +1596,15 @@ export interface ConfigSchema {
     browserDevtoolsTiming: boolean
 
     /**
+     * Enable integration with Chrome DevTools Workspaces
+     * for Nuxt projects.
+     *
+     * @default true
+     * @see [Chrome DevTools Project Settings](https://docs.google.com/document/d/1rfKPnxsNuXhnF7AiQZhu9kIwdiMS5hnAI05HBwFuBSM/edit)
+     */
+    chromeDevtoolsProjectSettings: boolean
+
+    /**
      * Record mutations to `nuxt.options` in module context, helping to debug configuration changes made by modules during the Nuxt initialization phase.
      *
      * When enabled, Nuxt will track which modules modify configuration options, making it easier to trace unexpected configuration changes.
@@ -1719,6 +1734,28 @@ export interface ConfigSchema {
      * @default true
      */
     pendingWhenIdle: boolean
+
+    /**
+     * Whether to improve chunk stability by using an import map to resolve the entry chunk of the bundle.
+     */
+    entryImportMap: boolean
+
+    /**
+     * Extract async data handler functions into separate chunks for better performance and caching.
+     *
+     * When enabled, handler functions passed to `useAsyncData` and `useLazyAsyncData` will be extracted
+     * into separate chunks and dynamically imported, allowing for better code splitting and caching.
+     *
+     * @experimental This is an experimental feature and API may change in the future.
+     */
+    extractAsyncDataHandlers: boolean
+
+    /**
+     * Whether to enable `@dxup/nuxt` module for better TypeScript DX.
+     *
+     * @see https://github.com/KazariEX/dxup
+     */
+    typescriptPlugin: boolean
   }
 
   generate: {
@@ -1836,9 +1873,16 @@ export interface ConfigSchema {
   _modules: Array<any>
 
   /**
+   * Configuration for Nuxt's server builder.
+   */
+  server: {
+    builder?: '@nuxt/nitro-server' | (string & {}) | { bundle: (nuxt: Nuxt) => Promise<void> }
+  }
+
+  /**
    * Configuration for Nitro.
    *
-   * @see [Nitro configuration docs](https://nitro.build/config/)
+   * @see [Nitro configuration docs](https://nitro.build/config)
    */
   nitro: NitroConfig
 
@@ -1847,7 +1891,7 @@ export interface ConfigSchema {
    *
    * @experimental This is an experimental feature and API may change in the future.
    *
-   * @see [Nitro route rules documentation](https://nitro.build/config/#routerules)
+   * @see [Nitro route rules documentation](https://nitro.build/config#routerules)
    */
   routeRules: NitroConfig['routeRules']
 
@@ -1855,7 +1899,7 @@ export interface ConfigSchema {
    * Nitro server handlers.
    *
    * Each handler accepts the following options:
-   * - handler: The path to the file defining the handler. - route: The route under which the handler is available. This follows the conventions of [rou3](https://github.com/unjs/rou3). - method: The HTTP method of requests that should be handled. - middleware: Specifies whether it is a middleware handler. - lazy: Specifies whether to use lazy loading to import the handler.
+   * - handler: The path to the file defining the handler. - route: The route under which the handler is available. This follows the conventions of [rou3](https://github.com/h3js/rou3). - method: The HTTP method of requests that should be handled. - middleware: Specifies whether it is a middleware handler. - lazy: Specifies whether to use lazy loading to import the handler.
    *
    * @see [`server/` directory documentation](https://nuxt.com/docs/guide/directory-structure/server)
    *
@@ -1888,7 +1932,7 @@ export interface ConfigSchema {
      *
      * @see [PostCSS docs](https://postcss.org/)
      */
-    plugins: Record<string, unknown> & { autoprefixer?: Options0, cssnano?: Options1 }
+    plugins: Record<string, unknown> & { autoprefixer?: false | AutoprefixerOptions, cssnano?: false | CssnanoOptions }
   }
 
   router: {
@@ -1969,7 +2013,13 @@ export interface ConfigSchema {
   /**
    * Configure shared esbuild options used within Nuxt and passed to other builders, such as Vite or Webpack.
    */
-    options: import('esbuild').TransformOptions
+    options: EsbuildTransformOptions
+  }
+
+  oxc: {
+    transform: {
+      options: OxcTransformOptions
+    }
   }
 
   /**
@@ -1978,7 +2028,7 @@ export interface ConfigSchema {
    * @see [Vite configuration docs](https://vite.dev/config) for more information.
    * Please note that not all vite options are supported in Nuxt.
    */
-  vite: ViteConfig & { $client?: ViteConfig, $server?: ViteConfig }
+  vite: ViteOptions
 
   webpack: {
   /**
@@ -2284,13 +2334,13 @@ export interface ConfigSchema {
      * Customize PostCSS Loader. same options as [`postcss-loader` options](https://github.com/webpack-contrib/postcss-loader#options)
      *
      */
-    postcss: { execute?: boolean, postcssOptions: ProcessOptions & { plugins: Record<string, unknown> & { autoprefixer?: Options0, cssnano?: Options1 } }, sourceMap?: boolean, implementation?: any }
+    postcss: { execute?: boolean, postcssOptions: ProcessOptions & { plugins: Record<string, unknown> & { autoprefixer?: AutoprefixerOptions, cssnano?: CssnanoOptions } }, sourceMap?: boolean, implementation?: any }
 
     /**
      * See [webpack-dev-middleware](https://github.com/webpack/webpack-dev-middleware) for available options.
      *
      */
-    devMiddleware: Options3<IncomingMessage, ServerResponse>
+    devMiddleware: WebpackDevMiddlewareOptions<IncomingMessage, ServerResponse>
 
     /**
      * See [webpack-hot-middleware](https://github.com/webpack-contrib/webpack-hot-middleware) for available options.

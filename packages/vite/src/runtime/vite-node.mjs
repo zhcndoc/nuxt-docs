@@ -1,5 +1,6 @@
 // @ts-check
 
+import process from 'node:process'
 import { performance } from 'node:perf_hooks'
 import { createError } from 'h3'
 import { ViteNodeRunner } from 'vite-node/client'
@@ -15,12 +16,12 @@ let render
 export default async (ssrContext) => {
   // Workaround for stub mode
   // https://github.com/nuxt/framework/pull/3983
-  // eslint-disable-next-line nuxt/prefer-import-meta
+  // eslint-disable-next-line nuxt/prefer-import-meta,@typescript-eslint/no-deprecated
   process.server = true
   import.meta.server = true
 
   // Invalidate cache for files changed since last rendering
-  const invalidates = await viteNodeFetch('/invalidates')
+  const invalidates = await viteNodeFetch.getInvalidates()
   const updates = runner.moduleCache.invalidateDepTree(invalidates)
 
   // Execute SSR bundle on demand
@@ -40,11 +41,11 @@ function createRunner () {
     root: viteNodeOptions.root, // Equals to Nuxt `srcDir`
     base: viteNodeOptions.base,
     async resolveId (id, importer) {
-      return await viteNodeFetch('/resolve/' + encodeURIComponent(id) + (importer ? '?importer=' + encodeURIComponent(importer) : '')) ?? undefined
+      return await viteNodeFetch.resolveId(id, importer)
     },
     async fetchModule (id) {
       id = id.replace(/\/\//g, '/') // TODO: fix in vite-node
-      return await viteNodeFetch('/module/' + encodeURI(id)).catch((err) => {
+      return await viteNodeFetch.fetchModule(id).catch((err) => {
         const errorData = err?.data?.data
         if (!errorData) {
           throw err
