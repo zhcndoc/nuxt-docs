@@ -1,18 +1,18 @@
 ---
 title: 'useLazyFetch'
-description: This wrapper around useFetch triggers navigation immediately.
+description: 这个围绕 useFetch 的封装通过设置 `lazy` 选项为 `true`，立即触发导航。
 links:
-  - label: Source
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/fetch.ts
     size: xs
 ---
 
-`useLazyFetch` provides a wrapper around [`useFetch`](/docs/4.x/api/composables/use-fetch) that triggers navigation before the handler is resolved by setting the `lazy` option to `true`.
+`useLazyFetch` 是对 [`useFetch`](/docs/4.x/api/composables/use-fetch) 的封装，通过将 `lazy` 选项设置为 `true`，在处理器解析前就触发导航。
 
-## Usage
+## 用法
 
-By default, [`useFetch`](/docs/4.x/api/composables/use-fetch) blocks navigation until its async handler is resolved. `useLazyFetch` allows navigation to proceed immediately, with data being fetched in the background.
+默认情况下， [`useFetch`](/docs/4.x/api/composables/use-fetch) 会阻塞导航，直到异步处理器解析完成。`useLazyFetch` 允许导航立即进行，数据则在后台获取。
 
 ```vue [app/pages/index.vue]
 <script setup lang="ts">
@@ -21,29 +21,29 @@ const { status, data: posts } = await useLazyFetch('/api/posts')
 
 <template>
   <div v-if="status === 'pending'">
-    Loading ...
+    正在加载...
   </div>
   <div v-else>
     <div v-for="post in posts">
-      <!-- do something -->
+      <!-- 执行相关操作 -->
     </div>
   </div>
 </template>
 ```
 
 ::note
-`useLazyFetch` has the same signature as [`useFetch`](/docs/4.x/api/composables/use-fetch).
+`useLazyFetch` 拥有与 [`useFetch`](/docs/4.x/api/composables/use-fetch) 相同的函数签名。
 ::
 
 ::warning
-Awaiting `useLazyFetch` only ensures the call is initialized. On client-side navigation, data may not be immediately available, and you must handle the `pending` state in your component's template.
+`await` 一个 `useLazyFetch` 调用仅确保请求已初始化。在客户端导航时，数据可能不会立刻可用，因此你必须在组件模板中处理 `pending` 状态。
 ::
 
 ::warning
-`useLazyFetch` is a reserved function name transformed by the compiler, so you should not name your own function `useLazyFetch`.
+`useLazyFetch` 是编译器转换后的保留函数名，因此不应将自己的函数命名为 `useLazyFetch`。
 ::
 
-## Type
+## 类型
 
 ```ts [Signature]
 export function useLazyFetch<DataT, ErrorT> (
@@ -53,56 +53,55 @@ export function useLazyFetch<DataT, ErrorT> (
 ```
 
 ::note
-`useLazyFetch` is equivalent to `useFetch` with `lazy: true` option set. See [`useFetch`](/docs/4.x/api/composables/use-fetch) for full type definitions.
+`useLazyFetch` 等价于设置了 `lazy: true` 选项的 `useFetch`。完整类型定义详见 [`useFetch`](/docs/4.x/api/composables/use-fetch)。
 ::
 
-## Parameters
+## 参数
 
-`useLazyFetch` accepts the same parameters as [`useFetch`](/docs/4.x/api/composables/use-fetch):
+`useLazyFetch` 接受与 [`useFetch`](/docs/4.x/api/composables/use-fetch) 相同的参数：
 
-- `URL` (`string | Request | Ref<string | Request> | () => string | Request`): The URL or request to fetch.
-- `options` (object): Same as [`useFetch` options](/docs/4.x/api/composables/use-fetch#parameters), with `lazy` automatically set to `true`.
+- `URL` (`string | Request | Ref<string | Request> | () => string | Request`)：要请求的 URL 或请求对象。
+- `options` (对象)：与 [`useFetch` 选项](/docs/4.x/api/composables/use-fetch#parameters) 相同，`lazy` 选项自动设置为 `true`。
 
 :read-more{to="/docs/4.x/api/composables/use-fetch#parameters"}
 
-## Return Values
+## 返回值
 
-Returns the same `AsyncData` object as [`useFetch`](/docs/4.x/api/composables/use-fetch):
+返回与 [`useFetch`](/docs/4.x/api/composables/use-fetch) 相同的 `AsyncData` 对象：
 
-| Name | Type | Description |
+| 名称 | 类型 | 说明 |
 | --- | --- |--- |
-| `data` | `Ref<DataT \| undefined>` | The result of the asynchronous fetch. |
-| `refresh` | `(opts?: AsyncDataExecuteOptions) => Promise<void>` | Function to manually refresh the data. |
-| `execute` | `(opts?: AsyncDataExecuteOptions) => Promise<void>` | Alias for `refresh`. |
-| `error` | `Ref<ErrorT \| undefined>` | Error object if the data fetching failed. |
-| `status` | `Ref<'idle' \| 'pending' \| 'success' \| 'error'>` | Status of the data request. |
-| `clear` | `() => void` | Resets `data` to `undefined`, `error` to `undefined`, sets `status` to `idle`, and cancels any pending requests. |
+| `data` | `Ref<DataT \| undefined>` | 异步获取的结果数据。 |
+| `refresh` | `(opts?: AsyncDataExecuteOptions) => Promise<void>` | 手动刷新数据的函数。 |
+| `execute` | `(opts?: AsyncDataExecuteOptions) => Promise<void>` | `refresh` 的别名。 |
+| `error` | `Ref<ErrorT \| undefined>` | 如果数据获取失败，包含错误对象。 |
+| `status` | `Ref<'idle' \| 'pending' \| 'success' \| 'error'>` | 数据请求的状态。 |
+| `clear` | `() => void` | 将 `data` 设为 `undefined`，`error` 设为 `undefined`，将状态重置为 `idle`，并取消所有待处理请求。 |
 
 :read-more{to="/docs/4.x/api/composables/use-fetch#return-values"}
 
-## Examples
+## 示例
 
-### Handling Pending State
+### 处理加载中状态
 
 ```vue [app/pages/index.vue]
 <script setup lang="ts">
-/* Navigation will occur before fetching is complete.
- * Handle 'pending' and 'error' states directly within your component's template
+/* 导航会在获取完成前发生。
+ * 请在组件模板内直接处理 'pending' 和 'error' 状态
  */
 const { status, data: posts } = await useLazyFetch('/api/posts')
 watch(posts, (newPosts) => {
-  // Because posts might start out null, you won't have access
-  // to its contents immediately, but you can watch it.
+  // 因为初始时 posts 可能是 null，所以无法立即访问其内容，但可以通过观察它的变化处理
 })
 </script>
 
 <template>
   <div v-if="status === 'pending'">
-    Loading ...
+    正在加载...
   </div>
   <div v-else>
     <div v-for="post in posts">
-      <!-- do something -->
+      <!-- 执行相关操作 -->
     </div>
   </div>
 </template>

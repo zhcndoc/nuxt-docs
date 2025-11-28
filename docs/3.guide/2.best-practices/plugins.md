@@ -4,17 +4,17 @@ title: Nuxt 插件
 description: 使用 Nuxt 插件的最佳实践。
 ---
 
-Plugins in Nuxt allow you to extend your application with additional functionality. However, improper use can lead to performance bottlenecks. This guide outlines best practices to optimize your Nuxt plugins.
+Nuxt 中的插件允许你为应用程序扩展额外功能。然而，不当使用可能导致性能瓶颈。此指南概述了优化 Nuxt 插件的最佳实践。
 
-## Avoid costly plugin setup
+## 避免代价高昂的插件初始化
 
-A large number of plugins can cause performance issues, especially if they require expensive computations or take too long to initialize. Since plugins run during the hydration phase, inefficient setups can block rendering and degrade the user experience.
+大量插件可能引发性能问题，尤其是当它们需要进行昂贵的计算或初始化时间过长时。由于插件会在水化阶段运行，低效的初始化过程可能阻塞渲染，降低用户体验。
 
-## Use Composition whenever possible
+## 尽可能使用组合式函数
 
-Whenever possible, favor composition over plugins. Just like in Vue, many utilities and composables can be used directly without the need for a plugin. This keeps your project lightweight and improves maintainability.
+尽可能优先使用组合式函数而非插件。就像在 Vue 中一样，许多工具函数和组合式函数可以直接使用，无需借助插件。这能够保持项目轻量化并提升可维护性。
 
-## If `async`, enable `parallel`
+## 如果是 `async`，启用 `parallel`
 
-By default, all plugins loads synchronously.
-When defining asynchronous plugins, setting `parallel: true` allows multiple plugins to load concurrently, improving performance by preventing blocking operations.
+默认情况下，所有插件都是同步加载的。
+在定义异步插件时，设置 `parallel: true` 可以让多个插件并行加载，通过避免阻塞操作来提升性能。

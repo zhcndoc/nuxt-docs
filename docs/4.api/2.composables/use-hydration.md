@@ -8,7 +8,7 @@ links:
     size: xs
 ---
 
-`useHydration` is a built-in composable that provides a way to set data on the server side every time a new HTTP request is made and receive that data on the client side. This way `useHydration` allows you to take full control of the hydration cycle.
+`useHydration` 是一个内置的可组合函数，提供了一种在每次发起新的 HTTP 请求时在服务器端设置数据，并在客户端接收这些数据的方法。通过这种方式，`useHydration` 让你能够完全控制水合周期。
 
 ::note
 这是一个高级的 composable，主要用于插件内，并且大多由 Nuxt 模块使用。

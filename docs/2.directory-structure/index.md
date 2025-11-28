@@ -1,61 +1,61 @@
 ---
-title: 'Nuxt Directory Structure'
-description: 'Learn about the directory structure of a Nuxt application and how to use it.'
+title: 'Nuxt 目录结构'
+description: '了解 Nuxt 应用程序的目录结构及其使用方法。'
 navigation: false
 ---
 
-Nuxt applications have a specific directory structure that is used to organize the code. This structure is designed to be easy to understand and to be used in a consistent way.
+Nuxt 应用程序具有特定的目录结构，用于组织代码。该结构设计为易于理解且使用方式统一。
 
-## Root Directory
+## 根目录
 
-The root directory of a Nuxt application is the directory that contains the `nuxt.config.ts` file. This file is used to configure the Nuxt application.
+Nuxt 应用程序的根目录是包含 `nuxt.config.ts` 文件的目录。此文件用于配置 Nuxt 应用程序。
 
-## App Directory
+## 应用目录
 
-The `app/` directory is the main directory of the Nuxt application. It contains the following subdirectories:
-- [`assets/`](/docs/4.x/directory-structure/app/assets): website's assets that the build tool (Vite or webpack) will process
-- [`components/`](/docs/4.x/directory-structure/app/components): Vue components of the application
-- [`composables/`](/docs/4.x/directory-structure/app/composables): add your Vue composables
-- [`layouts/`](/docs/4.x/directory-structure/app/layouts): Vue components that wrap around your pages and avoid re-rendering between pages
-- [`middleware/`](/docs/4.x/directory-structure/app/middleware): run code before navigating to a particular route
-- [`pages/`](/docs/4.x/directory-structure/app/pages): file-based routing to create routes within your web application
-- [`plugins/`](/docs/4.x/directory-structure/app/plugins): use Vue plugins and more at the creation of your Nuxt application
-- [`utils/`](/docs/4.x/directory-structure/app/utils): add functions throughout your application that can be used in your components, composables, and pages.
+`app/` 目录是 Nuxt 应用程序的主目录。它包含以下子目录：
+- [`assets/`](/docs/4.x/directory-structure/app/assets)：网站的资源，构建工具（Vite 或 webpack）将处理这些资源
+- [`components/`](/docs/4.x/directory-structure/app/components)：应用程序的 Vue 组件
+- [`composables/`](/docs/4.x/directory-structure/app/composables)：添加 Vue 组合函数
+- [`layouts/`](/docs/4.x/directory-structure/app/layouts)：Vue 组件，用于包裹页面并避免页面之间的重复渲染
+- [`middleware/`](/docs/4.x/directory-structure/app/middleware)：在导航至特定路由前运行代码
+- [`pages/`](/docs/4.x/directory-structure/app/pages)：基于文件的路由，用于在 Web 应用程序中创建路由
+- [`plugins/`](/docs/4.x/directory-structure/app/plugins)：在 Nuxt 应用创建时使用 Vue 插件及更多
+- [`utils/`](/docs/4.x/directory-structure/app/utils)：添加可以在组件、组合函数和页面中使用的工具函数
 
-This directory also includes specific files:
-- [`app.config.ts`](/docs/4.x/directory-structure/app/app-config): a reactive configuration within your application
-- [`app.vue`](/docs/4.x/directory-structure/app/app): the root component of your Nuxt application
-- [`error.vue`](/docs/4.x/directory-structure/app/error): the error page of your Nuxt application
+该目录还包括特定文件：
+- [`app.config.ts`](/docs/4.x/directory-structure/app/app-config)：应用内的响应式配置
+- [`app.vue`](/docs/4.x/directory-structure/app/app)：Nuxt 应用的根组件
+- [`error.vue`](/docs/4.x/directory-structure/app/error)：Nuxt 应用的错误页面
 
-## Public Directory
+## 公共目录
 
-The [`public/`](/docs/4.x/directory-structure/public) directory is the directory that contains the public files of the Nuxt application. Files contained within this directory are served at the root and are not modified by the build process.
+[`public/`](/docs/4.x/directory-structure/public) 目录包含 Nuxt 应用的公共文件。该目录中的文件会作为根路径直接提供，不会被构建过程修改。
 
-This is suitable for files that have to keep their names (e.g. `robots.txt`) _or_ likely won't change (e.g. `favicon.ico`).
+适用于必须保持文件名不变（例如 `robots.txt`）或内容不常变化（例如 `favicon.ico`）的文件。
 
-## Server Directory
+## 服务器目录
 
-The [`server/`](/docs/4.x/directory-structure/server) directory is the directory that contains the server-side code of the Nuxt application. It contains the following subdirectories:
-- [`api/`](/docs/4.x/directory-structure/server#server-routes): contains the API routes of the application.
-- [`routes/`](/docs/4.x/directory-structure/server#server-routes): contains the server routes of the application (e.g. dynamic `/sitemap.xml`).
-- [`middleware/`](/docs/4.x/directory-structure/server#server-middleware): run code before a server route is processed
-- [`plugins/`](/docs/4.x/directory-structure/server#server-plugins): use plugins and more at the creation of the Nuxt server
-- [`utils/`](/docs/4.x/directory-structure/server#server-utilities): add functions throughout your application that can be used in your server  code.
+[`server/`](/docs/4.x/directory-structure/server) 目录包含 Nuxt 应用的服务端代码。它包括以下子目录：
+- [`api/`](/docs/4.x/directory-structure/server#server-routes)：包含应用的 API 路由
+- [`routes/`](/docs/4.x/directory-structure/server#server-routes)：包含应用的服务器路由（例如动态的 `/sitemap.xml`）
+- [`middleware/`](/docs/4.x/directory-structure/server#server-middleware)：在处理服务器路由前运行代码
+- [`plugins/`](/docs/4.x/directory-structure/server#server-plugins)：在 Nuxt 服务器创建时使用插件等
+- [`utils/`](/docs/4.x/directory-structure/server#server-utilities)：在服务器代码中可用的工具函数
 
-## Shared Directory
+## 共享目录
 
-The [`shared/`](/docs/4.x/directory-structure/shared) directory is the directory that contains the shared code of the Nuxt application and Nuxt server. This code can be used in both the Vue app and the Nitro server.
+[`shared/`](/docs/4.x/directory-structure/shared) 目录包含 Nuxt 应用和 Nuxt 服务器共享的代码。这些代码既可用于 Vue 应用，也可用于 Nitro 服务器。
 
-## Content Directory
+## 内容目录
 
-The [`content/`](/docs/4.x/directory-structure/content) directory is enabled by the [Nuxt Content](https://content.nuxt.com) module. It is used to create a file-based CMS for your application using Markdown files.
+[`content/`](/docs/4.x/directory-structure/content) 目录由 [Nuxt Content](https://content.nuxt.com) 模块启用，用于通过 Markdown 文件创建基于文件的内容管理系统（CMS）。
 
-## Modules Directory
+## 模块目录
 
-The [`modules/`](/docs/4.x/directory-structure/modules) directory is the directory that contains the local modules of the Nuxt application. Modules are used to extend the functionality of the Nuxt application.
+[`modules/`](/docs/4.x/directory-structure/modules) 目录包含 Nuxt 应用的本地模块。模块用于扩展 Nuxt 应用的功能。
 
-## Nuxt Files
+## Nuxt 文件
 
-- [`nuxt.config.ts`](/docs/4.x/directory-structure/nuxt-config) file is the main configuration file for the Nuxt application.
-- [`.nuxtrc`](/docs/4.x/directory-structure/nuxtrc) file is another syntax for configuring the Nuxt application (useful for global configurations).
-- [`.nuxtignore`](/docs/4.x/directory-structure/nuxtignore) file is used to ignore files in the root directory during the build phase.
+- [`nuxt.config.ts`](/docs/4.x/directory-structure/nuxt-config) 是 Nuxt 应用的主配置文件。
+- [`.nuxtrc`](/docs/4.x/directory-structure/nuxtrc) 文件是另一种配置 Nuxt 应用的语法（适用于全局配置）。
+- [`.nuxtignore`](/docs/4.x/directory-structure/nuxtignore) 文件用于在构建阶段忽略根目录中的文件。

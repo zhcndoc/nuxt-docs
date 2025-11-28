@@ -1,20 +1,20 @@
 ---
 title: useLazyAsyncData
-description: This wrapper around useAsyncData triggers navigation immediately.
+description: 这是一个封装了 useAsyncData 的函数，能够在处理器解析完成前立即触发导航。
 links:
-  - label: Source
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/asyncData.ts
     size: xs
 ---
 
-`useLazyAsyncData` provides a wrapper around [`useAsyncData`](/docs/4.x/api/composables/use-async-data) that triggers navigation before the handler is resolved by setting the `lazy` option to `true`.
+`useLazyAsyncData` 提供了一个对 [`useAsyncData`](/docs/4.x/api/composables/use-async-data) 的封装，通过将 `lazy` 选项设置为 `true`，使得导航在处理器解析之前立即触发。
 
 ::note
-By default, [`useAsyncData`](/docs/4.x/api/composables/use-async-data) blocks navigation until its async handler is resolved. `useLazyAsyncData` allows navigation to occur immediately while data fetching continues in the background.
+默认情况下，[`useAsyncData`](/docs/4.x/api/composables/use-async-data) 会阻塞导航，直到其异步处理器解析完成。而 `useLazyAsyncData` 允许导航立即发生，同时数据请求在后台继续进行。
 ::
 
-## Usage
+## 用法
 
 ```vue [app/pages/index.vue]
 <script setup lang="ts">
@@ -24,10 +24,10 @@ const { status, data: posts } = await useLazyAsyncData('posts', () => $fetch('/a
 <template>
   <div>
     <div v-if="status === 'pending'">
-      Loading...
+      加载中...
     </div>
     <div v-else-if="status === 'error'">
-      Error loading posts
+      加载文章时出错
     </div>
     <div v-else>
       {{ posts }}
@@ -36,13 +36,13 @@ const { status, data: posts } = await useLazyAsyncData('posts', () => $fetch('/a
 </template>
 ```
 
-When using `useLazyAsyncData`, navigation will occur before fetching is complete. This means you must handle `pending` and `error` states directly within your component's template.
+使用 `useLazyAsyncData` 时，导航会在请求完成之前发生，这意味着你必须在组件模板中直接处理 `pending` 和 `error` 状态。
 
 ::warning
-`useLazyAsyncData` is a reserved function name transformed by the compiler, so you should not name your own function `useLazyAsyncData`.
+`useLazyAsyncData` 是一个由编译器转换的保留函数名，因此你不应将自己的函数命名为 `useLazyAsyncData`。
 ::
 
-## Type
+## 类型
 
 ```ts [Signature]
 export function useLazyAsyncData<DataT, ErrorT> (
@@ -57,38 +57,38 @@ export function useLazyAsyncData<DataT, ErrorT> (
 ): AsyncData<DataT, ErrorT>
 ```
 
-`useLazyAsyncData` has the same signature as [`useAsyncData`](/docs/4.x/api/composables/use-async-data).
+`useLazyAsyncData` 与 [`useAsyncData`](/docs/4.x/api/composables/use-async-data) 具有相同的签名。
 
-## Parameters
+## 参数
 
-`useLazyAsyncData` accepts the same parameters as [`useAsyncData`](/docs/4.x/api/composables/use-async-data), with the `lazy` option automatically set to `true`.
+`useLazyAsyncData` 接受与 [`useAsyncData`](/docs/4.x/api/composables/use-async-data) 相同的参数，且自动将 `lazy` 选项设置为 `true`。
 
 :read-more{to="/docs/4.x/api/composables/use-async-data#parameters"}
 
-## Return Values
+## 返回值
 
-`useLazyAsyncData` returns the same values as [`useAsyncData`](/docs/4.x/api/composables/use-async-data).
+`useLazyAsyncData` 返回与 [`useAsyncData`](/docs/4.x/api/composables/use-async-data) 相同的值。
 
 :read-more{to="/docs/4.x/api/composables/use-async-data#return-values"}
 
-## Example
+## 示例
 
 ```vue [app/pages/index.vue]
 <script setup lang="ts">
-/* Navigation will occur before fetching is complete.
-  Handle 'pending' and 'error' states directly within your component's template
+/* 导航会在数据获取完成之前发生。
+  请直接在组件模板中处理 'pending' 和 'error' 状态
 */
 const { status, data: count } = await useLazyAsyncData('count', () => $fetch('/api/count'))
 
 watch(count, (newCount) => {
-  // Because count might start out null, you won't have access
-  // to its contents immediately, but you can watch it.
+  // 因为 count 可能初始为 null，
+  // 所以你不能立即访问其内容，但可以监听它。
 })
 </script>
 
 <template>
   <div>
-    {{ status === 'pending' ? 'Loading' : count }}
+    {{ status === 'pending' ? '加载中' : count }}
   </div>
 </template>
 ```
