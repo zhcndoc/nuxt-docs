@@ -19,9 +19,9 @@ npx nuxt dev [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>] [-
 ## 参数
 
 <!--dev-args-->
-Argument | Description
---- | ---
-`ROOTDIR="."` | 指定工作目录（默认：`.`）
+| Argument      | Description                                    |
+|---------------|------------------------------------------------|
+| `ROOTDIR="."` | 指定工作目录（默认：`.`） |
 <!--/dev-args-->
 
 ## 选项

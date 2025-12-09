@@ -19,20 +19,20 @@ npx nuxt test [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>] [
 ## 参数
 
 <!--test-args-->
-Argument | Description
---- | ---
-`ROOTDIR="."` | 指定工作目录（默认：`.`）
+| Argument      | Description                                    |
+|---------------|------------------------------------------------|
+| `ROOTDIR="."` | 指定工作目录（默认：`.`） |
 <!--/test-args-->
 
 ## 选项
 
 <!--test-opts-->
-Option | Default | Description
---- | --- | ---
-`--cwd=<directory>` |  | 指定工作目录，此项优先于 ROOTDIR（默认：`.`）
-`--logLevel=<silent\|info\|verbose>` |  | 指定构建时日志级别
-`--dev` |  | 以开发模式运行
-`--watch` |  | 监听模式
+| Option                               | Default | Description                                                                      |
+|--------------------------------------|---------|----------------------------------------------------------------------------------|
+| `--cwd=<directory>`                  |         | 指定工作目录，此项优先于 ROOTDIR（默认：`.`） |
+| `--logLevel=<silent\|info\|verbose>` |         | 指定构建时日志级别                                                     |
+| `--dev`                              |         | 以开发模式运行                                                                  |
+| `--watch`                            |         | 监听模式                                                                       |
 <!--/test-opts-->
 
 ::note

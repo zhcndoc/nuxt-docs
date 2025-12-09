@@ -14,23 +14,23 @@ npx nuxt add <TEMPLATE> <NAME> [--cwd=<directory>] [--logLevel=<silent|info|verb
 ```
 <!--/add-cmd-->
 
-### 参数
+## 参数
 
 <!--add-args-->
-Argument | Description
---- | ---
-`TEMPLATE` | 指定要生成的模板（选项：<api\|app\|app-config\|component\|composable\|error\|layer\|layout\|middleware\|module\|page\|plugin\|server-middleware\|server-plugin\|server-route\|server-util>）
-`NAME` | 指定生成文件的名称
+| Argument   | Description                                                                                                                                                                                                      |
+|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `TEMPLATE` | 指定要生成的模板（选项：<api\|app\|app-config\|component\|composable\|error\|layer\|layout\|middleware\|module\|page\|plugin\|server-middleware\|server-plugin\|server-route\|server-util>） |
+| `NAME`     | 指定生成文件的名称                                                                                                                                                                               |
 <!--/add-args-->
 
 ### 选项
 
 <!--add-opts-->
-Option | Default | Description
---- | --- | ---
-`--cwd=<directory>` | `.` | 指定工作目录
-`--logLevel=<silent\|info\|verbose>` |  | 指定构建时的日志级别
-`--force` | `false` | 如果文件已存在则强制覆盖
+| Option                               | Default | Description                              |
+|--------------------------------------|---------|------------------------------------------|
+| `--cwd=<directory>`                  | `.`     | 指定工作目录            |
+| `--logLevel=<silent\|info\|verbose>` |         | 指定构建时的日志级别             |
+| `--force`                            | `false` | 如果文件已存在则强制覆盖 |
 <!--/add-opts-->
 
 **修饰符：**

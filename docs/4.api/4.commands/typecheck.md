@@ -19,20 +19,20 @@ npx nuxt typecheck [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbos
 ## 参数
 
 <!--typecheck-args-->
-参数 | 描述
---- | ---
-`ROOTDIR="."` | 指定工作目录（默认：`.`）
+| 参数      | 描述                                    |
+|---------------|------------------------------------------------|
+| `ROOTDIR="."` | 指定工作目录（默认：`.`） |
 <!--/typecheck-args-->
 
 ## 选项
 
 <!--typecheck-opts-->
-选项 | 默认 | 描述
---- | --- | ---
-`--cwd=<directory>` |  | 指定工作目录，此项优先于 ROOTDIR（默认：`.`）
-`--logLevel=<silent\|info\|verbose>` |  | 指定构建时的日志级别
-`--dotenv` |  | 要加载的 `.env` 文件路径，相对于根目录
-`-e, --extends=<layer-name>` |  | 从 Nuxt 层扩展
+| 选项                               | 默认 | 描述                                                                      |
+|--------------------------------------|---------|----------------------------------------------------------------------------------|
+| `--cwd=<directory>`                  |         | 指定工作目录，此项优先于 ROOTDIR（默认：`.`） |
+| `--logLevel=<silent\|info\|verbose>` |         | 指定构建时的日志级别                                                     |
+| `--dotenv`                           |         | 要加载的 `.env` 文件路径，相对于根目录                      |
+| `-e, --extends=<layer-name>`         |         | 从 Nuxt 层扩展                                                         |
 <!--/typecheck-opts-->
 
 ::note

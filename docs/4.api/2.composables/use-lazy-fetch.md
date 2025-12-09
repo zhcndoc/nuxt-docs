@@ -69,14 +69,14 @@ export function useLazyFetch<DataT, ErrorT> (
 
 返回与 [`useFetch`](/docs/4.x/api/composables/use-fetch) 相同的 `AsyncData` 对象：
 
-| 名称 | 类型 | 说明 |
-| --- | --- |--- |
-| `data` | `Ref<DataT \| undefined>` | 异步获取的结果数据。 |
-| `refresh` | `(opts?: AsyncDataExecuteOptions) => Promise<void>` | 手动刷新数据的函数。 |
-| `execute` | `(opts?: AsyncDataExecuteOptions) => Promise<void>` | `refresh` 的别名。 |
-| `error` | `Ref<ErrorT \| undefined>` | 如果数据获取失败，包含错误对象。 |
-| `status` | `Ref<'idle' \| 'pending' \| 'success' \| 'error'>` | 数据请求的状态。 |
-| `clear` | `() => void` | 将 `data` 设为 `undefined`，`error` 设为 `undefined`，将状态重置为 `idle`，并取消所有待处理请求。 |
+| 名称      | 类型                                                | 说明                                                                                                      |
+|-----------|-----------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| `data`    | `Ref<DataT \| undefined>`                           | 异步获取的结果数据。                                                                            |
+| `refresh` | `(opts?: AsyncDataExecuteOptions) => Promise<void>` | 手动刷新数据的函数。                                                                           |
+| `execute` | `(opts?: AsyncDataExecuteOptions) => Promise<void>` | `refresh` 的别名。                                                                                             |
+| `error`   | `Ref<ErrorT \| undefined>`                          | 如果数据获取失败，包含错误对象。                                                                        |
+| `status`  | `Ref<'idle' \| 'pending' \| 'success' \| 'error'>`  | 数据请求的状态。                                                                                      |
+| `clear`   | `() => void`                                        | 将 `data` 设为 `undefined`，`error` 设为 `undefined`，将状态重置为 `idle`，并取消所有待处理请求。 |
 
 :read-more{to="/docs/4.x/api/composables/use-fetch#return-values"}
 

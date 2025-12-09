@@ -24,15 +24,15 @@ npx nuxt cleanup [ROOTDIR] [--cwd=<directory>]
 ## 参数
 
 <!--cleanup-args-->
-Argument | Description
---- | ---
-`ROOTDIR="."` | 指定工作目录（默认： `.`）
+| Argument      | Description                                    |
+|---------------|------------------------------------------------|
+| `ROOTDIR="."` | 指定工作目录（默认： `.`） |
 <!--/cleanup-args-->
 
 ## 选项
 
 <!--cleanup-opts-->
-Option | Default | Description
---- | --- | ---
-`--cwd=<directory>` |  | 指定工作目录，此项优先于 ROOTDIR（默认： `.`）
+| Option              | Default | Description                                                                      |
+|---------------------|---------|----------------------------------------------------------------------------------|
+| `--cwd=<directory>` |         | 指定工作目录，此项优先于 ROOTDIR（默认： `.`） |
 <!--/cleanup-opts-->

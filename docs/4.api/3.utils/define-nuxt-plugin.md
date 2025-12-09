@@ -45,16 +45,16 @@ interface ObjectPlugin<T> {
 1. **函数插件**：一个接收 [`NuxtApp`](/docs/4.x/guide/going-further/internals#the-nuxtapp-interface) 实例的函数，并且可以返回一个包含 [`provide`](/docs/4.x/directory-structure/app/plugins#providing-helpers) 属性的对象的 Promise，如果你希望在 [`NuxtApp`](/docs/4.x/guide/going-further/internals#the-nuxtapp-interface) 实例上提供一个辅助工具。
 2. **对象插件**：一个可以包含多个属性以配置插件行为的对象，例如 `name`、`enforce`、`dependsOn`、`order`、`parallel`、`setup`、`hooks` 和 `env`。
 
-| Property           | Type                                                                 | Required | Description                                                                                                     |
-| ------------------ | -------------------------------------------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------- |
-| `name` | `string` | `false` | 插件的可选名称，便于调试和依赖管理。 |
-| `enforce` | `'pre'` \| `'default'` \| `'post'` | `false` | 控制插件相对于其他插件的运行时机。 |
-| `dependsOn` | `string[]` | `false` | 该插件依赖的插件名称数组。确保正确的执行顺序。 |
-| `order` | `number` | `false` | 允许对插件顺序进行更细粒度的控制，应仅由高级用户使用。**它会覆盖 `enforce` 的值并用于对插件进行排序。** |
-| `parallel` | `boolean` | `false` | 是否与其他并行插件一起并行执行该插件。 |
-| `setup` | `Plugin<T>`{lang="ts"}  | `false` | 主要的插件函数，相当于函数插件。 |
-| `hooks` | `Partial<RuntimeNuxtHooks>`{lang="ts"}  | `false` | 要直接注册的 Nuxt 应用运行时钩子。 |
-| `env` | `{ islands?: boolean }`{lang="ts"}  | `false` | 如果您不希望在渲染仅服务器或 Island 组件时运行该插件，请将此值设置为 `false`。 |
+| Property    | Type                                   | Required | Description                                                                                                                                                         |
+|-------------|----------------------------------------|----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `name`      | `string`                               | `false`  | 插件的可选名称，便于调试和依赖管理。                                                                                       |
+| `enforce`   | `'pre'` \| `'default'` \| `'post'`     | `false`  | 控制插件相对于其他插件的运行时机。                                                                                                            |
+| `dependsOn` | `string[]`                             | `false`  | 该插件依赖的插件名称数组。确保正确的执行顺序。                                                                                       |
+| `order`     | `number`                               | `false`  | 允许对插件顺序进行更细粒度的控制，应仅由高级用户使用。**它会覆盖 `enforce` 的值并用于对插件进行排序。** |
+| `parallel`  | `boolean`                              | `false`  | 是否与其他并行插件一起并行执行该插件。                                                                                              |
+| `setup`     | `Plugin<T>`{lang="ts"}                 | `false`  | 主要的插件函数，相当于函数插件。                                                                                                          |
+| `hooks`     | `Partial<RuntimeNuxtHooks>`{lang="ts"} | `false`  | 要直接注册的 Nuxt 应用运行时钩子。                                                                                                                        |
+| `env`       | `{ islands?: boolean }`{lang="ts"}     | `false`  | 如果您不希望在渲染仅服务器或 Island 组件时运行该插件，请将此值设置为 `false`。                                                      |
 
 :video-accordion{title="观看 Alexander Lichter 关于 Nuxt 插件对象语法的视频" videoId="2aXZyXB1QGQ"}
 
