@@ -12,13 +12,13 @@ links:
 
 **参数：**
 
-- `error`: `string | Error | Partial<{ cause, data, message, name, stack, statusCode, statusMessage }>`
+- `error`: `string | Error | Partial<{ cause, data, message, name, stack, status, statusText }>`
 
 ```ts
 showError('😱 Oh no, an error has been thrown.')
 showError({
-  statusCode: 404,
-  statusMessage: 'Page Not Found',
+  status: 404,
+  statusText: 'Page Not Found',
 })
 ```
 
