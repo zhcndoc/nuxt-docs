@@ -32,6 +32,7 @@ interface PageMeta {
   path?: string
   props?: RouteRecordRaw['props']
   alias?: string | string[]
+  groups?: string[]
   pageTransition?: boolean | TransitionProps
   layoutTransition?: boolean | TransitionProps
   viewTransition?: boolean | 'always'
@@ -75,6 +76,12 @@ interface PageMeta {
   - **类型**: `string | string[]`
 
     记录的别名。允许定义额外的路径，使其行为像记录的副本。可以使用路径简写例如 `/users/:id` 和 `/u/:id`。所有 `alias` 和 `path` 值必须共享相同的参数。
+
+  **`groups`**
+
+  - **Type**: `string[]`
+
+    Route groups the page belongs to, based on the folder structure. Automatically populated for pages within [route groups](/docs/4.x/guide/directory-structure/app/pages#route-groups).
 
   **`keepalive`**
 
