@@ -25,8 +25,8 @@ const { data, status, pending, error, refresh, clear } = await useAsyncData(
 </script>
 ```
 
-::warning
-如果你使用自定义的 useAsyncData 包装器，请不要在组合式函数中对其使用 await，因为那可能导致意外行为。有关如何创建自定义异步数据获取器的更多信息，请参阅[此示例](/docs/4.x/guide/recipes/custom-usefetch#custom-usefetchuseasyncdata)。
+::warning{to="/docs/4.x/guide/recipes/custom-usefetch#custom-usefetchuseasyncdata"}
+如果你正在使用自定义的 `useAsyncData` 包装器，请不要在可组合函数中对其进行 await，这可能会导致意外行为。请参阅自定义异步数据获取器的示例。
 ::
 
 ::note

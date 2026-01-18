@@ -25,8 +25,8 @@ const { data, status, error, refresh, clear } = await useFetch('/api/modules', {
 </script>
 ```
 
-::warning
-如果你使用了自定义的 useFetch 封装，请不要在该可组合函数内对其 await，因为这可能导致意外行为。有关如何创建自定义异步数据获取器的更多信息，请遵循[此配方](/docs/4.x/guide/recipes/custom-usefetch#custom-usefetchuseasyncdata)。
+::warning{to="/docs/4.x/guide/recipes/custom-usefetch#custom-usefetchuseasyncdata"}
+如果你正在使用自定义的 `useFetch` 封装，不要在可组合函数中对其进行 await，因为这可能会导致意外行为。请参阅自定义异步数据获取器的用法示例。
 ::
 
 ::note
