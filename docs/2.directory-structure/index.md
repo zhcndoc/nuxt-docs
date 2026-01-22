@@ -54,6 +54,10 @@ Nuxt 应用程序的根目录是包含 `nuxt.config.ts` 文件的目录。此文
 
 [`modules/`](/docs/4.x/directory-structure/modules) 目录包含 Nuxt 应用的本地模块。模块用于扩展 Nuxt 应用的功能。
 
+## Layers 目录
+
+[`layers/`](/docs/4.x/directory-structure/layers) 目录允许你组织和共享可重用的代码、组件、组合函数和配置。此目录中的层会自动在你的项目中注册。
+
 ## Nuxt 文件
 
 - [`nuxt.config.ts`](/docs/4.x/directory-structure/nuxt-config) 是 Nuxt 应用的主配置文件。

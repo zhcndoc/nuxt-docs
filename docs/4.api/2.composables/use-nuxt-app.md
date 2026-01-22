@@ -136,29 +136,31 @@ Nuxt 通过 `ssrContext` 暴露以下属性：
 
   也可以使用更高级的类型，例如 `ref`、`reactive`、`shallowRef`、`shallowReactive` 和 `NuxtError`。
 
-  自 [Nuxt v3.4](https://nuxt.com/blog/v3-4#payload-enhancements) 起，可以为 Nuxt 不支持的类型自定义 reducer/reviver。
+#### 自定义 Reducer/Reviver
 
-  :video-accordion{title="观看 Alexander Lichter 关于序列化 payload（尤其是类序列化）的视频" videoId="8w6ffRBs8a4"}
+自 [Nuxt v3.4](https://nuxt.com/blog/v3-4#payload-enhancements) 起，可以为 Nuxt 不支持的类型自定义 reducer/reviver。
 
-  在下面的示例中，我们通过一个 payload 插件为 [Luxon](https://moment.github.io/luxon/#/) 的 DateTime 类定义了 reducer（或序列化器）和 reviver（或反序列化器）。
+:video-accordion{title="观看 Alexander Lichter 关于序列化 payload（尤其是类序列化）的视频" videoId="8w6ffRBs8a4"}
 
-  ```ts [app/plugins/date-time-payload.ts]
-  /**
-   * This kind of plugin runs very early in the Nuxt lifecycle, before we revive the payload.
-   * You will not have access to the router or other Nuxt-injected properties.
-   *
-   * Note that the "DateTime" string is the type identifier and must
-   * be the same on both the reducer and the reviver.
-   */
-  export default definePayloadPlugin((nuxtApp) => {
-    definePayloadReducer('DateTime', (value) => {
-      return value instanceof DateTime && value.toJSON()
-    })
-    definePayloadReviver('DateTime', (value) => {
-      return DateTime.fromISO(value)
-    })
+在下面的示例中，我们通过一个 payload 插件为 [Luxon](https://moment.github.io/luxon/#/) 的 DateTime 类定义了 reducer（或序列化器）和 reviver（或反序列化器）。
+
+```ts [app/plugins/date-time-payload.ts]
+/**
+ * This kind of plugin runs very early in the Nuxt lifecycle, before we revive the payload.
+ * You will not have access to the router or other Nuxt-injected properties.
+ *
+ * Note that the "DateTime" string is the type identifier and must
+ * be the same on both the reducer and the reviver.
+ */
+export default definePayloadPlugin((nuxtApp) => {
+  definePayloadReducer('DateTime', (value) => {
+    return value instanceof DateTime && value.toJSON()
   })
-  ```
+  definePayloadReviver('DateTime', (value) => {
+    return DateTime.fromISO(value)
+  })
+})
+```
 
 ### `isHydrating`
 

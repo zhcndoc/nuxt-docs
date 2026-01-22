@@ -71,9 +71,9 @@ const { data: user } = useAsyncData(
 </script>
 ```
 
-### Make your `handler` abortable
+### 使你的 `handler` 函数支持中止
 
-You can make your `handler` function abortable by using the `signal` provided in the second argument. This is useful for cancelling requests when they are no longer needed, such as when a user navigates away from a page. `$fetch` natively supports abort signals.
+你可以通过使用传入的第二个参数中的 `signal` 来使 `handler` 函数支持中止。这对于在请求不再需要时取消请求非常有用，例如当用户离开页面时。`$fetch` 原生支持中止信号。
 
 ```ts
 const { data, error } = await useAsyncData(
@@ -81,14 +81,14 @@ const { data, error } = await useAsyncData(
   (_nuxtApp, { signal }) => $fetch('/api/users', { signal }),
 )
 
-refresh() // will actually cancel the $fetch request (if dedupe: cancel)
-refresh() // will actually cancel the $fetch request (if dedupe: cancel)
+refresh() // 如果 dedupe: cancel，实际上会取消 $fetch 请求
+refresh() // 如果 dedupe: cancel，实际上会取消 $fetch 请求
 refresh()
 
-clear() // will cancel the latest pending handler
+clear() // 会取消最新的挂起处理函数
 ```
 
-You can also pass an `AbortSignal` to the `refresh`/`execute` function to cancel individual requests manually.
+你也可以手动传递一个 `AbortSignal` 给 `refresh`/`execute` 函数，以取消单独的请求。
 
 ```ts
 const { refresh } = await useAsyncData(
@@ -103,11 +103,11 @@ function handleUserAction () {
 }
 
 function handleCancel () {
-  abortController?.abort() // aborts the ongoing refresh request
+  abortController?.abort() // 终止正在进行的 refresh 请求
 }
 ```
 
-If your `handler` function does not support abort signals, you can implement your own abort logic using the `signal` provided.
+如果你的 `handler` 函数不支持中止信号，你可以使用提供的 `signal` 实现你自己的中止逻辑。
 
 ```ts
 const { data, error } = await useAsyncData(
@@ -115,7 +115,7 @@ const { data, error } = await useAsyncData(
   (_nuxtApp, { signal }) => {
     return new Promise((resolve, reject) => {
       signal?.addEventListener('abort', () => {
-        reject(new Error('Request aborted'))
+        reject(new Error('请求已中止'))
       })
       return Promise.resolve(callback.call(this, yourHandler)).then(resolve, reject)
     })
@@ -123,11 +123,11 @@ const { data, error } = await useAsyncData(
 )
 ```
 
-The handler signal will be aborted when:
+处理函数的中止信号将在以下情况下被中止：
 
-- A new request is made with `dedupe: 'cancel'`
-- The `clear` function is called
-- The `options.timeout` duration is exceeded
+- 使用 `dedupe: 'cancel'` 发起了新的请求
+- 调用了 `clear` 函数
+- 超过了 `options.timeout` 指定的时间
 
 ::warning
 [`useAsyncData`](/docs/4.x/api/composables/use-async-data) 是一个由编译器转换的保留函数名，因此你不应将自己的函数命名为 [`useAsyncData`](/docs/4.x/api/composables/use-async-data)。
@@ -257,7 +257,7 @@ type AsyncDataOptions<DataT> = {
 }
 
 type AsyncDataRequestContext = {
-  /** The reason for this data request */
+  /** 本次数据请求的原因 */
   cause: 'initial' | 'refresh:manual' | 'refresh:hook' | 'watch'
 }
 

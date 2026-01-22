@@ -46,3 +46,13 @@ export function useState<T> (key: string, init?: () => T | Ref<T>): Ref<T>
 - `key`：一个唯一键，确保跨请求的数据获取能被正确去重。如果你不提供键，则会为该次 `useState` 实例生成一个基于文件和行号的唯一键。
 - `init`：在状态未初始化时提供初始值的函数。该函数也可以返回一个 `Ref`。
 - `T`：（仅限 TypeScript）指定状态的类型
+
+## 故障排除
+
+### `无法序列化任意非普通 JavaScript 对象（non-POJOs）`
+
+当你尝试用 `useState` 存储不可序列化的负载（例如类的实例）时，会出现此错误。
+
+如果你想用 `useState` 存储 Nuxt 未支持的类实例，可以使用 [`definePayloadPlugin`](/docs/4.x/api/composables/use-nuxt-app#custom-reducerreviver) 为你的类添加自定义序列化器和反序列化器。
+
+:read-more{to="/docs/4.x/api/composables/use-nuxt-app#payload"}

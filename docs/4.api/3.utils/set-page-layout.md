@@ -19,6 +19,42 @@ export default defineNuxtRouteMiddleware((to) => {
 })
 ```
 
+## Passing Props to Layouts
+
+You can pass props to the layout by providing an object as the second argument:
+
+```ts [app/middleware/admin-layout.ts]
+export default defineNuxtRouteMiddleware((to) => {
+  setPageLayout('admin', {
+    sidebar: true,
+    title: 'Dashboard',
+  })
+})
+```
+
+The layout can then receive these props:
+
+```vue [app/layouts/admin.vue]
+<script setup lang="ts">
+const props = defineProps<{
+  sidebar?: boolean
+  title?: string
+}>()
+</script>
+
+<template>
+  <div>
+    <aside v-if="sidebar">
+      Sidebar
+    </aside>
+    <main>
+      <h1>{{ title }}</h1>
+      <slot />
+    </main>
+  </div>
+</template>
+```
+
 ::note
 如果你选择在服务器端动态设置布局，你必须在 Vue 渲染布局之前（即在插件或路由中间件中）执行此操作，以避免水合（hydration）不匹配。
 ::
