@@ -24,17 +24,17 @@ const router = useRouter()
 
 如果你有 `pages/` 目录，`useRouter` 的行为与 `vue-router` 提供的完全相同。
 
-::read-more{icon="i-simple-icons-vuedotjs" to="https://router.vuejs.org/api/interfaces/Router.html#Properties-currentRoute" target="_blank"}
+::read-more{icon="i-simple-icons-vuedotjs" to="https://router.vuejs.org/api/interfaces/router#Properties-currentRoute-" target="_blank"}
 阅读 `vue-router` 关于 `Router` 接口的文档。
 ::
 
 ## 基本操作
 
-- [`addRoute()`](https://router.vuejs.org/api/interfaces/Router.html#addRoute)：向路由实例添加新路由。可以提供 `parentName` 将新的路由作为已有路由的子路由添加。
-- [`removeRoute()`](https://router.vuejs.org/api/interfaces/Router.html#removeRoute)：通过名称移除已有路由。
-- [`getRoutes()`](https://router.vuejs.org/api/interfaces/Router.html#getRoutes)：获取所有路由记录的完整列表。
-- [`hasRoute()`](https://router.vuejs.org/api/interfaces/Router.html#hasRoute)：检查是否存在指定名称的路由。
-- [`resolve()`](https://router.vuejs.org/api/interfaces/Router.html#resolve)：返回路由位置的规范化版本。同时包含一个包含任何现有基础路径的 `href` 属性。
+- [`addRoute()`](https://router.vuejs.org/api/interfaces/router#addRoute-): 向路由实例添加新路由。可以提供 `parentName` 将新的路由作为已有路由的子路由添加。
+- [`removeRoute()`](https://router.vuejs.org/api/interfaces/router#removeRoute-): 通过名称移除已有路由。
+- [`getRoutes()`](https://router.vuejs.org/api/interfaces/router#getRoutes-): 获取所有路由记录的完整列表。
+- [`hasRoute()`](https://router.vuejs.org/api/interfaces/router#hasRoute-): 检查是否存在指定名称的路由。
+- [`resolve()`](https://router.vuejs.org/api/interfaces/router#resolve-): 返回路由位置的规范化版本。同时包含一个包含任何现有基础路径的 `href` 属性。
 
 ```ts [示例]
 const router = useRouter()
@@ -52,11 +52,11 @@ router.resolve({ name: 'home' })
 
 ## 基于 History API
 
-- [`back()`](https://router.vuejs.org/api/interfaces/Router.html#back)：如果可能，后退一步，等同于 `router.go(-1)`。
-- [`forward()`](https://router.vuejs.org/api/interfaces/Router.html#forward)：如果可能，前进一步，等同于 `router.go(1)`。
-- [`go()`](https://router.vuejs.org/api/interfaces/Router.html#go)：向前或向后移动历史记录，不受 `router.back()` 和 `router.forward()` 的层级限制。
-- [`push()`](https://router.vuejs.org/api/interfaces/Router.html#push)：通过将新条目推入历史记录栈，编程式导航到新 URL。**推荐使用 [`navigateTo`](/docs/api/utils/navigate-to) 替代。**
-- [`replace()`](https://router.vuejs.org/api/interfaces/Router.html#replace)：通过替换当前历史记录栈中的条目，编程式导航到新 URL。**推荐使用 [`navigateTo`](/docs/api/utils/navigate-to) 替代。**
+- [`back()`](https://router.vuejs.org/api/interfaces/router#back-): 如果可能，后退一步，等同于 `router.go(-1)`。
+- [`forward()`](https://router.vuejs.org/api/interfaces/router#forward-): 如果可能，前进一步，等同于 `router.go(1)`。
+- [`go()`](https://router.vuejs.org/api/interfaces/router#go-): 向前或向后移动历史记录，不受 `router.back()` 和 `router.forward()` 的层级限制。
+- [`push()`](https://router.vuejs.org/api/interfaces/router#push-): 通过将新条目推入历史记录栈，编程式导航到新 URL。**推荐使用 [`navigateTo`](/docs/3.x/api/utils/navigate-to) 替代。**
+- [`replace()`](https://router.vuejs.org/api/interfaces/router#replace-): 通过替换当前历史记录栈中的条目，编程式导航到新 URL。**推荐使用 [`navigateTo`](/docs/3.x/api/utils/navigate-to) 替代。**
 
 ```ts [示例]
 const router = useRouter()
@@ -78,14 +78,14 @@ router.replace({ hash: '#bio' })
 
 然而，Nuxt 提供了**路由中间件**的概念，它简化了导航守卫的实现并带来了更好的开发者体验。
 
-:read-more{to="/docs/guide/directory-structure/middleware"}
+:read-more{to="/docs/3.x/directory-structure/middleware"}
 
 ## Promise 和错误处理
 
-- [`isReady()`](https://router.vuejs.org/api/interfaces/Router.html#isReady)：返回一个 Promise，当路由完成初始导航时解析。
-- [`onError`](https://router.vuejs.org/api/interfaces/Router.html#onError)：添加错误处理器，在导航过程中发生未捕获错误时调用。
+- [`isReady()`](https://router.vuejs.org/api/interfaces/router#isReady-): 返回一个 Promise，当路由完成初始导航时解析。
+- [`onError`](https://router.vuejs.org/api/interfaces/router#onError-): 添加错误处理器，在导航过程中发生未捕获错误时调用。
 
-:read-more{icon="i-simple-icons-vuedotjs" to="https://router.vuejs.org/api/interfaces/Router.html#Methods" title="Vue Router 文档" target="_blank"}
+:read-more{icon="i-simple-icons-vuedotjs" to="https://router.vuejs.org/api/interfaces/router#Methods-" title="Vue Router 文档" target="_blank"}
 
 ## 通用路由实例
 

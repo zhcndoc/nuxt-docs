@@ -12,9 +12,9 @@ links:
 
 ## 参数
 
-- `err`: `string | { cause, data, message, name, stack, statusCode, statusMessage, fatal }`
+- `err`: `string | { cause, data, message, name, stack, status, statusText, fatal }`
 
-您可以向 `createError` 函数传入字符串或对象。如果传入字符串，则它将用作错误的 `message`，`statusCode` 默认为 `500`。如果传入对象，则可以设置错误的多个属性，例如 `statusCode`、`message` 及其他错误属性。
+您可以向 `createError` 函数传入字符串或对象。如果传入字符串，则它将用作错误的 `message`，`status` 默认为 `500`。如果传入对象，则可以设置错误的多个属性，例如 `status`、`message` 及其他错误属性。
 
 ## 在 Vue 应用中
 
@@ -30,7 +30,7 @@ links:
 const route = useRoute()
 const { data } = await useFetch(`/api/movies/${route.params.slug}`)
 if (!data.value) {
-  throw createError({ statusCode: 404, statusMessage: '页面未找到' })
+  throw createError({ status: 404, statusText: '页面未找到' })
 }
 </script>
 ```
@@ -44,12 +44,12 @@ if (!data.value) {
 ```ts [server/api/error.ts]
 export default eventHandler(() => {
   throw createError({
-    statusCode: 404,
-    statusMessage: '页面未找到'
+    status: 404,
+    statusText: '页面未找到',
   })
 })
 ```
 
-在 API 路由中，建议通过传入带有简短 `statusMessage` 的对象来使用 `createError`，因为它可以在客户端访问。否则，传给 API 路由的 `createError` 的 `message` 将不会传递到客户端。或者，您可以使用 `data` 属性将数据传回客户端。无论如何，请始终考虑避免将动态用户输入写入消息，以避免潜在的安全问题。
+在 API 路由中，建议通过传入带有简短 `statusText` 的对象来使用 `createError`，因为它可以在客户端访问。否则，传给 API 路由的 `createError` 的 `message` 将不会传递到客户端。或者，您可以使用 `data` 属性将数据传回客户端。无论如何，请始终考虑避免将动态用户输入写入消息，以避免潜在的安全问题。
 
-:read-more{to="/docs/getting-started/error-handling"}
+:read-more{to="/docs/3.x/getting-started/error-handling"}

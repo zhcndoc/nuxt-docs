@@ -22,8 +22,8 @@ const error = useError()
 
 ```ts
 interface NuxtError<DataT = unknown> {
-  statusCode: number
-  statusMessage: string
+  status: number
+  statusText: string
   message: string
   data?: DataT
   error?: true
@@ -32,24 +32,24 @@ interface NuxtError<DataT = unknown> {
 export const useError: () => Ref<NuxtError | undefined>
 ```
 
-## Parameters
+## 参数
 
-This composable does not take any parameters.
+此组合函数不接受任何参数。
 
-## Return Values
+## 返回值
 
-Returns a `Ref` containing the current Nuxt error (or `undefined` if there is no error). The error object is reactive and will update automatically when the error state changes.
+返回一个 `Ref`，包含当前的 Nuxt 错误（如果没有错误，则为 `undefined`）。错误对象是响应式的，当错误状态变化时会自动更新。
 
-## Example
+## 示例
 
 ```vue
 <script setup lang="ts">
 const error = useError()
 
 if (error.value) {
-  console.error('Nuxt error:', error.value)
+  console.error('Nuxt 错误:', error.value)
 }
 </script>
 ```
 
-:read-more{to="/docs/getting-started/error-handling"}
+:read-more{to="/docs/3.x/getting-started/error-handling"}

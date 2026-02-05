@@ -39,7 +39,7 @@ export default defineNuxtConfig({
 })
 ```
 
-:read-more{title="NuxtLink" to="/docs/api/components/nuxt-link"}
+:read-more{title="NuxtLink" to="/docs/3.x/api/components/nuxt-link"}
 
 ### 混合渲染
 

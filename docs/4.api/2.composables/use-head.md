@@ -12,7 +12,7 @@ links:
 
 `useHead` 组合式函数允许你以编程和响应式的方式管理你的 head 标签，由 [Unhead](https://unhead.unjs.io) 提供支持。它让你可以自定义 HTML 文档 `<head>` 部分的 meta 标签、链接、脚本及其它元素。
 
-```vue [app/app.vue]
+```vue [app.vue]
 <script setup lang="ts">
 useHead({
   title: 'My App',
@@ -38,7 +38,7 @@ useHead({
 ## 类型
 
 ```ts [Signature]
-export function useHead (meta: MaybeComputedRef<MetaObject>): void
+export function useHead (meta: MaybeComputedRef<MetaObject>): ActiveHeadEntry<UseHeadInput>
 
 interface MetaObject {
   title?: string
@@ -51,6 +51,21 @@ interface MetaObject {
   noscript?: Noscript[]
   htmlAttrs?: HtmlAttributes
   bodyAttrs?: BodyAttributes
+}
+
+interface ActiveHeadEntry<Input> {
+  /**
+   * Updates the entry with new input.
+   *
+   * Will first clear any side effects for previous input.
+   */
+  patch: (input: Input) => void
+  /**
+   * Dispose the entry, removing it from the active head.
+   *
+   * Will queue side effects for removal.
+   */
+  dispose: () => void
 }
 ```
 
@@ -81,7 +96,7 @@ interface MetaObject {
 
 ### 基础 Meta 标签
 
-```vue [app/pages/about.vue]
+```vue [pages/about.vue]
 <script setup lang="ts">
 useHead({
   title: '关于我们',
@@ -96,7 +111,7 @@ useHead({
 
 ### 响应式 Meta 标签
 
-```vue [app/pages/profile.vue]
+```vue [pages/profile.vue]
 <script setup lang="ts">
 const profile = ref({ name: 'John Doe' })
 
@@ -114,7 +129,7 @@ useHead({
 
 ### 使用函数实现完全响应式
 
-```vue [app/pages/dynamic.vue]
+```vue [pages/dynamic.vue]
 <script setup lang="ts">
 const count = ref(0)
 
@@ -129,7 +144,7 @@ useHead(() => ({
 
 ### 添加外部脚本和样式
 
-```vue [app/pages/external.vue]
+```vue [pages/external.vue]
 <script setup lang="ts">
 useHead({
   link: [
@@ -150,7 +165,7 @@ useHead({
 
 ### 设置 Body 和 HTML 属性
 
-```vue [app/pages/themed.vue]
+```vue [pages/themed.vue]
 <script setup lang="ts">
 const isDark = ref(true)
 

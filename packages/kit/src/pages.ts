@@ -1,12 +1,13 @@
 import type { NuxtHooks, NuxtMiddleware } from '@nuxt/schema'
-import type { NitroRouteConfig } from 'nitropack'
 import { defu } from 'defu'
-import { useNuxt } from './context'
-import { isNuxtMajorVersion } from './compatibility'
-import { logger } from './logger'
-import { toArray } from './utils'
 
-export function extendPages (cb: NuxtHooks['pages:extend']) {
+import { useNuxt } from './context.ts'
+import { isNuxtMajorVersion } from './compatibility.ts'
+import { logger } from './logger.ts'
+import type { NitroRouteConfig } from './nitro-types.ts'
+import { toArray } from './utils.ts'
+
+export function extendPages (cb: NuxtHooks['pages:extend']): void {
   const nuxt = useNuxt()
   if (isNuxtMajorVersion(2, nuxt)) {
     // @ts-expect-error TODO: Nuxt 2 hook
@@ -24,13 +25,13 @@ export interface ExtendRouteRulesOptions {
   override?: boolean
 }
 
-export function extendRouteRules (route: string, rule: NitroRouteConfig, options: ExtendRouteRulesOptions = {}) {
+export function extendRouteRules (route: string, rule: NitroRouteConfig, options: ExtendRouteRulesOptions = {}): void {
   const nuxt = useNuxt()
   for (const opts of [nuxt.options, nuxt.options.nitro]) {
     opts.routeRules ||= {}
     opts.routeRules[route] = options.override
-      ? defu(rule, opts.routeRules[route])
-      : defu(opts.routeRules[route], rule)
+      ? defu(rule, opts.routeRules[route] as any)
+      : defu(opts.routeRules[route] as any, rule)
   }
 }
 
@@ -47,7 +48,7 @@ export interface AddRouteMiddlewareOptions {
   prepend?: boolean
 }
 
-export function addRouteMiddleware (input: NuxtMiddleware | NuxtMiddleware[], options: AddRouteMiddlewareOptions = {}) {
+export function addRouteMiddleware (input: NuxtMiddleware | NuxtMiddleware[], options: AddRouteMiddlewareOptions = {}): void {
   const nuxt = useNuxt()
   const middlewares = toArray(input)
   nuxt.hook('app:resolve', (app) => {

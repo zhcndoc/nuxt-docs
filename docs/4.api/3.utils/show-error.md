@@ -12,13 +12,13 @@ links:
 
 **参数：**
 
-- `error`：`string | Error | Partial<{ cause, data, message, name, stack, statusCode, statusMessage }>`
+- `error`: `string | Error | Partial<{ cause, data, message, name, stack, status, statusText }>`
 
 ```ts
 showError("😱 哎呀，抛出了一个错误。")
 showError({
-  statusCode: 404,
-  statusMessage: "页面未找到"
+  status: 404,
+  statusText: 'Page Not Found',
 })
 ```
 
@@ -28,4 +28,4 @@ showError({
 `showError` 会调用 `app:error` 钩子。
 ::
 
-:read-more{to="/docs/getting-started/error-handling"}
+:read-more{to="/docs/3.x/getting-started/error-handling"}

@@ -50,7 +50,7 @@ const WhitelistAttributes = {
 
 ## 示例
 
-```vue [app/pages/user-profile.vue]
+```vue [pages/user-profile.vue]
 <script setup lang="ts">
 // 可能包含恶意代码的用户生成内容
 const userBio = ref('<script>alert("xss")<' + '/script>')

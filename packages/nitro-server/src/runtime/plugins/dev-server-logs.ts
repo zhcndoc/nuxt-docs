@@ -7,9 +7,8 @@ import { withTrailingSlash } from 'ufo'
 import { getContext } from 'unctx'
 import { captureRawStackTrace, parseRawStackTrace } from 'errx'
 import type { ParsedTrace } from 'errx'
-
+import type { NitroApp } from 'nitropack/runtime/app'
 import { isVNode } from 'vue'
-import type { NitroApp } from '#internal/nitro/app'
 
 // @ts-expect-error virtual file
 import { rootDir } from '#internal/dev-server-logs-options'
@@ -77,7 +76,7 @@ export default (nitroApp: NitroApp) => {
     const ctx = asyncContext.tryUse()
     if (!ctx) { return }
     try {
-      const reducers = Object.assign(Object.create(null), devReducers, ctx.event.context._payloadReducers)
+      const reducers = Object.assign(Object.create(null), devReducers, ctx.event.context['~payloadReducers'])
       htmlContext.bodyAppend.unshift(`<script type="application/json" data-nuxt-logs="${appId}">${stringify(ctx.logs, reducers)}</script>`)
     } catch (e) {
       const shortError = e instanceof Error && 'toString' in e ? ` Received \`${e.toString()}\`.` : ''

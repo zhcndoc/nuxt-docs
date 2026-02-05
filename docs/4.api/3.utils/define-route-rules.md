@@ -8,7 +8,7 @@ links:
     size: xs
 ---
 
-::read-more{to="/docs/guide/going-further/experimental-features#inlinerouterules" icon="i-lucide-star"}
+::read-more{to="/docs/3.x/guide/going-further/experimental-features#inlinerouterules" icon="i-lucide-star"}
 该功能处于实验阶段，使用前需在 `nuxt.config` 中启用 `experimental.inlineRouteRules` 选项。
 ::
 
@@ -47,6 +47,6 @@ export default defineNuxtConfig({
 
 如果需要更细粒度的控制，比如在页面的 [`definePageMeta`](/docs/api/utils/define-page-meta) 中使用了自定义的 `path` 或 `alias`，应当直接在 `nuxt.config` 中设置 `routeRules`。
   
-::read-more{to="/docs/guide/concepts/rendering#hybrid-rendering" icon="i-lucide-medal"}
+::read-more{to="/docs/3.x/guide/concepts/rendering#hybrid-rendering" icon="i-lucide-medal"}
 阅读更多关于 `routeRules` 的内容。
 ::

@@ -6,12 +6,12 @@ import { createUnimport, scanDirExports, toExports } from 'unimport'
 import escapeRE from 'escape-string-regexp'
 
 import { lookupNodeModuleSubpath, parseNodeModulePath } from 'mlly'
-import { isDirectory, logger, resolveToAlias } from '../utils'
-import { TransformPlugin } from './transform'
-import { appCompatPresets, defaultPresets } from './presets'
+import { isDirectory, logger, resolveToAlias } from '../utils.ts'
+import { TransformPlugin } from './transform.ts'
+import { appCompatPresets, defaultPresets } from './presets.ts'
 import type { ImportsOptions, ResolvedNuxtTemplate } from 'nuxt/schema'
 
-import { pagesImportPresets, routeRulesPresets } from '../pages/module'
+import { pagesImportPresets, routeRulesPresets } from '../pages/module.ts'
 
 const allNuxtPresets = [
   ...pagesImportPresets,
@@ -124,8 +124,11 @@ export default defineNuxtModule<Partial<ImportsOptions>>({
 
     // Transform to inject imports in production mode
     addBuildPlugin(TransformPlugin({
-      ctx: { injectImports: (code, id, options) => ctx.injectImports(code, id, options) },
-      options, sourcemap: !!nuxt.options.sourcemap.server || !!nuxt.options.sourcemap.client,
+      ctx: {
+        injectImports: (code, id, options) => ctx.injectImports(code, id, options),
+      },
+      options,
+      sourcemap: !!nuxt.options.sourcemap.server || !!nuxt.options.sourcemap.client,
     }))
 
     const priorities = getLayerDirectories(nuxt).map((dirs, i) => [dirs.app, -i] as const).sort(([a], [b]) => b.length - a.length)
@@ -245,7 +248,7 @@ function addDeclarationTemplates (ctx: Pick<Unimport, 'getImports' | 'generateTy
 
   addTypeTemplate({
     filename: 'imports.d.ts',
-    getContents: async ({ nuxt }) => toExports(await ctx.getImports(), nuxt.options.buildDir, true),
+    getContents: async ({ nuxt }) => toExports(await ctx.getImports(), nuxt.options.buildDir, true, { declaration: true }),
   })
 
   addTypeTemplate({

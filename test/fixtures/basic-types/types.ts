@@ -4,7 +4,7 @@ import type { FetchError } from 'ofetch'
 import type { NavigationFailure, RouteLocationNormalized, RouteLocationRaw, Router, useRouter as vueUseRouter } from 'vue-router'
 import type { H3Event } from 'h3'
 import { getRouteRules as getNitroRouteRules } from 'nitropack/runtime'
-import type { NitroRouteRules } from 'nitropack'
+import type { NitroRouteRules } from 'nitropack/types'
 
 import type { AppConfig, RuntimeValue, UpperSnakeCase } from 'nuxt/schema'
 import { defineNuxtModule } from 'nuxt/kit'
@@ -21,6 +21,15 @@ import type { IslandComponent, LazyComponent } from '#components'
 import { useRouter } from '#imports'
 
 interface TestResponse { message: string }
+
+declare module 'nuxt/app' {
+  interface NuxtLayouts {
+    withFunction: {
+      someProp: number
+      function: () => void
+    }
+  }
+}
 
 describe('API routes', () => {
   it('generates types for routes', () => {
@@ -299,6 +308,22 @@ describe('layouts', () => {
     h(NuxtLayout, { fallback: 'custom' })
     // @ts-expect-error Invalid layout
     h(NuxtLayout, { fallback: 'invalid-layout' })
+  })
+
+  it('setPageLayout recognizes named layouts and props', () => {
+    setPageLayout('custom')
+    setPageLayout('pascal-case')
+    setPageLayout('override')
+    setPageLayout('with-props', { aProp: 42 })
+    // @ts-expect-error Invalid layout
+    setPageLayout('invalid-layout')
+    // @ts-expect-error Invalid layout props
+    setPageLayout('with-props', { aProp: 'string-instead-of-number' })
+  })
+
+  it('expect setPageLayout to raise TS error when using non-serializable props values', () => {
+    // @ts-expect-error Non-serializable layout props
+    setPageLayout('withFunction', { aProp: () => {}, someProp: 5 })
   })
 })
 
@@ -733,7 +758,7 @@ describe('extends type declarations', () => {
 describe('composables inference', () => {
   it('callWithNuxt', () => {
     const bob = callWithNuxt({} as any, () => true)
-    expectTypeOf<typeof bob>().toEqualTypeOf<boolean | Promise<boolean>>()
+    expectTypeOf<typeof bob>().toEqualTypeOf<Promise<boolean>>()
   })
   it('runWithContext', () => {
     const bob = useNuxtApp().runWithContext(() => true)

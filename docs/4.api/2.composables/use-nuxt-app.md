@@ -16,7 +16,7 @@ const nuxtApp = useNuxtApp()
 </script>
 ```
 
-如果当前作用域中无法获取运行时上下文，调用 `useNuxtApp` 会抛出异常。你可以改用 [`tryUseNuxtApp`](#tryusenuxtapp)，适用于不需要 `nuxtApp` 的组合式函数，或仅检查上下文是否可用而不抛出异常。
+如果当前作用域中无法获取运行时上下文，调用 `useNuxtApp` 会抛出异常。你可以改用 [`tryUseNuxtApp`](/docs/3.x/api/composables/use-nuxt-app#tryusenuxtapp)，适用于不需要 `nuxtApp` 的组合式函数，或仅检查上下文是否可用而不抛出异常。
 
 <!--
 note
@@ -133,28 +133,30 @@ Nuxt 通过 `ssrContext` 暴露如下属性：
 
   也可以使用更高级的类型，比如 `ref`、`reactive`、`shallowRef`、`shallowReactive` 和 `NuxtError`。
 
-  从 [Nuxt v3.4](https://nuxt.com/blog/v3-4#payload-enhancements) 开始，可以为 Nuxt 不支持的类型自定义 reducer/reviver。
+#### 自定义 Reducer/Reviver
 
-  :video-accordion{title="观看 Alexander Lichter 关于序列化负载的讲解视频，特别是关于类的处理" videoId="8w6ffRBs8a4"}
+从 [Nuxt v3.4](https://nuxt.com/blog/v3-4#payload-enhancements) 开始，可以为 Nuxt 不支持的类型自定义 reducer（序列化器）/reviver（反序列化器）。
 
-  下例中，定义了一个用于 [Luxon](https://moment.github.io/luxon/#/) DateTime 类的 reducer（序列化器）和 reviver（反序列化器），通过负载插件实现。
+:video-accordion{title="观看 Alexander Lichter 关于序列化负载的讲解视频，特别是关于类的处理" videoId="8w6ffRBs8a4"}
 
-  ```ts [plugins/date-time-payload.ts]
-  /**
-   * 这种插件会非常早地在 Nuxt 生命周期运行，在负载复原之前。
-   * 你将无法访问路由器或其他 Nuxt 注入的属性。
-   *
-   * 注意 "DateTime" 是类型标识符，在 reducer 和 reviver 中必须相同。
-   */
-  export default definePayloadPlugin((nuxtApp) => {
-    definePayloadReducer('DateTime', (value) => {
-      return value instanceof DateTime && value.toJSON()
-    })
-    definePayloadReviver('DateTime', (value) => {
-      return DateTime.fromISO(value)
-    })
+下例中，定义了一个用于 [Luxon](https://moment.github.io/luxon/#/) DateTime 类的 reducer 和 reviver，通过负载插件实现。
+
+```ts [plugins/date-time-payload.ts]
+/**
+ * 这种插件会非常早地在 Nuxt 生命周期运行，在负载复原之前。
+ * 你将无法访问路由器或其他 Nuxt 注入的属性。
+ *
+ * 注意 "DateTime" 是类型标识符，在 reducer 和 reviver 中必须相同。
+ */
+export default definePayloadPlugin((nuxtApp) => {
+  definePayloadReducer('DateTime', (value) => {
+    return value instanceof DateTime && value.toJSON()
   })
-  ```
+  definePayloadReviver('DateTime', (value) => {
+    return DateTime.fromISO(value)
+  })
+})
+```
 
 ### `isHydrating`
 
@@ -264,7 +266,7 @@ Vue 目前仅支持 `<script setup>` 中使用 async/await 时的异步上下文
 原生异步上下文支持目前在 Bun 和 Node 环境可用。
 ::
 
-:read-more{to="/docs/guide/going-further/experimental-features#asynccontext"}
+:read-more{to="/docs/3.x/guide/going-further/experimental-features#asynccontext"}
 
 ## tryUseNuxtApp
 

@@ -18,7 +18,7 @@ definePageMeta({
 </script>
 ```
 
-:read-more{to="/docs/guide/directory-structure/pages#page-metadata"}
+:read-more{to="/docs/3.x/directory-structure/pages#page-metadata"}
 
 ## 类型
 
@@ -32,6 +32,7 @@ interface PageMeta {
   path?: string
   props?: RouteRecordRaw['props']
   alias?: string | string[]
+  groups?: string[]
   pageTransition?: boolean | TransitionProps
   layoutTransition?: boolean | TransitionProps
   viewTransition?: boolean | 'always'
@@ -76,11 +77,17 @@ interface PageMeta {
 
     路由别名。允许定义额外路径，使其行为与该路由的副本一致。支持路径简写，如 `/users/:id` 和 `/u/:id`。所有的 `alias` 和 `path` 必须共享相同的参数。
 
+  **`groups`**
+
+  - **类型**: `string[]`
+
+    页面所属的路由组，基于文件夹结构。对于位于[路由组](/docs/3.x/guide/directory-structure/app/pages#route-groups)内的页面会自动填充。
+
   **`keepalive`**
 
-  - **类型**: `boolean` | [`KeepAliveProps`](https://vue.zhcndoc.com/api/built-in-components.html#keepalive)
+  - **类型**: `boolean` | [`KeepAliveProps`](https://vuejs.org/api/built-in-components#keepalive)
 
-    当你希望在路由切换时保留页面状态时设置为 `true`，或者使用 [`KeepAliveProps`](https://vue.zhcndoc.com/api/built-in-components.html#keepalive) 进行细粒度控制。
+    当你希望在路由切换时保留页面状态时设置为 `true`，或者使用 [`KeepAliveProps`](https://vuejs.org/api/built-in-components#keepalive) 进行细粒度控制。
 
   **`key`**
 
@@ -96,19 +103,19 @@ interface PageMeta {
 
   **`layoutTransition`**
 
-  - **类型**: `boolean` | [`TransitionProps`](https://vue.zhcndoc.com/api/built-in-components.html#transition)
+  - **类型**: `boolean` | [`TransitionProps`](https://vuejs.org/api/built-in-components#transition)
 
     设置当前布局应用的过渡名称。你也可以将其设置为 `false` 来禁用布局过渡。
 
   **`middleware`**
 
-  - **类型**: `MiddlewareKey` | [`NavigationGuard`](https://router.vuejs.org/api/interfaces/NavigationGuard.html#navigationguard) | `Array<MiddlewareKey | NavigationGuard>`
+  - **类型**: `MiddlewareKey` | [`NavigationGuard`](https://router.vuejs.org/api/interfaces/navigationguard) | `Array<MiddlewareKey | NavigationGuard>`
 
     在 `definePageMeta` 中直接定义匿名或命名中间件。了解更多关于[路由中间件](/docs/guide/directory-structure/middleware)。
 
   **`pageTransition`**
 
-  - **类型**: `boolean` | [`TransitionProps`](https://vue.zhcndoc.com/api/built-in-components.html#transition)
+  - **类型**: `boolean` | [`TransitionProps`](https://vuejs.org/api/built-in-components#transition)
 
     设置当前页面应用的过渡名称。你也可以设置为 `false` 来禁用页面过渡。
 
@@ -122,7 +129,7 @@ interface PageMeta {
 
   **`redirect`**
 
-  - **类型**: [`RouteRecordRedirectOption`](https://router.vuejs.org/guide/essentials/redirect-and-alias.html#redirect-and-alias)
+  - **类型**: [`RouteRecordRedirectOption`](https://router.vuejs.org/guide/essentials/redirect-and-alias)
 
     路由直接匹配时重定向的位置。重定向在任何导航守卫之前发生，并触发一次新的导航。
 

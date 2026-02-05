@@ -22,7 +22,7 @@ export default defineEventHandler((event) => {
 })
 ```
 
-:read-more{to="/docs/guide/going-further/runtime-config"}
+:read-more{to="/docs/3.x/guide/going-further/runtime-config"}
 
 ## 定义运行时配置
 
@@ -48,7 +48,7 @@ export default defineNuxtConfig({
 需要服务器访问的变量直接添加在 `runtimeConfig` 内。需要客户端和服务器端都能访问的变量定义在 `runtimeConfig.public` 中。
 ::
 
-:read-more{to="/docs/guide/going-further/runtime-config"}
+:read-more{to="/docs/3.x/guide/going-further/runtime-config"}
 
 ## 访问运行时配置
 
@@ -76,7 +76,7 @@ export default defineEventHandler(async (event) => {
 
 可以使用以 `NUXT_` 为前缀的匹配环境变量名称来更新运行时配置值。
 
-:read-more{to="/docs/guide/going-further/runtime-config"}
+:read-more{to="/docs/3.x/guide/going-further/runtime-config"}
 
 ### 使用 `.env` 文件
 
@@ -95,7 +95,7 @@ NUXT_API_SECRET = "123"
 在 **生产运行时** ，应使用平台环境变量，`.env` 文件不会被使用。
 ::
 
-:read-more{to="/docs/guide/directory-structure/env"}
+:read-more{to="/docs/3.x/directory-structure/env"}
 
 ## `app` 命名空间
 
@@ -139,4 +139,4 @@ export default defineEventHandler((event) => {
 })
 ```
 
-:read-more{to="/docs/guide/going-further/runtime-config"}
+:read-more{to="/docs/3.x/guide/going-further/runtime-config"}

@@ -1,4 +1,4 @@
-import { defineResolvers } from '../utils/definition'
+import { defineResolvers } from '../utils/definition.ts'
 
 export default defineResolvers({
   /**
@@ -43,14 +43,6 @@ export default defineResolvers({
     hoist: {
       $resolve: (val) => {
         const defaults = [
-          // Nitro auto-imported/augmented dependencies
-          'nitropack/types',
-          'nitropack/runtime',
-          'nitropack',
-          'defu',
-          'h3',
-          'consola',
-          'ofetch',
           // Key nuxt dependencies
           '@unhead/vue',
           '@nuxt/devtools',

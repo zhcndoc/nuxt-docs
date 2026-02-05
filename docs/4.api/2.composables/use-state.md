@@ -15,7 +15,7 @@ links:
 const count = useState('counter', () => Math.round(Math.random() * 100))
 ```
 
-:read-more{to="/docs/getting-started/state-management"}
+:read-more{to="/docs/3.x/getting-started/state-management"}
 
 ::important
 由于 `useState` 内的数据会被序列化为 JSON，非常重要的一点是它不能包含无法序列化的内容，比如类、函数或符号。
@@ -46,3 +46,13 @@ export function useState<T> (key: string, init?: () => T | Ref<T>): Ref<T>
 - `key`：唯一键，用于确保跨请求的数据获取正确去重。如果未提供键，系统将为你生成一个基于文件和 `useState` 实例所在行号的唯一键。
 - `init`：当状态未初始化时提供初始值的函数。该函数也可以返回一个 `Ref`。
 - `T`：（仅 TypeScript）指定状态的类型。
+
+## 故障排除
+
+### `Cannot stringify arbitrary non-POJOs`
+
+当你尝试使用 `useState` 存储不可序列化的内容（如类实例）时，会出现此错误。
+
+如果你想使用 `useState` 存储 Nuxt 不支持的类实例，可以使用 [`definePayloadPlugin`](/docs/3.x/api/composables/use-nuxt-app#custom-reducerreviver) 来为你的类添加自定义的序列化和反序列化方法。
+
+:read-more{to="/docs/3.x/api/composables/use-nuxt-app#payload"}

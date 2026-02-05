@@ -93,4 +93,4 @@ async function refresh () {
 如果你能访问到 `asyncData` 实例，建议通过其 `refresh` 或 `execute` 方法来重新获取数据，这是一种更优的方式。
 ::
 
-:read-more{to="/docs/getting-started/data-fetching"}
+:read-more{to="/docs/3.x/getting-started/data-fetching"}

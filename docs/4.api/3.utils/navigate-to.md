@@ -17,7 +17,7 @@ links:
 ::
 
 ::note
-`navigateTo` 不能在 Nitro 路由中使用。若需在 Nitro 路由中执行服务器端重定向，请改用 [`sendRedirect`](https://h3.zhcndoc.com/utils/response#sendredirectevent-location-code)。
+`navigateTo` 不能在 Nitro 路由中使用。若需在 Nitro 路由中执行服务器端重定向，请改用 [`sendRedirect`](https://h3.dev/utils/response#redirectlocation-status-statustext)。
 ::
 
 ### 在 Vue 组件中使用
@@ -68,7 +68,7 @@ export default defineNuxtRouteMiddleware((to, from) => {
 
 此时 `navigateTo` 会被执行但未被返回，可能导致意外行为。
 
-:read-more{to="/docs/guide/directory-structure/middleware"}
+:read-more{to="/docs/3.x/directory-structure/middleware"}
 
 ### 跳转到外部 URL
 
@@ -147,7 +147,7 @@ type OpenWindowFeatures = {
 
 ### `to`
 
-**类型**：[`RouteLocationRaw`](https://router.vuejs.org/api/interfaces/RouteLocationOptions.html#Interface-RouteLocationOptions) | `undefined` | `null`
+**类型**：[`RouteLocationRaw`](https://router.vuejs.org/api/interfaces/routelocationoptions) | `undefined` | `null`
 
 **默认值**：`'/'`
 
@@ -185,9 +185,9 @@ await navigateTo({ name: 'product', params: { id: 1 } })
   - **类型**：`number`
   - **默认**：`302`
 
-  - `navigateTo` 进行服务器端重定向时，会默认使用 [`302 Found`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/302) 状态码。
+  - `navigateTo` 进行服务器端重定向时，会默认使用 [`302 Found`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/302) 状态码。
 
-  - 可通过该参数修改重定向状态码。常用的还有 [`301 Moved Permanently`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/301) 用于永久重定向。
+  - 可通过该参数修改重定向状态码。常用的还有 [`301 Moved Permanently`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/301) 用于永久重定向。
 
 - `external`
 

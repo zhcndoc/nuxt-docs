@@ -19,21 +19,21 @@ npx nuxt prepare [ROOTDIR] [--dotenv] [--cwd=<directory>] [--logLevel=<silent|in
 ## 参数
 
 <!--prepare-args-->
-参数 | 说明
---- | ---
-`ROOTDIR="."` | 指定工作目录（默认：`.`）
+| 参数         | 说明                            |
+|--------------|--------------------------------|
+| `ROOTDIR="."` | 指定工作目录（默认：`.`）        |
 <!--/prepare-args-->
 
 ## 选项
 
 <!--prepare-opts-->
-选项 | 默认值 | 说明
---- | --- | ---
-`--dotenv` |  | 指定要加载的 `.env` 文件路径，路径相对于根目录
-`--cwd=<directory>` |  | 指定工作目录，该选项优先于 ROOTDIR（默认：`.`）
-`--logLevel=<silent\|info\|verbose>` |  | 指定构建时的日志级别
-`--envName` |  | 解析配置覆盖时使用的环境（构建时默认是 `production`，运行开发服务器时默认是 `development`）
-`-e, --extends=<layer-name>` |  | 从 Nuxt 层继承
+| 选项                               | 默认值 | 说明                                                                                                                |
+|-----------------------------------|--------|---------------------------------------------------------------------------------------------------------------------|
+| `--dotenv`                        |        | 指定要加载的 `.env` 文件路径，路径相对于根目录                                                                       |
+| `--cwd=<directory>`               |        | 指定工作目录，该选项优先于 ROOTDIR（默认：`.`）                                                                      |
+| `--logLevel=<silent\|info\|verbose>` |        | 指定构建时的日志级别                                                                                                 |
+| `--envName`                      |        | 解析配置覆盖时使用的环境（构建时默认是 `production`，运行开发服务器时默认是 `development`）                            |
+| `-e, --extends=<layer-name>`     |        | 从 Nuxt 层继承                                                                                                       |
 <!--/prepare-opts-->
 
 ::note

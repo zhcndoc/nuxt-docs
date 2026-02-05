@@ -1,6 +1,6 @@
 ---
 title: 'setResponseStatus'
-description: setResponseStatus 设置响应的 statusCode（以及可选的 statusMessage）。
+description: setResponseStatus 设置响应的状态码（以及可选的状态消息）。
 links:
   - label: 源码
     icon: i-simple-icons-github
@@ -10,7 +10,7 @@ links:
 
 Nuxt 提供了组合函数和工具，以支持一流的服务端渲染。
 
-`setResponseStatus` 用于设置响应的 statusCode（以及可选的 statusMessage）。
+`setResponseStatus` 用于设置响应的状态码（以及可选的状态消息）。
 
 ::important
 `setResponseStatus` 只能在 [Nuxt 上下文](/docs/guide/going-further/nuxt-app#the-nuxt-context) 中调用。
@@ -33,4 +33,4 @@ if (event) {
 在浏览器中，`setResponseStatus` 不会生效。
 ::
 
-:read-more{to="/docs/getting-started/error-handling"}
+:read-more{to="/docs/3.x/getting-started/error-handling"}

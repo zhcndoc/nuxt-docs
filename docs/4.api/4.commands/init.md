@@ -19,29 +19,29 @@ npm create nuxt@latest [DIR] [--cwd=<directory>] [--logLevel=<silent|info|verbos
 ## 参数
 
 <!--init-args-->
-参数 | 说明
---- | ---
-`DIR=""` | 项目目录
+| 参数 | 说明       |
+|------|------------|
+| `DIR=""` | 项目目录 |
 <!--/init-args-->
 
 ## 选项
 
 <!--init-opts-->
-选项 | 默认值 | 说明
---- | --- | ---
-`--cwd=<directory>` | `.` | 指定工作目录
-`--logLevel=<silent\|info\|verbose>` |  | 指定构建时日志级别
-`-t, --template` |  | 模板名称
-`-f, --force` |  | 覆盖已存在的目录
-`--offline` |  | 强制离线模式
-`--preferOffline` |  | 优先使用离线模式
-`--no-install` |  | 跳过依赖安装
-`--gitInit` |  | 初始化 git 仓库
-`--shell` |  | 安装完成后在项目目录启动 shell
-`--packageManager` |  | 选择包管理器（npm, pnpm, yarn, bun）
-`-M, --modules` |  | 要安装的 Nuxt 模块（逗号分隔，无空格）
-`--no-modules` |  | 跳过模块安装提示
-`--nightly` |  | 使用 Nuxt 每日构建版本（3x 或 latest）
+| 选项                               | 默认值 | 说明                                                    |
+|------------------------------------|--------|---------------------------------------------------------|
+| `--cwd=<directory>`                | `.`    | 指定工作目录                                            |
+| `--logLevel=<silent\|info\|verbose>` |        | 指定构建时日志级别                                     |
+| `-t, --template`                   |        | 模板名称                                              |
+| `-f, --force`                     |        | 覆盖已存在的目录                                       |
+| `--offline`                      |        | 强制离线模式                                          |
+| `--preferOffline`                  |        | 优先使用离线模式                                       |
+| `--no-install`                   |        | 跳过依赖安装                                          |
+| `--gitInit`                      |        | 初始化 git 仓库                                      |
+| `--shell`                        |        | 安装完成后在项目目录启动 shell                         |
+| `--packageManager`               |        | 选择包管理器（npm, pnpm, yarn, bun）                    |
+| `-M, --modules`                  |        | 要安装的 Nuxt 模块（逗号分隔，无空格）                   |
+| `--no-modules`                   |        | 跳过模块安装提示                                      |
+| `--nightly`                      |        | 使用 Nuxt 每日构建版本（3x 或 latest）                     |
 <!--/init-opts-->
 
 ## 环境变量

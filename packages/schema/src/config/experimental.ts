@@ -1,4 +1,4 @@
-import { defineResolvers } from '../utils/definition'
+import { defineResolvers } from '../utils/definition.ts'
 
 export default defineResolvers({
   /**
@@ -94,13 +94,11 @@ export default defineResolvers({
         if (
           val === false ||
           (await get('dev')) ||
-          (await get('ssr')) === false ||
-          // @ts-expect-error TODO: handled normalised types
-          (await get('builder')) === '@nuxt/webpack-builder'
+          (await get('ssr')) === false
         ) {
           return false
         }
-        // Enabled by default for vite prod with ssr (for vue components)
+        // Enabled by default for prod with ssr (for vue components)
         return val ?? ((await get('future')).compatibilityVersion === 4 ? (id?: string) => !!id && id.includes('.vue') : true)
       },
     },
@@ -144,6 +142,7 @@ export default defineResolvers({
     },
   },
   experimental: {
+    runtimeBaseURL: false,
     /**
      * Enable to use experimental decorators in Nuxt and Nitro.
      *
@@ -180,6 +179,8 @@ export default defineResolvers({
         return typeof val === 'boolean' ? val : true
       },
     },
+
+    serverAppConfig: true,
 
     /**
      * Emit `app:chunkError` hook when there is an error loading vite/webpack
@@ -815,6 +816,11 @@ export default defineResolvers({
     viteEnvironmentApi: {
       $resolve: async (val, get) => {
         return typeof val === 'boolean' ? val : (await get('future.compatibilityVersion')) >= 5
+      },
+    },
+    nitroAutoImports: {
+      $resolve: async (val, get) => {
+        return typeof val === 'boolean' ? val : (await get('future.compatibilityVersion')) < 5
       },
     },
   },

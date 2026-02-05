@@ -1,4 +1,4 @@
-import type { RenderResponse } from 'nitropack'
+import type { RenderResponse } from 'nitropack/types'
 import type { Link, SerializableHead } from '@unhead/vue/types'
 import { destr } from 'destr'
 import type { H3Event } from 'h3'
@@ -7,13 +7,13 @@ import { resolveUnrefHeadInput } from '@unhead/vue'
 import { getRequestDependencies } from 'vue-bundle-renderer/runtime'
 import { getQuery as getURLQuery } from 'ufo'
 import type { NuxtIslandContext, NuxtIslandResponse } from 'nuxt/app'
+import { useNitroApp } from 'nitropack/runtime/app'
+
 import { islandCache, islandPropCache } from '../utils/cache'
 import { createSSRContext } from '../utils/renderer/app'
 import { getSSRRenderer } from '../utils/renderer/build-files'
 import { renderInlineStyles } from '../utils/renderer/inline-styles'
 import { getClientIslandResponse, getServerComponentHTML, getSlotIslandResponse } from '../utils/renderer/islands'
-
-import { useNitroApp } from '#internal/nitro'
 
 const ISLAND_SUFFIX_RE = /\.json(?:\?.*)?$/
 
@@ -86,8 +86,9 @@ export default defineEventHandler(async (event) => {
       const currentValue = islandHead[key as keyof SerializableHead]
       if (Array.isArray(currentValue)) {
         currentValue.push(...value)
+      } else {
+        islandHead[key as keyof SerializableHead] = value
       }
-      islandHead[key as keyof SerializableHead] = value
     }
   }
 

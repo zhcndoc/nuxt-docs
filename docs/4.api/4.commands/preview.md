@@ -19,22 +19,22 @@ npx nuxt preview [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>
 ## 参数
 
 <!--preview-args-->
-参数 | 说明
---- | ---
-`ROOTDIR="."` | 指定工作目录（默认值：`.`）
+| 参数             | 说明                                 |
+|------------------|------------------------------------|
+| `ROOTDIR="."`    | 指定工作目录（默认值：`.`）         |
 <!--/preview-args-->
 
 ## 选项
 
 <!--preview-opts-->
-选项 | 默认值 | 说明
---- | --- | ---
-`--cwd=<directory>` |  | 指定工作目录，此选项优先于 ROOTDIR（默认：`.`）
-`--logLevel=<silent\|info\|verbose>` |  | 指定构建时日志级别
-`--envName` |  | 解析配置覆盖时使用的环境（构建时默认是 `production`，开发服务器运行时默认是 `development`）
-`-e, --extends=<layer-name>` |  | 从 Nuxt 层扩展
-`-p, --port` |  | 监听端口（使用环境变量 `PORT` 可覆盖）
-`--dotenv` |  | 要加载的 `.env` 文件路径，相对于根目录
+| 选项                                   | 默认值 | 说明                                                                                                           |
+|--------------------------------------|-------|--------------------------------------------------------------------------------------------------------------|
+| `--cwd=<directory>`                  |       | 指定工作目录，此选项优先于 ROOTDIR（默认：`.`）                                                               |
+| `--logLevel=<silent\|info\|verbose>` |       | 指定构建时日志级别                                                                                            |
+| `--envName`                          |       | 解析配置覆盖时使用的环境（构建时默认是 `production`，开发服务器运行时默认是 `development`）                      |
+| `-e, --extends=<layer-name>`         |       | 从 Nuxt 层扩展                                                                                                 |
+| `-p, --port`                         |       | 监听端口（使用环境变量 `PORT` 可覆盖）                                                                        |
+| `--dotenv`                           |       | 要加载的 `.env` 文件路径，相对于根目录                                                                         |
 <!--/preview-opts-->
 
 此命令会将 `process.env.NODE_ENV` 设置为 `production`。如需覆盖，请在 `.env` 文件或命令行参数中定义 `NODE_ENV`。

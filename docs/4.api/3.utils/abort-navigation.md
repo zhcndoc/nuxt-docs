@@ -22,7 +22,7 @@ export function abortNavigation (err?: Error | string): false
 
 ### `err`
 
-- **类型**: [`Error`](https://developer.mozilla.org/pl/docs/Web/JavaScript/Reference/Global_Objects/Error) | `string`
+- **类型**: [`Error`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) | `string`
 
   可选的错误信息，`abortNavigation` 将会抛出该错误。
 
@@ -60,7 +60,7 @@ export default defineNuxtRouteMiddleware((to, from) => {
 
 ### `err` 作为错误对象
 
-你也可以将错误作为一个 [`Error`](https://developer.mozilla.org/pl/docs/Web/JavaScript/Reference/Global_Objects/Error) 对象传递，比如在 `catch` 块中捕获的错误：
+你也可以将错误作为一个 [`Error`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) 对象传递，比如在 `catch` 块中捕获的错误：
 
 ```ts [middleware/auth.ts]
 export default defineNuxtRouteMiddleware((to, from) => {

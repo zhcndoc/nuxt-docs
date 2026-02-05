@@ -16,7 +16,7 @@ links:
 
 ## 用法
 
-```vue [app/pages/index.vue]
+```vue [pages/index.vue]
 <script setup lang="ts">
 const { status, data: posts } = await useLazyAsyncData('posts', () => $fetch('/api/posts'))
 </script>

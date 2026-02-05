@@ -16,7 +16,7 @@ export default defineNuxtPlugin((nuxtApp) => {
 })
 ```
 
-:read-more{to="/docs/guide/directory-structure/plugins#creating-plugins"}
+:read-more{to="/docs/3.x/directory-structure/plugins#creating-plugins"}
 
 ## 类型
 

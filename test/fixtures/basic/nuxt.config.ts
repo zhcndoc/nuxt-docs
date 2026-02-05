@@ -192,10 +192,13 @@ export default withMatrix({
       '/route-rules/spa': { ssr: false },
       '/redirect/catchall': { ssr: false },
       '/route-rules/middleware': { appMiddleware: 'route-rules-middleware' },
+      '/route-rules/layout': { appLayout: 'custom' },
       '/hydration/spa-redirection/**': { ssr: false },
       '/no-scripts': { noScripts: true },
       '/prerender/**': { prerender: true },
       '/route-rules/redirect': { redirect: '/' },
+      '/isr': { isr: 60 },
+      '/swr': { swr: 60 },
     },
     output: { dir: process.env.NITRO_OUTPUT_DIR },
     prerender: {

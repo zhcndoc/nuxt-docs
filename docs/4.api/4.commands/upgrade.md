@@ -21,7 +21,7 @@ npx nuxt upgrade [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>
 <!--upgrade-args-->
 参数 | 说明
 --- | ---
-`ROOTDIR="."` | 指定工作目录（默认值：`。`）
+`ROOTDIR="."` | 指定工作目录（默认值：`.`）
 <!--/upgrade-args-->
 
 ## 选项

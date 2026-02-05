@@ -14,7 +14,7 @@ links:
 这是向站点添加元标签的推荐方式，因为它防止 XSS 攻击并且拥有完整的 TypeScript 支持。
 ::
 
-:read-more{to="/docs/getting-started/seo-meta"}
+:read-more{to="/docs/3.x/getting-started/seo-meta"}
 
 ## 用法
 
@@ -48,7 +48,7 @@ useSeoMeta({
 
 参数超过 100 个。请查看[源码中的完整参数列表](https://github.com/harlan-zw/zhead/blob/main/packages/zhead/src/metaFlat.ts#L1035)。
 
-:read-more{to="/docs/getting-started/seo-meta"}
+:read-more{to="/docs/3.x/getting-started/seo-meta"}
 
 ## 性能
 

@@ -9,7 +9,7 @@ import htmlnano from 'htmlnano'
 import { glob } from 'tinyglobby'
 import { camelCase } from 'scule'
 
-import genericMessages from '../templates/messages.json'
+import genericMessages from '../templates/messages.json' with { type: 'json' }
 
 const r = (path: string) => fileURLToPath(new URL(join('..', path), import.meta.url))
 const replaceAll = (input: string, search: string | RegExp, replace: string) => input.split(search).join(replace)
@@ -113,7 +113,7 @@ export const RenderPlugin = () => {
           hasExpression ? 'import { escapeHtml } from \'@vue/shared\'\n' : '',
           hasMessages ? `export type DefaultMessages = Record<${Object.keys({ ...genericMessages, ...messages }).map(a => `"${a}"`).join(' | ') || 'string'}, string | boolean | number >` : '',
           hasMessages ? `const _messages = ${JSON.stringify({ ...genericMessages, ...messages })}` : '',
-          `export const template = (${hasMessages ? 'messages: Partial<DefaultMessages>' : ''}) => {`,
+          `export const template = (${hasMessages ? 'messages: Partial<DefaultMessages>' : ''}): string => {`,
           hasMessages ? '  messages = { ..._messages, ...messages }' : '',
           `  return ${templateString}`,
           '}',

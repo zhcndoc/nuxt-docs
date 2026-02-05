@@ -14,7 +14,7 @@ links:
 
 默认情况下，[`useFetch`](/docs/3.x/api/composables/use-fetch) 会阻塞导航，直到其异步处理函数解析完成。而 `useLazyFetch` 则允许导航立即进行，数据在后台异步获取。
 
-```vue [app/pages/index.vue]
+```vue [pages/index.vue]
 <script setup lang="ts">
 const { status, data: posts } = await useLazyFetch('/api/posts')
 </script>
@@ -69,14 +69,14 @@ export function useLazyFetch<DataT, ErrorT> (
 
 返回与 [`useFetch`](/docs/3.x/api/composables/use-fetch) 相同的 `AsyncData` 对象：
 
-| 名称 | 类型 | 描述 |
-| --- | --- |--- |
-| `data` | `Ref<DataT \| undefined>` | 异步请求的结果数据。 |
-| `refresh` | `(opts?: AsyncDataExecuteOptions) => Promise<void>` | 手动刷新数据的函数。 |
-| `execute` | `(opts?: AsyncDataExecuteOptions) => Promise<void>` | `refresh` 的别名。 |
-| `error` | `Ref<ErrorT \| undefined>` | 若请求失败，返回错误对象。 |
-| `status` | `Ref<'idle' \| 'pending' \| 'success' \| 'error'>` | 请求的当前状态。 |
-| `clear` | `() => void` | 将 `data` 和 `error` 重置为 `undefined`，状态设为 `idle`，并取消所有挂起的请求。 |
+| 名称     | 类型                                                  | 描述                                                                                                          |
+| -------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `data`   | `Ref<DataT \| undefined>`                             | 异步请求的结果数据。                                                                                           |
+| `refresh`| `(opts?: AsyncDataExecuteOptions) => Promise<void>`  | 手动刷新数据的函数。                                                                                           |
+| `execute`| `(opts?: AsyncDataExecuteOptions) => Promise<void>`  | `refresh` 的别名。                                                                                             |
+| `error`  | `Ref<ErrorT \| undefined>`                            | 若请求失败，返回错误对象。                                                                                     |
+| `status` | `Ref<'idle' \| 'pending' \| 'success' \| 'error'>`   | 请求的当前状态。                                                                                               |
+| `clear`  | `() => void`                                          | 将 `data` 和 `error` 重置为 `undefined`，状态设为 `idle`，并取消所有挂起的请求。                              |
 
 :read-more{to="/docs/3.x/api/composables/use-fetch#return-values"}
 

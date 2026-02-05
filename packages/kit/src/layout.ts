@@ -1,14 +1,14 @@
 import type { NuxtTemplate } from '@nuxt/schema'
 import { join, parse } from 'pathe'
 import { kebabCase } from 'scule'
-import { isNuxtMajorVersion } from './compatibility'
-import { useNuxt } from './context'
-import { logger } from './logger'
-import { addTemplate } from './template'
+import { isNuxtMajorVersion } from './compatibility.ts'
+import { useNuxt } from './context.ts'
+import { logger } from './logger.ts'
+import { addTemplate } from './template.ts'
 import { reverseResolveAlias } from 'pathe/utils'
 
 const LAYOUT_RE = /["']/g
-export function addLayout (this: any, template: NuxtTemplate | string, name?: string) {
+export function addLayout (this: any, template: NuxtTemplate | string, name?: string): void {
   const nuxt = useNuxt()
   const { filename, src } = addTemplate(template)
   const layoutName = kebabCase(name || parse(filename).name).replace(LAYOUT_RE, '')

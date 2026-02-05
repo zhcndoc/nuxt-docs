@@ -25,12 +25,12 @@ const { data, status, pending, error, refresh, clear } = await useAsyncData(
 </script>
 ```
 
-::warning
-如果你正在使用自定义的 useAsyncData 包装器，请勿在组合式函数中对其加 await，因为这可能导致意外行为。请参考[此示例](/docs/3.x/guide/recipes/custom-usefetch#custom-usefetch)了解如何制作自定义的异步数据获取器。
+::warning{to="/docs/3.x/guide/recipes/custom-usefetch#custom-usefetchuseasyncdata"}
+如果你正在使用自定义的 `useAsyncData` 包装器，请勿在组合式函数中对其加 await，因为这可能导致意外行为。请参考[此示例](/docs/3.x/guide/recipes/custom-usefetch#custom-usefetch)了解如何制作自定义的异步数据获取器。
 ::
 
 ::note
-`data`、`status`、`pending`` 和 `error` 是 Vue 的 ref，使用时需要通过 `.value` 访问（比如在 `<script setup>` 中），而 `refresh`/`execute` 和 `clear` 是普通函数。
+`data`、`status`、`pending` 和 `error` 是 Vue 的 ref，使用时需要通过 `.value` 访问（比如在 `<script setup>` 中），而 `refresh`/`execute` 和 `clear` 是普通函数。
 ::
 
 ### 监听参数
@@ -133,7 +133,7 @@ const { data, error } = await useAsyncData(
 [`useAsyncData`](/docs/3.x/api/composables/use-async-data) 是编译器保留的函数名，所以你不应该将自定义函数命名为 [`useAsyncData`](/docs/3.x/api/composables/use-async-data)。
 ::
 
-:read-more{to="/docs/getting-started/data-fetching#useasyncdata"}
+:read-more{to="/docs/3.x/getting-started/data-fetching#useasyncdata"}
 
 ## 参数
 
@@ -167,7 +167,7 @@ const { data, error } = await useAsyncData(
 底层，`lazy: false` 利用 `<Suspense>` 阻塞路由加载直到数据获取完成。建议使用 `lazy: true` 并实现加载状态，以获得更流畅的用户体验。
 ::
 
-::read-more{to="/docs/api/composables/use-lazy-async-data"}
+::read-more{to="/docs/3.x/api/composables/use-lazy-async-data"}
 你可以使用 `useLazyAsyncData` 来获得与 `useAsyncData` 中 `lazy: true` 相同的行为。
 ::
 
@@ -280,4 +280,4 @@ interface AsyncDataExecuteOptions {
 type AsyncDataRequestStatus = 'idle' | 'pending' | 'success' | 'error'
 ```
 
-:read-more{to="/docs/getting-started/data-fetching"}
+:read-more{to="/docs/3.x/getting-started/data-fetching"}

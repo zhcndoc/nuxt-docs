@@ -4,7 +4,7 @@ description: '定义一个具有特定策略的懒加载水合组件。'
 links:
   - label: 源码
     icon: i-simple-icons-github
-    to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/components/plugins/lazy-hydration-macro-transform.ts
+    to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/components/plugins/lazy-hydration-macro-transform.ts
     size: xs
 ---
 

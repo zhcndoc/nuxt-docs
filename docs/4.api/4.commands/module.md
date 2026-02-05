@@ -4,7 +4,7 @@ description: "使用命令行搜索并添加模块到你的 Nuxt 应用。"
 links:
   - label: 源码
     icon: i-simple-icons-github
-    to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/module/
+    to: https://github.com/nuxt/cli/tree/main/packages/nuxi/src/commands/module
     size: xs
 ---
 
@@ -60,20 +60,16 @@ npx nuxt module search <QUERY> [--cwd=<directory>] [--nuxtVersion=<2|3>]
 
 ### 参数
 
-<!--module-search-args-->
 参数 | 说明
 --- | ---
 `QUERY` | 搜索关键词
-<!--/module-search-args-->
 
 ### 选项
 
-<!--module-search-opts-->
 选项 | 默认值 | 说明
 --- | --- | ---
 `--cwd=<directory>` | `.` | 指定工作目录
 `--nuxtVersion=<2\|3>` |  | 按 Nuxt 版本筛选，仅列出兼容模块（默认自动检测）
-<!--/module-search-opts-->
 
 此命令搜索与你的查询匹配且与你 Nuxt 版本兼容的 Nuxt 模块。
 

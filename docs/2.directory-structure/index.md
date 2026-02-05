@@ -10,7 +10,7 @@ Nuxt 应用程序有一个特定的目录结构，用于组织代码。该结构
 
 Nuxt 应用程序的根目录是包含 `nuxt.config.ts` 文件的目录。该文件用于配置 Nuxt 应用程序。
 
-### 应用目录及文件
+## 应用目录及文件
 
 以下目录与通用的 Nuxt 应用程序相关：
 - [`assets/`](/docs/3.x/directory-structure/assets)：网站的资源文件，构建工具（Vite 或 webpack）将会处理这些资源
@@ -27,7 +27,7 @@ Nuxt 应用程序的根目录是包含 `nuxt.config.ts` 文件的目录。该文
 - [`app.vue`](/docs/3.x/directory-structure/app)：Nuxt 应用的根组件
 - [`error.vue`](/docs/3.x/directory-structure/error)：Nuxt 应用的错误页面
 
-### 服务器目录
+## 服务器目录
 
 [`server/`](/docs/3.x/directory-structure/server) 目录包含 Nuxt 应用的服务器端代码。该目录包含以下子目录：
 - [`api/`](/docs/3.x/directory-structure/server#server-routes)：应用的 API 路由
@@ -53,6 +53,10 @@ Nuxt 应用程序的根目录是包含 `nuxt.config.ts` 文件的目录。该文
 ## 模块目录
 
 [`modules/`](/docs/3.x/directory-structure/modules) 目录包含 Nuxt 应用的本地模块。模块用于扩展 Nuxt 应用的功能。
+
+## Layers 目录
+
+[`layers/`](/docs/3.x/directory-structure/layers) 目录允许您组织和共享可复用的代码、组件、组合函数和配置。此目录内的层会自动在您的项目中注册。
 
 ## Nuxt 文件
 

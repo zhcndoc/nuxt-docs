@@ -9,7 +9,7 @@ links:
 ---
 
 ::note
-`defineNuxtComponent()` 是一个辅助函数，用于使用 Options API 定义类型安全的 Vue 组件，类似于 [`defineComponent()`](https://vue.zhcndoc.com/api/general.html#definecomponent)。`defineNuxtComponent()` 包装还为组件选项添加了对 `asyncData` 和 `head` 的支持。
+`defineNuxtComponent()` 是一个辅助函数，用于使用 Options API 定义类型安全的 Vue 组件，类似于 [`defineComponent()`](https://vuejs.org/api/general#definecomponent)。`defineNuxtComponent()` 包装还为组件选项添加了对 `asyncData` 和 `head` 的支持。
 ::
 
 ::note
