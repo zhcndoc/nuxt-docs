@@ -1,5 +1,5 @@
 ---
-title: "nuxt 模块"
+title: "nuxt module"
 description: "使用命令行搜索并添加模块到你的 Nuxt 应用。"
 links:
   - label: 源码

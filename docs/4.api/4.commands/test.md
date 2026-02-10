@@ -1,5 +1,5 @@
 ---
-title: "nuxt 测试"
+title: "nuxt test"
 description: 测试命令使用 @nuxt/test-utils 运行测试。
 links:
   - label: 源码
