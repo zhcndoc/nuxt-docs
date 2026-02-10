@@ -2,7 +2,7 @@
 title: "clearError"
 description: "clearError 组合式函数清除所有已处理的错误。"
 links:
-  - label: 来源
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/error.ts
     size: xs

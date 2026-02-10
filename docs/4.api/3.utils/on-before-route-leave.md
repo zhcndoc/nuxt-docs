@@ -2,7 +2,7 @@
 title: "onBeforeRouteLeave"
 description: onBeforeRouteLeave 组合式函数允许在组件内注册路由守卫。
 links:
-  - label: 来源
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/router.ts
     size: xs

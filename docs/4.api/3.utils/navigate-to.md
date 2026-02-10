@@ -2,7 +2,7 @@
 title: "navigateTo"
 description: navigateTo 是一个以编程方式导航用户的辅助函数。
 links:
-  - label: Source
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/router.ts
     size: xs

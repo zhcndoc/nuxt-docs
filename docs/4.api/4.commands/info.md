@@ -2,7 +2,7 @@
 title: "nuxt info"
 description: info 命令记录关于当前或指定的 Nuxt 项目的信息。
 links:
-  - label: 源
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/info.ts
     size: xs

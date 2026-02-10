@@ -2,7 +2,7 @@
 title: 'abortNavigation'
 description: 'abortNavigation 是一个辅助函数，用于阻止导航发生，并在传入错误参数时抛出该错误。'
 links:
-  - label: 来源
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/router.ts
     size: xs

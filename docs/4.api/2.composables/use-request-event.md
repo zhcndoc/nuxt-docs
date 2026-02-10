@@ -2,7 +2,7 @@
 title: 'useRequestEvent'
 description: '使用 useRequestEvent 组合式函数访问传入请求事件。'
 links:
-  - label: 源代码
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/ssr.ts
     size: xs

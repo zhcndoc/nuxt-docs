@@ -2,7 +2,7 @@
 title: 'addRouteMiddleware'
 description: 'addRouteMiddleware() 是一个用于在应用中动态添加中间件的辅助函数。'
 links:
-  - label: 源代码
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/router.ts
     size: xs

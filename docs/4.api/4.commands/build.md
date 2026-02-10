@@ -2,7 +2,7 @@
 title: "nuxt build"
 description: "构建你的 Nuxt 应用。"
 links:
-  - label: 来源
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/build.ts
     size: xs

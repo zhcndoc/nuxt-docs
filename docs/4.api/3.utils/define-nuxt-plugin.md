@@ -2,7 +2,7 @@
 title: "defineNuxtPlugin"
 description: defineNuxtPlugin() 是用于创建 Nuxt 插件的辅助函数。
 links:
-  - label: 源代码
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/nuxt.ts
     size: xs

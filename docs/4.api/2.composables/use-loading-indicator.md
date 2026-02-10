@@ -2,7 +2,7 @@
 title: 'useLoadingIndicator'
 description: 该 composable 可让您访问应用页面的加载状态。
 links:
-  - label: Source
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/loading-indicator.ts
     size: xs

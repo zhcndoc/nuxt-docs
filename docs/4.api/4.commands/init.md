@@ -1,8 +1,8 @@
 ---
-title: "创建 nuxt"
+title: "create nuxt"
 description: init 命令会初始化一个新的 Nuxt 项目。
 links:
-  - label: 来源
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/init.ts
     size: xs

@@ -2,7 +2,7 @@
 title: "refreshCookie"
 description: "当 cookie 发生变化时，手动刷新 useCookie 的值"
 links:
-  - label: Source
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/cookie.ts
     size: xs

@@ -2,7 +2,7 @@
 title: 'useHydration'
 description: '允许对 hydration 周期进行完全控制，以便从服务器设置和接收数据。'
 links:
-  - label: Source
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/hydrate.ts
     size: xs

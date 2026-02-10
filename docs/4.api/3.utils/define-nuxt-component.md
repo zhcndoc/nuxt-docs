@@ -2,7 +2,7 @@
 title: "defineNuxtComponent"
 description: defineNuxtComponent() 是一个用于使用 Options API 定义类型安全组件的辅助函数。
 links:
-  - label: 源代码
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/component.ts
     size: xs

@@ -2,7 +2,7 @@
 title: useHeadSafe
 description: 推荐的在接受用户输入时提供 head 数据的方式。
 links:
-  - label: 源代码
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/unjs/unhead/blob/main/packages/vue/src/composables.ts
     size: xs

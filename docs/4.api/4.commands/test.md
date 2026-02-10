@@ -2,7 +2,7 @@
 title: "nuxt test"
 description: test 命令使用 @nuxt/test-utils 运行测试。
 links:
-  - label: 源代码
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/test.ts
     size: xs

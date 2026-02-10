@@ -2,7 +2,7 @@
 title: 'prefetchComponents'
 description: Nuxt 提供工具，让你可以控制组件的预获取。
 links:
-  - label: Source
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/preload.ts
     size: xs

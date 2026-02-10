@@ -2,7 +2,7 @@
 title: "nuxt generate"
 description: 对应用的每个路由进行预渲染，并将结果以纯 HTML 文件的形式保存。
 links:
-  - label: 源代码
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/generate.ts
     size: xs

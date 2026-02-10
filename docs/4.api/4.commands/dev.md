@@ -2,7 +2,7 @@
 title: 'nuxt dev'
 description: dev 命令在 http://localhost:3000 启动带有热模块替换的开发服务器
 links:
-  - label: 源代码
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/dev.ts
     size: xs

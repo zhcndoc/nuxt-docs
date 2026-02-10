@@ -2,7 +2,7 @@
 title: 'useFetch'
 description: '使用对 SSR 友好的可组合函数从 API 端点获取数据。'
 links:
-  - label: 源代码
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/fetch.ts
     size: xs

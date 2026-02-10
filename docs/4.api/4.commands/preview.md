@@ -1,8 +1,8 @@
 ---
-title: "nuxt 预览"
+title: "nuxt preview"
 description: 预览命令在运行 build 命令后启动一个服务器以预览你的应用。
 links:
-  - label: 源代码
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/preview.ts
     size: xs

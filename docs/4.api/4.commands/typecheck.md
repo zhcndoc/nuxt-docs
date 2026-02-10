@@ -1,8 +1,8 @@
 ---
-title: "nuxt 类型检查"
+title: "nuxt typecheck"
 description: 该 typecheck 命令运行 vue-tsc 来检查整个应用的类型。
 links:
-  - label: 来源
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/typecheck.ts
     size: xs

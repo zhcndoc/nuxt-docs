@@ -2,7 +2,7 @@
 title: "$fetch"
 description: Nuxt 使用 ofetch 在全局暴露 `$fetch` 助手来在你的 Vue 应用或 API 路由中发起 HTTP 请求。
 links:
-  - label: 源代码
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/entry.ts
     size: xs

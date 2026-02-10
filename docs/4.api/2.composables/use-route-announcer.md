@@ -2,7 +2,7 @@
 title: 'useRouteAnnouncer'
 description: 此可组合项会观察页面标题的变化，并相应地更新播报消息。
 links:
-  - label: 来源
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/route-announcer.ts
     size: xs

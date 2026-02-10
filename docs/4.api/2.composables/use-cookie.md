@@ -2,7 +2,7 @@
 title: 'useCookie'
 description: useCookie 是一个 SSR 友好的可组合函数，用于读取和写入 cookies。
 links:
-  - label: 源代码
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/cookie.ts
     size: xs

@@ -1,8 +1,8 @@
 ---
-title: 'nuxt 清理'
+title: 'nuxt cleanup'
 description: '移除常见的 Nuxt 生成文件和缓存。'
 links:
-  - label: 源代码
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/cleanup.ts
     size: xs

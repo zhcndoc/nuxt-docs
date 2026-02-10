@@ -1,8 +1,8 @@
 ---
-title: "nuxt 模块"
+title: "nuxt module"
 description: "通过命令行搜索并将模块添加到你的 Nuxt 应用。"
 links:
-  - label: 源
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/cli/tree/main/packages/nuxi/src/commands/module
     size: xs

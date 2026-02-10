@@ -2,7 +2,7 @@
 title: 'preloadRouteComponents'
 description: 'preloadRouteComponents 允许你在 Nuxt 应用中手动预加载单个页面。'
 links:
-  - label: 源代码
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/preload.ts
     size: xs

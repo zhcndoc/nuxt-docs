@@ -2,7 +2,7 @@
 title: 'useNuxtData'
 description: '访问数据获取组合函数的当前缓存值。'
 links:
-  - label: Source
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/asyncData.ts
     size: xs

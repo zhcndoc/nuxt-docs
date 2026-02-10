@@ -2,7 +2,7 @@
 title: "useRoute"
 description: useRoute 组合函数返回当前路由。
 links:
-  - label: 来源
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/router.ts
     size: xs

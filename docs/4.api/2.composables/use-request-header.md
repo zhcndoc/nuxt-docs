@@ -2,7 +2,7 @@
 title: "useRequestHeader"
 description: "使用 useRequestHeader 访问某个传入请求头。"
 links:
-  - label: 来源
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/ssr.ts
     size: xs

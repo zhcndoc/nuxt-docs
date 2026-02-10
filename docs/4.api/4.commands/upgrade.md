@@ -1,8 +1,8 @@
 ---
-title: "nuxt 升级"
+title: "nuxt upgrade"
 description: 升级命令将 Nuxt 升级到最新版本。
 links:
-  - label: 来源
+  - label: 源码
     icon: i-simple-icons-github
     to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/upgrade.ts
     size: xs
