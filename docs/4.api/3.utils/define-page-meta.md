@@ -35,7 +35,7 @@ interface PageMeta {
   groups?: string[]
   pageTransition?: boolean | TransitionProps
   layoutTransition?: boolean | TransitionProps
-  viewTransition?: boolean | 'always'
+  viewTransition?: ViewTransitionPageOptions['enabled'] | ViewTransitionPageOptions
   key?: false | string | ((route: RouteLocationNormalizedLoaded) => string)
   keepalive?: boolean | KeepAliveProps
   layout?: false | LayoutKey | Ref<LayoutKey> | ComputedRef<LayoutKey>
@@ -79,9 +79,9 @@ interface PageMeta {
 
   **`groups`**
 
-  - **Type**: `string[]`
+  - **类型**: `string[]`
 
-    Route groups the page belongs to, based on the folder structure. Automatically populated for pages within [route groups](/docs/4.x/guide/directory-structure/app/pages#route-groups).
+    页面所属的路由分组，基于文件夹结构自动填充。适用于处于[路由组](/docs/4.x/guide/directory-structure/app/pages#route-groups)内的页面。
 
   **`keepalive`**
 
@@ -121,11 +121,17 @@ interface PageMeta {
 
   **`viewTransition`**
 
-  - **类型**: `boolean | 'always'`
+  - **类型**: `boolean | 'always' | ViewTransitionPageOptions`
 
     **实验性功能，仅在你的 nuxt.config 文件中[启用](/docs/4.x/getting-started/transitions#view-transitions-api-experimental) 时可用**</br>
     启用/禁用当前页面的视图过渡（View Transitions）。
     如果设置为 true，Nuxt 会在用户的浏览器匹配 `prefers-reduced-motion: reduce` 时不应用过渡（推荐）。如果设置为 `always`，Nuxt 将始终应用过渡。
+
+    你也可以传入一个 `ViewTransitionPageOptions` 对象以配置[视图过渡类型](/docs/4.x/getting-started/transitions#view-transition-types):
+    - `enabled`: `boolean | 'always'` - 启用/禁用过渡
+    - `types`: `string[] | (to, from) => string[]` - 适用于任何涉及此页面的过渡类型
+    - `toTypes`: `string[] | (to, from) => string[]` - 仅在导航**到**此页面时应用的类型
+    - `fromTypes`: `string[] | (to, from) => string[]` - 仅在导航**从**此页面时应用的类型
 
   **`redirect`**
 

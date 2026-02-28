@@ -56,3 +56,7 @@ const { message, politeness, set, polite, assertive } = useRouteAnnouncer({
 })
 </script>
 ```
+
+::callout
+对于宣布页面内动态内容变化（表单验证、提示消息、加载状态），请改用 [`useAnnouncer`](/docs/4.x/api/composables/use-announcer)。
+::
