@@ -76,6 +76,7 @@ export function useLazyFetch<DataT, ErrorT> (
 | `execute` | `(opts?: AsyncDataExecuteOptions) => Promise<void>` | `refresh` 的别名。                                                                                             |
 | `error`   | `Ref<ErrorT \| undefined>`                          | 如果数据获取失败，包含错误对象。                                                                        |
 | `status`  | `Ref<'idle' \| 'pending' \| 'success' \| 'error'>`  | 数据请求的状态。                                                                                      |
+| `pending` | `Ref<boolean>`                                      | 布尔值，指示当前请求是否正在进行中。                                                                       |
 | `clear`   | `() => void`                                        | 将 `data` 设为 `undefined`，`error` 设为 `undefined`，将状态重置为 `idle`，并取消所有待处理请求。 |
 
 :read-more{to="/docs/4.x/api/composables/use-fetch#return-values"}

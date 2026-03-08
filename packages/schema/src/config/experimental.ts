@@ -97,7 +97,13 @@ export default defineResolvers({
     restoreState: false,
     renderJsonPayloads: true,
     noVueServer: false,
-    payloadExtraction: true,
+    payloadExtraction: {
+      $resolve: async (val, get) => {
+        if ((await get('ssr')) === false) { return false }
+        if (val === 'client' || typeof val === 'boolean') { return val }
+        return (await get('future.compatibilityVersion')) >= 5 ? 'client' as const : true
+      },
+    },
     clientFallback: false,
     crossOriginPrefetch: false,
 
@@ -239,12 +245,12 @@ export default defineResolvers({
         return typeof val === 'boolean' ? val : false
       },
     },
-    viteEnvironmentApi: {
+    nitroAutoImports: {
       $resolve: async (val, get) => {
-        return typeof val === 'boolean' ? val : (await get('future.compatibilityVersion')) >= 5
+        return typeof val === 'boolean' ? val : (await get('future.compatibilityVersion')) < 5
       },
     },
-    nitroAutoImports: {
+    asyncCallHook: {
       $resolve: async (val, get) => {
         return typeof val === 'boolean' ? val : (await get('future.compatibilityVersion')) < 5
       },

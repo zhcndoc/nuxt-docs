@@ -116,7 +116,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@89a39a4e59826350b863aa6b6252a07ad50cf83e # v4.32.4
+        uses: github/codeql-action/init@c793b717bc78562f491db7b0e93a3a178b099162 # v4.32.5
         with:
           config: |
             paths:
@@ -133,7 +133,7 @@ jobs:
           languages: ${{ matrix.language }}
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@89a39a4e59826350b863aa6b6252a07ad50cf83e # v4.32.4
+        uses: github/codeql-action/analyze@c793b717bc78562f491db7b0e93a3a178b099162 # v4.32.5
         with:
           category: '/language:${{ matrix.language }}'
 
@@ -314,7 +314,7 @@ jobs:
       matrix:
         os: [ubuntu-24.04-arm, windows-latest]
         env: ['dev', 'built']
-        builder: ['vite-env-api', 'vite', 'rspack', 'webpack']
+        builder: ['vite', 'rspack', 'webpack']
         context: ['async', 'default']
         manifest: ['manifest-on', 'manifest-off']
         payload: ['json', 'js']
@@ -338,12 +338,9 @@ jobs:
             builder: 'webpack'
           - manifest: 'manifest-off'
             builder: 'webpack'
-          - manifest: 'manifest-off'
-            builder: 'vite-env-api'
-          - payload: 'js'
-            builder: 'vite-env-api'
 
-    timeout-minutes: 15
+
+    timeout-minutes: 25
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2

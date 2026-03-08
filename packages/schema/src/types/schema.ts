@@ -1121,11 +1121,19 @@ export interface ConfigSchema {
     noVueServer: boolean
 
     /**
-     * When this option is enabled (by default) payload of pages that are prerendered are extracted
+     * Controls how payload data is delivered for prerendered and cached (ISR/SWR) pages.
      *
-     * @default true
+     * - `'client'` - Payload is inlined in HTML for the initial server render, and extracted to
+     *   `_payload.json` files for client-side navigation. This avoids a separate request on
+     *   initial load while still enabling efficient client-side navigation.
+     * - `true` - Payload is extracted to a separate `_payload.json` file for both the initial
+     *   server render and client-side navigation.
+     * - `false` - Payload extraction is disabled entirely. Payload is always inlined in HTML and
+     *   no `_payload.json` files are generated.
+     *
+     * `@default` true (or 'client' when compatibilityVersion >= 5)
      */
-    payloadExtraction: boolean | undefined
+    payloadExtraction: 'client' | boolean | undefined
 
     /**
      * Whether to enable the experimental `<NuxtClientFallback>` component for rendering content on the client if there's an error in SSR.
@@ -1286,14 +1294,6 @@ export interface ConfigSchema {
      * @see [CookieStore](https://developer.mozilla.org/en-US/docs/Web/API/CookieStore)
      */
     cookieStore: boolean
-
-    /**
-     * Enable experimental Vite Environment API
-     * @see [Vite Environment API](https://vite.dev/guide/api-environment#environment-api)
-     * @default false
-     * @default true with compatibilityVersion >= 5
-     */
-    viteEnvironmentApi: boolean
 
     /**
      * This allows specifying the default options for core Nuxt components and composables.
@@ -1593,6 +1593,19 @@ export interface ConfigSchema {
      * @default false with compatibilityVersion >= 5
      */
     nitroAutoImports: boolean
+
+    /**
+     * Whether `callHook` always returns a `Promise`, wrapping synchronous hook results.
+     *
+     * Hookable v6 may return `void` instead of `Promise<void>` when there are no registered
+     * hooks or all hooks are synchronous. When this option is enabled, Nuxt wraps `callHook`
+     * with `Promise.resolve()` so that `.then()` and `.catch()` chaining always works.
+     *
+     * Set to `false` for better performance if your code and modules use `await` with `callHook`.
+     * @default true
+     * @default false with compatibilityVersion >= 5
+     */
+    asyncCallHook: boolean
   }
 
   /**
