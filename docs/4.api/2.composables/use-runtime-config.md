@@ -18,7 +18,7 @@ const config = useRuntimeConfig()
 
 ```ts [server/api/foo.ts]
 export default defineEventHandler((event) => {
-  const config = useRuntimeConfig(event)
+  const config = useRuntimeConfig()
 })
 ```
 
@@ -56,7 +56,7 @@ export default defineNuxtConfig({
 
 ```ts [server/api/test.ts]
 export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig(event)
+  const config = useRuntimeConfig()
 
   // 访问公共变量
   const result = await $fetch(`/test`, {
@@ -132,7 +132,7 @@ export default defineNuxtPlugin((NuxtApp) => {
 
 ```ts [server/api/foo.ts]
 export default defineEventHandler((event) => {
-  const config = useRuntimeConfig(event)
+  const config = useRuntimeConfig()
 
   // 在服务端和客户端都可访问的 cdnURL
   const cdnURL = config.app.cdnURL

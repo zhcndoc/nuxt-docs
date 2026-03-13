@@ -113,6 +113,8 @@ export default createConfigForNuxt({
     },
     rules: {
       '@typescript-eslint/no-deprecated': 'error',
+      '@typescript-eslint/return-await': ['error', 'in-try-catch'],
+      'no-return-await': 'off',
     },
   })
 
@@ -245,6 +247,7 @@ export default createConfigForNuxt({
                   // vue ecosystem
                   '@unhead',
                   '@vue/shared',
+                  'ofetch',
                   'vue/server-renderer',
                   'vue',
                   'vue-router',

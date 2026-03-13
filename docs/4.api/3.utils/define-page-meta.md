@@ -38,7 +38,7 @@ interface PageMeta {
   viewTransition?: ViewTransitionPageOptions['enabled'] | ViewTransitionPageOptions
   key?: false | string | ((route: RouteLocationNormalizedLoaded) => string)
   keepalive?: boolean | KeepAliveProps
-  layout?: false | LayoutKey | Ref<LayoutKey> | ComputedRef<LayoutKey>
+  layout?: false | LayoutKey | Ref<LayoutKey> | ComputedRef<LayoutKey> | { name?: LayoutKey | false, props?: Record<string, unknown> /* or the selected layout's props */ }
   middleware?: MiddlewareKey | NavigationGuard | Array<MiddlewareKey | NavigationGuard>
   scrollToTop?: boolean | ((to: RouteLocationNormalizedLoaded, from: RouteLocationNormalizedLoaded) => boolean)
   [key: string]: unknown
@@ -97,9 +97,11 @@ interface PageMeta {
 
   **`layout`**
 
-  - **类型**: `false` | `LayoutKey` | `Ref<LayoutKey>` | `ComputedRef<LayoutKey>`
+  - **类型**: `false` | `LayoutKey` | `Ref<LayoutKey>` | `ComputedRef<LayoutKey>` | `{ name?: LayoutKey | false; props?: Record<string, unknown> /* 或所选布局的属性 */ }`
 
     为每个路由设置静态或动态的布局名称。如果需要禁用默认布局，可将其设置为 `false`。
+
+    You can also pass an object with `name` and `props` to pass typed props to your layout component. When your layout defines props with `defineProps`, they will be fully typed in `definePageMeta`.
 
   **`layoutTransition`**
 
@@ -245,3 +247,52 @@ definePageMeta({
 })
 </script>
 ```
+
+### 向布局传递 Props
+
+你可以通过使用对象语法为 `layout` 传递 props。如果你的布局使用 `defineProps` 定义了 props，这些 props 将具有完整的类型。
+
+::code-group
+
+```vue [app/pages/dashboard.vue]
+<script setup lang="ts">
+definePageMeta({
+  layout: {
+    name: 'panel',
+    props: {
+      sidebar: true,
+      title: 'Dashboard',
+    },
+  },
+})
+</script>
+```
+
+```vue [app/layouts/panel.vue]
+<script setup lang="ts">
+const props = defineProps<{
+  sidebar?: boolean
+  title?: string
+}>()
+</script>
+
+<template>
+  <div>
+    <aside v-if="sidebar">
+      Sidebar
+    </aside>
+    <main>
+      <h1>{{ title }}</h1>
+      <slot />
+    </main>
+  </div>
+</template>
+```
+
+::
+
+::tip
+通过 `definePageMeta` 设置的布局属性完全基于布局的 `defineProps` 进行类型定义。您将在编辑器中获得自动补全和类型检查。
+::
+
+:read-more{to="/docs/4.x/directory-structure/app/layouts#passing-props-to-layouts"}

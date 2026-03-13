@@ -9,7 +9,7 @@ import { $fetchComponent } from '@nuxt/test-utils/experimental'
 import { createRegExp, exactly } from 'magic-regexp'
 import type { NuxtIslandResponse } from 'nuxt/app'
 
-import { asyncContext, builder, isDev, isRenderingJson, isTestingAppManifest, isWebpack } from './matrix'
+import { asyncContext, builder, isDev, isTestingAppManifest, isWebpack } from './matrix'
 import { expectNoClientErrors, gotoPath, parseData, parsePayload, renderPage } from './utils'
 
 await setup({
@@ -72,9 +72,7 @@ describe('route rules', () => {
 
     const { script, attrs } = parseData(headHtml)
     expect(script.serverRendered).toEqual(false)
-    if (isRenderingJson) {
-      expect(attrs['data-ssr']).toEqual('false')
-    }
+    expect(attrs['data-ssr']).toEqual('false')
     await expectNoClientErrors('/route-rules/spa')
   })
 
@@ -120,7 +118,6 @@ describe('route rules', () => {
       ssr: false,
     })
     expect(routeRules['/route-rules/isr-spa/_payload.json']).toBeUndefined()
-    expect(routeRules['/route-rules/isr-spa/_payload.js']).toBeUndefined()
   })
 })
 
@@ -1213,15 +1210,12 @@ describe('errors', () => {
     expect(res.statusText).toBe('This is a custom error')
     const error = await res.json()
     delete error.stack
-    const url = new URL(error.url)
-    url.host = 'localhost:3000'
-    error.url = url.toString()
     expect(error).toMatchObject({
-      message: isDev ? 'This is a custom error' : 'Server Error',
-      statusCode: 422,
-      statusMessage: 'This is a custom error',
-      url: 'http://localhost:3000/error',
+      message: 'This is a custom error',
+      status: 422,
+      statusText: 'This is a custom error',
     })
+    expect(error).not.toHaveProperty('url')
   })
 
   it('should render a HTML error page', async () => {
@@ -1239,19 +1233,13 @@ describe('errors', () => {
     expect(res.status).toBe(404)
     const error = await res.json()
     delete error.stack
-    const url = new URL(error.url)
-    url.host = 'localhost:3000'
-    error.url = url.toString()
-
-    expect(error).toMatchInlineSnapshot(`
-      {
-        "error": true,
-        "message": "Page Not Found: /__nuxt_error",
-        "statusCode": 404,
-        "statusMessage": "Page Not Found: /__nuxt_error",
-        "url": "http://localhost:3000/__nuxt_error",
-      }
-    `)
+    expect(error).toMatchObject({
+      error: true,
+      message: 'Page Not Found: /__nuxt_error',
+      status: 404,
+      statusText: 'Page Not Found: /__nuxt_error',
+    })
+    expect(error).not.toHaveProperty('url')
   })
 
   it('should not recursively throw an error when there is an error rendering the error page', async () => {
@@ -2170,6 +2158,15 @@ describe('server components/islands', () => {
     // test island head
     expect(html).toContain('<meta name="author" content="Nuxt">')
     expect(html).toContain('plugin-style')
+    // #34482 - title should be composed with titleTemplate
+    expect(html).toContain('<title>Server Page - Fixture</title>')
+  })
+
+  it('/server-page - should preserve title after hydration', async () => {
+    const { page } = await renderPage('/server-page')
+    await page.waitForLoadState('networkidle')
+    expect(await page.title()).toBe('Server Page - Fixture')
+    await page.close()
   })
 
   it('/server-page - client side navigation', async () => {
@@ -2184,15 +2181,11 @@ describe('server components/islands', () => {
   it.skipIf(isDev)('should allow server-only components to set prerender hints', async () => {
     // @ts-expect-error ssssh! untyped secret property
     const publicDir = useTestContext().nuxt._nitro.options.output.publicDir
-    expect(await readdir(join(publicDir, 'catchall', 'some', 'url', 'from', 'server-only', 'component')).catch(() => [])).toContain(
-      isRenderingJson
-        ? '_payload.json'
-        : '_payload.js',
-    )
+    expect(await readdir(join(publicDir, 'catchall', 'some', 'url', 'from', 'server-only', 'component')).catch(() => [])).toContain('_payload.json')
   })
 })
 
-describe.skipIf(isDev || isWindows || !isRenderingJson)('prefetching', () => {
+describe.skipIf(isDev || isWindows)('prefetching', () => {
   it('should prefetch components', async () => {
     await expectNoClientErrors('/prefetch/components')
   })
@@ -2312,7 +2305,8 @@ describe.skipIf(isDev)('dynamic paths', () => {
       expect(url.startsWith('/foo/_other/') || isPublicFile('/foo/', url)).toBeTruthy()
     }
 
-    expect(await $fetch<string>('/foo/url')).toContain('path: /foo/url')
+    // TODO: document as breaking change
+    expect(await $fetch<string>('/foo/url')).toContain('path: /url')
   })
 
   it('should allow setting relative baseURL', async () => {
@@ -2699,9 +2693,9 @@ describe.runIf(isDev && !isWebpack)('vite plugins', () => {
   })
 })
 
-describe.skipIf(isWindows || !isRenderingJson)('payload rendering', () => {
+describe.skipIf(isWindows)('payload rendering', () => {
   it('renders a payload', async () => {
-    const payload = await $fetch<string>('/random/a/_payload.json', { responseType: 'text' })
+    const payload = await $fetch('/random/a/_payload.json', { responseType: 'text' })
     const data = parsePayload(payload)
     expect(typeof data.prerenderedAt).toEqual('number')
 
@@ -2762,15 +2756,15 @@ describe.skipIf(isWindows || !isRenderingJson)('payload rendering', () => {
     expect(res.status).toBe(404)
   })
 
-  it.skipIf(!isRenderingJson)('should not include server-component HTML in payload', async () => {
-    const payload = await $fetch<string>('/prefetch/server-components/_payload.json', { responseType: 'text' })
+  it('should not include server-component HTML in payload', async () => {
+    const payload = await $fetch('/prefetch/server-components/_payload.json', { responseType: 'text' })
     const entries = Object.entries(parsePayload(payload))
     const [key, serializedComponent] = entries.find(([key]) => key.startsWith('AsyncServerComponent')) || []
     expect(serializedComponent).toEqual(key)
   })
 
   it('should render payload for ISR routes', async () => {
-    const payload = await $fetch<string>('/isr/_payload.json', { responseType: 'text' })
+    const payload = await $fetch('/isr/_payload.json', { responseType: 'text' })
     const data = parsePayload(payload)
     expect(data.data).toBeDefined()
     expect(data.data['isr-data']).toBeDefined()
@@ -2778,7 +2772,7 @@ describe.skipIf(isWindows || !isRenderingJson)('payload rendering', () => {
   })
 
   it('should render payload for SWR routes', async () => {
-    const payload = await $fetch<string>('/swr/_payload.json', { responseType: 'text' })
+    const payload = await $fetch('/swr/_payload.json', { responseType: 'text' })
     const data = parsePayload(payload)
     expect(data.data).toBeDefined()
     expect(data.data['swr-data']).toBeDefined()
