@@ -87,10 +87,15 @@ export const useAPI = createUseFetch(callerOptions => ({
 你可以向 `createUseFetch` 传入自定义的 `$fetch` 实例：
 
 ```ts [app/composables/useAPI.ts]
-export const useAPI = createUseFetch({
+export const useAPI = createUseFetch(callerOptions => ({
   $fetch: useNuxtApp().$api as typeof $fetch,
-})
+  ...callerOptions,
+}))
 ```
+
+::important
+此处必须使用**函数签名**（覆盖模式），以便 [`useNuxtApp()`](/docs/4.x/api/composables/use-nuxt-app) 在 setup 上下文中（在组合函数调用处）被调用，而不是在模块作用域中，那里没有 Nuxt 实例可用。
+::
 
 :read-more{to="/docs/4.x/guide/recipes/custom-usefetch"}
 

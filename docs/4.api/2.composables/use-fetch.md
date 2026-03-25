@@ -139,6 +139,7 @@ type UseFetchOptions<DataT> = {
   body?: MaybeRefOrGetter<RequestInit['body'] | Record<string, any>>
   headers?: MaybeRefOrGetter<Record<string, string> | [key: string, value: string][] | Headers>
   baseURL?: MaybeRefOrGetter<string>
+  cache?: false | 'default' | 'force-cache' | 'no-cache' | 'no-store' | 'only-if-cached' | 'reload'
   server?: boolean
   lazy?: boolean
   immediate?: boolean
@@ -154,7 +155,7 @@ type UseFetchOptions<DataT> = {
 }
 
 type AsyncDataRequestContext = {
-  /** The reason for this data request */
+  /** 此数据请求的原因 */
   cause: 'initial' | 'refresh:manual' | 'refresh:hook' | 'watch'
 }
 
@@ -183,28 +184,28 @@ type AsyncDataRequestStatus = 'idle' | 'pending' | 'success' | 'error'
 
 - `options` (对象): 请求的配置。扩展自 [unjs/ofetch](https://github.com/unjs/ofetch) 选项和 [`AsyncDataOptions`](/docs/4.x/api/composables/use-async-data#params)。所有选项都可以是静态值、`ref` 或计算属性。
 
-| 选项            | 类型                                                                   | 默认值      | 说明                                                                                                             |
-|-----------------|------------------------------------------------------------------------|------------|------------------------------------------------------------------------------------------------------------------|
-| `key`           | `MaybeRefOrGetter<string>`                                             | 自动生成   | 去重的唯一键。如果未提供，将从 URL 和选项生成。                                                                  |
-| `method`        | `MaybeRefOrGetter<string>`                                             | `'GET'`    | HTTP 请求方法。                                                                                                   |
-| `query`         | `MaybeRefOrGetter<SearchParams>`                                       | -          | 要附加到 URL 的查询/搜索参数。别名：`params`。                                                                  |
-| `params`        | `MaybeRefOrGetter<SearchParams>`                                       | -          | `query` 的别名。                                                                                                 |
-| `body`          | `MaybeRefOrGetter<RequestInit['body'] \| Record<string, any>>`         | -          | 请求体。对象会被自动序列化为字符串。                                                                             |
-| `headers`       | `MaybeRefOrGetter<Record<string, string> \| [key, value][] \| Headers>`| -          | 请求头。                                                                                                       |
-| `baseURL`       | `MaybeRefOrGetter<string>`                                             | -          | 请求的基础 URL。                                                                                                |
-| `cache`         | `boolean \| string`                                                    | -          | 缓存控制。布尔值表示禁用缓存，或使用 Fetch API 的值：`default`、`no-store` 等。                                  |
-| `server`        | `boolean`                                                              | `true`     | 是否在服务器上获取。                                                                                            |
-| `lazy`          | `boolean`                                                              | `false`    | 如果为 true，则在路由加载后解析（不会阻塞导航）。                                                              |
-| `immediate`     | `boolean`                                                              | `true`     | 如果为 false，则阻止请求立即触发。                                                                              |
-| `default`       | `() => DataT`                                                          | -          | 在异步解析前为 `data` 提供默认值的工厂函数。                                                                     |
-| `timeout`       | `number`                                                               | -          | 超时的毫秒数，等待请求超时（默认为 `undefined`，这意味着没有超时）。                                             |
-| `transform`     | `(input: DataT) => DataT \| Promise<DataT>`                            | -          | 在结果解析后用于转换结果的函数。                                                                                  |
-| `getCachedData` | `(key, nuxtApp, ctx) => DataT \| undefined`                            | -          | 返回缓存数据的函数。见下方默认实现。                                                                             |
-| `pick`          | `string[]`                                                             | -          | 仅从结果中选择指定键。                                                                                            |
-| `watch`         | `MultiWatchSources \| false`                                           | -          | 要监听并自动刷新的一组响应式源。`false` 禁用监听。                                                              |
-| `deep`          | `boolean`                                                              | `false`    | 将数据以深层 ref 对象返回。                                                                                      |
-| `dedupe`        | `'cancel' \| 'defer'`                                                  | `'cancel'` | 避免在同一时间多次为相同键发起请求。                                                                             |
-| `$fetch`        | `typeof globalThis.$fetch`                                             | -          | 自定义的 $fetch 实现。见 [Nuxt 中的自定义 useFetch](/docs/4.x/guide/recipes/custom-usefetch)                     |
+| Option          | Type                                                                    | Default    | Description                                                                                                      |
+|-----------------|-------------------------------------------------------------------------|------------|------------------------------------------------------------------------------------------------------------------|
+| `key`           | `MaybeRefOrGetter<string>`                                              | auto-gen   | 用于去重的唯一键。如果未提供，则从 URL 和选项生成。                                                                |
+| `method`        | `MaybeRefOrGetter<string>`                                              | `'GET'`    | HTTP 请求方法。                                                                                                  |
+| `query`         | `MaybeRefOrGetter<SearchParams>`                                        | -          | 要附加到 URL 的查询/搜索参数。别名：`params`。                                                                   |
+| `params`        | `MaybeRefOrGetter<SearchParams>`                                        | -          | `query` 的别名。                                                                                                 |
+| `body`          | `MaybeRefOrGetter<RequestInit['body'] \| Record<string, any>>`          | -          | 请求体。对象会被自动序列化。                                                                                     |
+| `headers`       | `MaybeRefOrGetter<Record<string, string> \| [key, value][] \| Headers>` | -          | 请求头。                                                                                                         |
+| `baseURL`       | `MaybeRefOrGetter<string>`                                              | -          | 请求的 Base URL。                                                                                                |
+| `cache`         | `false \| string`                                                       | -          | 缓存控制。布尔值禁用缓存，或使用 Fetch API 值：`default`、`no-store` 等。                                        |
+| `server`        | `boolean`                                                               | `true`     | 是否在服务器端获取。                                                                                             |
+| `lazy`          | `boolean`                                                               | `false`    | 如果为 true，则在路由加载后解析（不阻塞导航）。                                                                    |
+| `immediate`     | `boolean`                                                               | `true`     | 如果为 false，阻止请求立即触发。                                                                                 |
+| `default`       | `() => DataT`                                                           | -          | 在异步解析前用于 `data` 默认值的工厂函数。                                                                       |
+| `timeout`       | `number`                                                                | -          | 超时前等待的毫秒数（默认为 `undefined`，表示无超时）                                                             |
+| `transform`     | `(input: DataT) => DataT \| Promise<DataT>`                             | -          | 在解析后转换结果的函数。                                                                                         |
+| `getCachedData` | `(key, nuxtApp, ctx) => DataT \| undefined`                             | -          | 返回缓存数据的函数。默认值见下方。                                                                               |
+| `pick`          | `string[]`                                                              | -          | 仅从结果中选取指定的键。                                                                                         |
+| `watch`         | `MultiWatchSources \| false`                                            | -          | 要监听并自动刷新的响应式源数组。`false` 禁用监听。                                                               |
+| `deep`          | `boolean`                                                               | `false`    | 在深 ref 对象中返回数据。                                                                                        |
+| `dedupe`        | `'cancel' \| 'defer'`                                                   | `'cancel'` | 避免同时多次获取相同的键。                                                                                       |
+| `$fetch`        | `typeof globalThis.$fetch`                                              | -          | 自定义 $fetch 实现。参见 [Nuxt 中的自定义 useFetch](/docs/4.x/guide/recipes/custom-usefetch)                      |
 
 ::note  
 所有 fetch 选项都可以是 `computed` 或 `ref` 值。当它们被更新时，会被监听并自动使用新值发起请求。  
