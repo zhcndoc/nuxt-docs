@@ -1,6 +1,6 @@
 ---
 title: 'useLazyFetch'
-description: 这个围绕 useFetch 的封装通过设置 `lazy` 选项为 `true`，立即触发导航。
+description: 这个围绕 useFetch 的封装通过将 `lazy` 选项设置为 `true`，立即触发导航。
 links:
   - label: 源码
     icon: i-simple-icons-github
@@ -32,7 +32,7 @@ const { status, data: posts } = await useLazyFetch('/api/posts')
 ```
 
 ::note
-`useLazyFetch` 拥有与 [`useFetch`](/docs/4.x/api/composables/use-fetch) 相同的函数签名。
+`useLazyFetch` 具有与 [`useFetch`](/docs/4.x/api/composables/use-fetch) 相同的函数签名。
 ::
 
 ::warning
@@ -71,13 +71,13 @@ export function useLazyFetch<DataT, ErrorT> (
 
 | 名称      | 类型                                                | 说明                                                                                                      |
 |-----------|-----------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
-| `data`    | `Ref<DataT \| undefined>`                           | 异步获取的结果数据。                                                                            |
-| `refresh` | `(opts?: AsyncDataExecuteOptions) => Promise<void>` | 手动刷新数据的函数。                                                                           |
+| `data`    | `Ref<DataT \| undefined>`                           | 异步请求的结果。                                                                            |
+| `refresh` | `(opts?: AsyncDataExecuteOptions) => Promise<void>` | 用于手动刷新数据的函数。                                                                           |
 | `execute` | `(opts?: AsyncDataExecuteOptions) => Promise<void>` | `refresh` 的别名。                                                                                             |
-| `error`   | `Ref<ErrorT \| undefined>`                          | 如果数据获取失败，包含错误对象。                                                                        |
+| `error`   | `Ref<ErrorT \| undefined>`                          | 如果数据获取失败，则为错误对象。                                                                        |
 | `status`  | `Ref<'idle' \| 'pending' \| 'success' \| 'error'>`  | 数据请求的状态。                                                                                      |
-| `pending` | `Ref<boolean>`                                      | 布尔值，指示当前请求是否正在进行中。                                                                       |
-| `clear`   | `() => void`                                        | 将 `data` 设为 `undefined`，`error` 设为 `undefined`，将状态重置为 `idle`，并取消所有待处理请求。 |
+| `pending` | `Ref<boolean>`                                      | 用于指示当前请求是否正在进行的布尔标志。                                              |
+| `clear`   | `() => void`                                        | 将 `data` 重置为 `undefined`，将 `error` 重置为 `undefined`，将 `status` 设置为 `idle`，并取消任何正在进行的请求。 |
 
 :read-more{to="/docs/4.x/api/composables/use-fetch#return-values"}
 

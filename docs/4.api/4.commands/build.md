@@ -1,5 +1,5 @@
 ---
-title: "nuxt build"
+title: "nuxt 构建"
 description: "构建你的 Nuxt 应用。"
 links:
   - label: 源码
@@ -10,7 +10,7 @@ links:
 
 <!--build-cmd-->
 ```bash [Terminal]
-npx nuxt build [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>] [--prerender] [--preset] [--dotenv] [--envName] [-e, --extends=<layer-name>]
+npx nuxt build [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>] [--prerender] [--preset] [--dotenv] [--envName] [-e, --extends=<layer-name>] [--profile[=verbose]]
 ```
 <!--/build-cmd-->
 
@@ -31,11 +31,12 @@ npx nuxt build [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>] 
 |--------------------------------------|---------|------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `--cwd=<directory>`                  |         | 指定工作目录，该选项优先于 ROOTDIR（默认： `.`）                                                                     |
 | `--logLevel=<silent\|info\|verbose>` |         | 指定构建时的日志级别                                                                                                                         |
-| `--prerender`                        |         | 构建 Nuxt 并对静态路由进行预渲染                                                                                                               |
-| `--preset=<preset>`                  |         | Specify Nitro 服务器预设. Available presets depend on Nitro (e.g. `node-server`, `vercel`, `netlify`, `static`)                                  |
-| `--dotenv`                           |         | 要加载的 `.env` 文件路径，相对于项目根目录                                                                                          |
+| `--prerender`                        |         | 构建 Nuxt 并预渲染静态路由                                                                                                               |
+| `--preset=<preset>`                  |         | 指定 Nitro 服务器 preset。可用的 preset 取决于 Nitro（例如 `node-server`、`vercel`、`netlify`、`static`）                                  |
+| `--dotenv`                           |         | 要加载的 `.env` 文件路径，相对于根目录                                                                                          |
 | `--envName`                          |         | 在解析配置覆盖时使用的环境（构建时默认是 `production`，运行开发服务器时默认是 `development`） |
-| `-e, --extends=<layer-name>`         |         | 从 Nuxt 层扩展                                                                                                                             |
+| `-e, --extends=<layer-name>`         |         | 从一个 Nuxt layer 进行扩展                                                                                                                             |
+| `--profile`                          |         | 分析性能（v4.4+）。退出时会写入一个 V8 CPU profile 和 JSON 报告。若要完整的控制台报告，请使用 `--profile=verbose`。                     |
 <!--/build-opts-->
 
 ::note

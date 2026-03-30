@@ -152,8 +152,12 @@ describe('pages', () => {
     expect(html).toContain('This is a custom component with a named export.')
     // should remove dev-only and replace with any fallback content
     expect(html).toContain(isDev ? 'Some dev-only info' : 'Some prod-only info')
-    // should apply attributes to client-only components
-    expect(html).toContain('<div style="color:red;" class="client-only"></div>')
+    // should strip dev-only with attributes in production
+    if (isDev) {
+      expect(html).toContain('Dev-only with attributes')
+    } else {
+      expect(html).not.toContain('Dev-only with attributes')
+    }
     // should render server-only components
     expect(html.replaceAll(/ data-island-uid="[^"]*"/g, '')).toContain('<div class="server-only" style="background-color:gray;"> server-only component <div> server-only component child (non-server-only) </div></div>')
     // should register global components automatically
@@ -386,9 +390,6 @@ describe('pages', () => {
 
   it('/client-only-components', async () => {
     const html = await $fetch<string>('/client-only-components')
-    // ensure fallbacks with classes and arbitrary attributes are rendered
-    expect(html).toContain('<div class="client-only-script" foo="bar">')
-    expect(html).toContain('<div class="client-only-script-setup" foo="hello">')
     expect(html).toContain('<div>Fallback</div>')
     // ensure components are not rendered server-side
     expect(html).not.toContain('Should not be server rendered')
@@ -494,9 +495,6 @@ describe('pages', () => {
   it('/client-only-explicit-import', async () => {
     const html = await $fetch<string>('/client-only-explicit-import')
 
-    // ensure fallbacks with classes and arbitrary attributes are rendered
-    expect(html).toContain('<div class="client-only-script" foo="bar">')
-    expect(html).toContain('<div class="lazy-client-only-script-setup" foo="hello">')
     // ensure components are not rendered server-side
     expect(html).not.toContain('client only script')
     await expectNoClientErrors('/client-only-explicit-import')
@@ -2170,6 +2168,15 @@ describe('server components/islands', () => {
     // test island head
     expect(html).toContain('<meta name="author" content="Nuxt">')
     expect(html).toContain('plugin-style')
+    // #34482 - title should be composed with titleTemplate
+    expect(html).toContain('<title>Server Page - Fixture</title>')
+  })
+
+  it('/server-page - should preserve title after hydration', async () => {
+    const { page } = await renderPage('/server-page')
+    await page.waitForLoadState('networkidle')
+    expect(await page.title()).toBe('Server Page - Fixture')
+    await page.close()
   })
 
   it('/server-page - client side navigation', async () => {
@@ -3013,20 +3020,12 @@ describe('import components', () => {
     expect(html).toContain('default-comp-all')
   })
 
-  it('load default component with mode client', () => {
-    expect(html).toContain('default-comp-client')
-  })
-
   it('load default component with mode server', () => {
     expect(html).toContain('default-comp-server')
   })
 
   it('load named component with mode all', () => {
     expect(html).toContain('named-comp-all')
-  })
-
-  it('load named component with mode client', () => {
-    expect(html).toContain('named-comp-client')
   })
 
   it('load named component with mode server', () => {
@@ -3043,10 +3042,6 @@ describe('lazy import components', () => {
 
   it('lazy load named component with mode all', () => {
     expect(html).toContain('lazy-named-comp-all')
-  })
-
-  it('lazy load named component with mode client', () => {
-    expect(html).toContain('lazy-named-comp-client')
   })
 
   it('lazy load named component with mode server', () => {
@@ -3246,7 +3241,7 @@ describe('nuxt-time', () => {
     const html = await $fetch<string>('/components/nuxt-time')
     const snap = html.match(/<time[^>]*data-testid="fixed"[^>]*>[^<]*<\/time>/)?.[0].replace(/ data-prehydrate-id="[^"]*"/g, '')
     expect(snap).toContain(
-      '<time data-month="long" data-day="numeric" datetime="2023-02-11T08:24:08.396Z" data-testid="fixed">',
+      '<time data-month="long" data-day="numeric" data-relative="false" data-title="false" datetime="2023-02-11T08:24:08.396Z" data-testid="fixed">',
     )
   })
 

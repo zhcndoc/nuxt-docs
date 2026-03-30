@@ -38,7 +38,7 @@ interface PageMeta {
   viewTransition?: ViewTransitionPageOptions['enabled'] | ViewTransitionPageOptions
   key?: false | string | ((route: RouteLocationNormalizedLoaded) => string)
   keepalive?: boolean | KeepAliveProps
-  layout?: false | LayoutKey | Ref<LayoutKey> | ComputedRef<LayoutKey>
+  layout?: false | LayoutKey | Ref<LayoutKey> | ComputedRef<LayoutKey> | { name?: LayoutKey | false, props?: Record<string, unknown> /* or the selected layout's props */ }
   middleware?: MiddlewareKey | NavigationGuard | Array<MiddlewareKey | NavigationGuard>
   scrollToTop?: boolean | ((to: RouteLocationNormalizedLoaded, from: RouteLocationNormalizedLoaded) => boolean)
   [key: string]: unknown
@@ -97,9 +97,11 @@ interface PageMeta {
 
   **`layout`**
 
-  - **类型**: `false` | `LayoutKey` | `Ref<LayoutKey>` | `ComputedRef<LayoutKey>`
+  - **Type**: `false` | `LayoutKey` | `Ref<LayoutKey>` | `ComputedRef<LayoutKey>` | `{ name?: LayoutKey | false; props?: Record<string, unknown> /* or the selected layout's props */ }`
 
     为每个路由设置静态或动态的布局名称。如果需要禁用默认布局，可将其设置为 `false`。
+
+    你也可以传入一个带有 `name` 和 `props` 的对象，以便向你的布局组件传递已类型化的 props。当你的布局使用 `defineProps` 定义了 props 时，这些 props 会在 `definePageMeta` 中得到完整的类型支持。
 
   **`layoutTransition`**
 
@@ -127,7 +129,7 @@ interface PageMeta {
     启用/禁用当前页面的视图过渡（View Transitions）。
     如果设置为 true，Nuxt 会在用户的浏览器匹配 `prefers-reduced-motion: reduce` 时不应用过渡（推荐）。如果设置为 `always`，Nuxt 将始终应用过渡。
 
-    你也可以传入一个 `ViewTransitionPageOptions` 对象以配置[视图过渡类型](/docs/4.x/getting-started/transitions#view-transition-types):
+    你也可以传入一个 `ViewTransitionPageOptions` 对象以配置[视图过渡类型](/docs/4.x/getting-started/transitions#view-transition-types)：
     - `enabled`: `boolean | 'always'` - 启用/禁用过渡
     - `types`: `string[] | (to, from) => string[]` - 适用于任何涉及此页面的过渡类型
     - `toTypes`: `string[] | (to, from) => string[]` - 仅在导航**到**此页面时应用的类型
@@ -188,7 +190,7 @@ definePageMeta({
 ```vue [app/pages/some-page.vue]
 <script setup lang="ts">
 definePageMeta({
-  // define middleware as a function
+  // 将中间件定义为函数
   middleware: [
     function (to, from) {
       const auth = useState('auth')
@@ -203,10 +205,10 @@ definePageMeta({
     },
   ],
 
-  // ... or a string
+  // ... 或者使用字符串
   middleware: 'auth',
 
-  // ... or multiple strings
+  // ... 或多个字符串
   middleware: ['auth', 'another-named-middleware'],
 })
 </script>
@@ -237,11 +239,60 @@ definePageMeta({
 ```vue [app/pages/some-page.vue]
 <script setup lang="ts">
 definePageMeta({
-  // set custom layout
+  // 设置自定义布局
   layout: 'admin',
 
-  // ... or disable a default layout
+  // ... 或禁用默认布局
   layout: false,
 })
 </script>
 ```
+
+### 向布局传递 Props
+
+你可以通过使用 `layout` 的对象语法来向布局传递 props。如果你的布局使用 `defineProps` 定义了 props，那么这些 props 将会被完全类型推断。
+
+::code-group
+
+```vue [app/pages/dashboard.vue]
+<script setup lang="ts">
+definePageMeta({
+  layout: {
+    name: 'panel',
+    props: {
+      sidebar: true,
+      title: 'Dashboard',
+    },
+  },
+})
+</script>
+```
+
+```vue [app/layouts/panel.vue]
+<script setup lang="ts">
+const props = defineProps<{
+  sidebar?: boolean
+  title?: string
+}>()
+</script>
+
+<template>
+  <div>
+    <aside v-if="sidebar">
+      Sidebar
+    </aside>
+    <main>
+      <h1>{{ title }}</h1>
+      <slot />
+    </main>
+  </div>
+</template>
+```
+
+::
+
+::tip
+通过 `definePageMeta` 设置的布局 props 会基于布局的 `defineProps` 得到完整类型支持。你将在编辑器中获得自动补全和类型检查。
+::
+
+:read-more{to="/docs/4.x/directory-structure/app/layouts#passing-props-to-layouts"}

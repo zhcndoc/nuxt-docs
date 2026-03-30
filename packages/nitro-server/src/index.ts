@@ -1,3 +1,4 @@
+import { performance } from 'node:perf_hooks'
 import { pathToFileURL } from 'node:url'
 import { existsSync, promises as fsp, readFileSync } from 'node:fs'
 import { cpus } from 'node:os'
@@ -8,9 +9,9 @@ import type { Nuxt, NuxtOptions } from '@nuxt/schema'
 import { addRoute, createRouter as createRou3Router, findAllRoutes } from 'rou3'
 import { compileRouterToString } from 'rou3/compiler'
 import { join, relative, resolve } from 'pathe'
-import { readPackageJSON } from 'pkg-types'
 import { joinURL, withTrailingSlash } from 'ufo'
 import { hash } from 'ohash'
+import nuxtPkg from 'nuxt/package.json' with { type: 'json' }
 import { build, copyPublicAssets, createDevServer, createNitro, prepare, prerender, scanHandlers, writeTypes } from 'nitropack'
 import type { Nitro, NitroConfig, NitroRouteRules } from 'nitropack/types'
 import { addPlugin, addTemplate, addVitePlugin, createIsIgnored, findPath, getDirectory, getLayerDirectories, logger, resolveAlias, resolveIgnorePatterns, resolveNuxtModule } from '@nuxt/kit'
@@ -109,13 +110,17 @@ export async function bundle (nuxt: Nuxt & { _nitro?: Nitro }): Promise<void> {
   }
 
   if (nuxt.options.experimental.componentIslands) {
-    // sync conditions with /packages/nuxt/src/core/templates.ts#L539
+    const islandHandlerPath = JSON.stringify(resolve(distDir, 'runtime/handlers/island'))
+    const h3Path = JSON.stringify(resolve(distDir, 'runtime/h3-compat'))
+    const ISLAND_RENDERER_KEY = '#internal/nuxt/island-renderer.mjs'
+
     nuxt.options.nitro.virtual ||= {}
-    nuxt.options.nitro.virtual['#internal/nuxt/island-renderer.mjs'] = () => {
+    nuxt.options.nitro.virtual[ISLAND_RENDERER_KEY] = () => {
+      // sync conditions with /packages/nuxt/src/core/templates.ts#L539
       if (nuxt.options.dev || nuxt.options.experimental.componentIslands !== 'auto' || nuxt.apps.default?.pages?.some(p => p.mode === 'server') || nuxt.apps.default?.components?.some(c => c.mode === 'server' && !nuxt.apps.default?.components.some(other => other.pascalName === c.pascalName && other.mode === 'client'))) {
-        return `export { default } from '${resolve(distDir, 'runtime/handlers/island')}'`
+        return `export { default } from ${islandHandlerPath}`
       }
-      return `import { defineEventHandler } from 'h3'; export default defineEventHandler(() => {});`
+      return `import { defineEventHandler } from ${h3Path}; export default defineEventHandler(() => {});`
     }
     nuxt.options.nitro.handlers ||= []
     nuxt.options.nitro.handlers.push({
@@ -131,7 +136,6 @@ export async function bundle (nuxt: Nuxt & { _nitro?: Nitro }): Promise<void> {
   }
 
   const mockProxy = resolveModulePath('mocked-exports/proxy', { from: import.meta.url })
-  const { version: nuxtVersion } = await readPackageJSON('nuxt', { from: import.meta.url })
 
   const nitroConfig: NitroConfig = defu(nuxt.options.nitro, {
     debug: nuxt.options.debug ? nuxt.options.debug.nitro : false,
@@ -146,7 +150,7 @@ export async function bundle (nuxt: Nuxt & { _nitro?: Nitro }): Promise<void> {
     },
     framework: {
       name: 'nuxt',
-      version: nuxtVersion || nitroBuilder.version,
+      version: nuxtPkg.version || nitroBuilder.version,
     },
     imports: nuxt.options.experimental.nitroAutoImports === false
       ? false
@@ -640,11 +644,13 @@ export async function bundle (nuxt: Nuxt & { _nitro?: Nitro }): Promise<void> {
   nitroConfig.rollupConfig!.plugins!.push(
     ImpoundPlugin.rollup({
       cwd: nuxt.options.rootDir,
+      trace: true,
       include: sharedPatterns,
       patterns: createImportProtectionPatterns(nuxt, { context: 'shared' }),
     }),
     ImpoundPlugin.rollup({
       cwd: nuxt.options.rootDir,
+      trace: true,
       patterns: createImportProtectionPatterns(nuxt, { context: 'nitro-app' }),
       exclude: [/node_modules[\\/]nitro(?:pack)?(?:-nightly)?[\\/]|(packages|@nuxt)[\\/]nitro-server(?:-nightly)?[\\/](src|dist)[\\/]runtime[\\/]/, ...sharedPatterns],
     }),
@@ -670,6 +676,19 @@ export async function bundle (nuxt: Nuxt & { _nitro?: Nitro }): Promise<void> {
     watchOptions: {
       ignored: [isIgnored],
     },
+  }
+
+  const cacheDriverPath = join(distDir, 'runtime/utils/cache-driver.js')
+  const cacheDriverOption = isWindows ? pathToFileURL(cacheDriverPath).href : cacheDriverPath
+
+  // Use hash-based cache driver for runtime payload cache to avoid conflicts when
+  // path is both a file and a directory prefix: https://github.com/nuxt/nuxt/issues/34547
+  if (nuxt.options.dev) {
+    const payloadCacheDir = resolve(nuxt.options.buildDir, 'cache/nuxt/payload')
+    nitroConfig.devStorage['cache:nuxt:payload'] ||= {
+      driver: cacheDriverOption,
+      base: payloadCacheDir,
+    }
   }
 
   // Hoist types for nitro implicit dependencies
@@ -722,10 +741,12 @@ export async function bundle (nuxt: Nuxt & { _nitro?: Nitro }): Promise<void> {
   }
 
   // Init nitro
+  nuxt._perf?.startPhase('nitro:createNitro')
   const nitro = await createNitro(nitroConfig, {
     compatibilityDate: nuxt.options.compatibilityDate,
     dotenv: nuxt.options._loadOptions?.dotenv,
   })
+  nuxt._perf?.endPhase('nitro:createNitro')
 
   // eslint-disable-next-line @typescript-eslint/no-deprecated
   if (nuxt.options.experimental.serverAppConfig === false && nitro.options.imports) {
@@ -753,12 +774,11 @@ export async function bundle (nuxt: Nuxt & { _nitro?: Nitro }): Promise<void> {
   })
 
   const cacheDir = resolve(nuxt.options.buildDir, 'cache/nitro/prerender')
-  const cacheDriverPath = join(distDir, 'runtime/utils/cache-driver.js')
   await fsp.rm(cacheDir, { recursive: true, force: true }).catch(() => {})
   nitro.options._config.storage = defu(nitro.options._config.storage, {
     'internal:nuxt:prerender': {
       // TODO: resolve upstream where file URLs are not being resolved/inlined correctly
-      driver: isWindows ? pathToFileURL(cacheDriverPath).href : cacheDriverPath,
+      driver: cacheDriverOption,
       base: cacheDir,
     },
   })
@@ -766,6 +786,36 @@ export async function bundle (nuxt: Nuxt & { _nitro?: Nitro }): Promise<void> {
   // Expose nitro to modules and kit
   nuxt._nitro = nitro
   await nuxt.callHook('nitro:init', nitro)
+
+  // Instrument Nitro rollup plugins for perf tracking
+  if (nuxt._perf) {
+    nitro.hooks.hook('rollup:before', (_nitro, rollupConfig) => {
+      const plugins = (rollupConfig.plugins || []) as Array<{ name?: string, transform?: (...a: any[]) => any, resolveId?: (...a: any[]) => any, load?: (...a: any[]) => any } | null>
+      for (const plugin of plugins) {
+        if (!plugin || !plugin.name) { continue }
+        const pluginName = `nitro:${plugin.name}`
+        for (const hookName of ['transform', 'resolveId', 'load'] as const) {
+          const original = plugin[hookName]
+          if (typeof original !== 'function') { continue }
+          plugin[hookName] = function (this: any, ...args: any[]) {
+            const start = performance.now()
+            const record = () => nuxt._perf?.recordBundlerPluginHook(pluginName, hookName, performance.now() - start, start)
+            try {
+              const result = original.apply(this, args)
+              if (result && typeof result === 'object' && 'then' in result) {
+                return (result as Promise<any>).finally(record)
+              }
+              record()
+              return result
+            } catch (err) {
+              record()
+              throw err
+            }
+          } as any
+        }
+      }
+    })
+  }
 
   nuxt['~runtimeDependencies'] ||= []
   nuxt['~runtimeDependencies']!.push(
@@ -948,24 +998,8 @@ export async function bundle (nuxt: Nuxt & { _nitro?: Nitro }): Promise<void> {
     }
   }
 
-  // nuxt build/dev
-  nuxt.hook('build:done', async () => {
-    await nuxt.callHook('nitro:build:before', nitro)
-    await prepare(nitro)
-    if (nuxt.options.dev) {
-      return build(nitro)
-    }
-
-    await prerender(nitro)
-
-    logger.restoreAll()
-    await build(nitro)
-    logger.wrapAll()
-
-    await symlinkDist()
-  })
-
   // nuxt dev
+  let waitUntilCompile: Promise<void> | undefined
   if (nuxt.options.dev) {
     for (const builder of ['webpack', 'rspack'] as const) {
       nuxt.hook(`${builder}:compile`, ({ name, compiler }) => {
@@ -992,9 +1026,32 @@ export async function bundle (nuxt: Nuxt & { _nitro?: Nitro }): Promise<void> {
     })
     nuxt.server = createDevServer(nitro)
 
-    const waitUntilCompile = new Promise<void>(resolve => nitro.hooks.hook('compiled', () => resolve()))
-    nuxt.hook('build:done', () => waitUntilCompile)
+    waitUntilCompile = new Promise<void>(resolve => nitro.hooks.hook('compiled', () => resolve()))
   }
+
+  // nuxt build/dev
+  nuxt.hook('build:done', async () => {
+    nuxt._perf?.startPhase('nitro:build')
+    try {
+      await nuxt.callHook('nitro:build:before', nitro)
+      await prepare(nitro)
+      if (nuxt.options.dev) {
+        await build(nitro)
+        await waitUntilCompile
+        return
+      }
+
+      await prerender(nitro)
+
+      logger.restoreAll()
+      await build(nitro)
+      logger.wrapAll()
+
+      await symlinkDist()
+    } finally {
+      nuxt._perf?.endPhase('nitro:build')
+    }
+  })
 }
 
 const RELATIVE_RE = /^([^.])/

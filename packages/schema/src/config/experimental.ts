@@ -199,7 +199,7 @@ export default defineResolvers({
       },
     },
     browserDevtoolsTiming: {
-      $resolve: async (val, get) => typeof val === 'boolean' ? val : await get('dev'),
+      $resolve: (val, get) => typeof val === 'boolean' ? val : get('dev'),
     },
     chromeDevtoolsProjectSettings: true,
     debugModuleMutation: {
@@ -253,6 +253,16 @@ export default defineResolvers({
     asyncCallHook: {
       $resolve: async (val, get) => {
         return typeof val === 'boolean' ? val : (await get('future.compatibilityVersion')) < 5
+      },
+    },
+    asyncCallHook: {
+      $resolve: async (val, get) => {
+        return typeof val === 'boolean' ? val : (await get('future.compatibilityVersion')) < 5
+      },
+    },
+    clientNodePlaceholder: {
+      $resolve: async (val, get) => {
+        return typeof val === 'boolean' ? val : (await get('future.compatibilityVersion')) >= 5
       },
     },
   },

@@ -25,8 +25,8 @@ const { data, status, pending, error, refresh, clear } = await useAsyncData(
 </script>
 ```
 
-::warning{to="/docs/4.x/guide/recipes/custom-usefetch#custom-usefetchuseasyncdata"}
-如果你正在使用自定义的 `useAsyncData` 包装器，请不要在可组合函数中对其进行 await，这可能会导致意外行为。请参阅自定义异步数据获取器的示例。
+::tip{to="/docs/4.x/guide/recipes/custom-usefetch#custom-usefetch-with-createusefetch"}
+需要一个带预定义默认值的自定义 `useAsyncData` 吗？使用 `createUseAsyncData` 来创建一个完全类型化的自定义组合式函数。查看 [自定义 useFetch 配方](/docs/4.x/guide/recipes/custom-usefetch) 以了解详情。
 ::
 
 ::note

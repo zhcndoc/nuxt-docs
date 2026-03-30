@@ -34,10 +34,11 @@ import { VitePluginCheckerPlugin } from './plugins/vite-plugin-checker.ts'
 import { AnalyzePlugin } from './plugins/analyze.ts'
 import { DevServerPlugin } from './plugins/dev-server.ts'
 import { EnvironmentsPlugin } from './plugins/environments.ts'
-import { ViteNodePlugin, writeDevServer } from './plugins/vite-node.ts'
+import { ViteNodePlugin } from './plugins/vite-node.ts'
 import { ClientManifestPlugin } from './plugins/client-manifest.ts'
 import { ResolveDeepImportsPlugin } from './plugins/resolve-deep-imports.ts'
 import { ResolveExternalsPlugin } from './plugins/resolved-externals.ts'
+import { PerfPlugin } from './plugins/perf.ts'
 
 export const bundle: NuxtBuilder['bundle'] = async (nuxt) => {
   const useAsyncEntry = nuxt.options.experimental.asyncEntry || nuxt.options.dev
@@ -108,36 +109,42 @@ export const bundle: NuxtBuilder['bundle'] = async (nuxt) => {
           }
         },
       },
-      builder: {
-        async buildApp (builder) {
-          // run serially to preserve the order of client, server builds
-          const environments = Object.values(builder.environments)
-          for (const environment of environments) {
-            logger.restoreAll()
-            await builder.build(environment)
-            logger.wrapAll()
-            await nuxt.callHook('vite:compiled')
+      ...nuxt.options.experimental.viteEnvironmentApi
+        ? {
+            builder: {
+              async buildApp (builder) {
+                // run serially to preserve the order of client, server builds
+                const environments = Object.values(builder.environments)
+                for (const environment of environments) {
+                  logger.restoreAll()
+                  nuxt._perf?.startPhase(`vite:${environment.name}`)
+                  await builder.build(environment)
+                  nuxt._perf?.endPhase(`vite:${environment.name}`)
+                  logger.wrapAll()
+                  await nuxt.callHook('vite:compiled')
+                }
+              },
+            },
+            environments: {
+              client: {
+                consumer: 'client',
+                keepProcessEnv: false,
+                dev: {
+                  warmup: [entry],
+                },
+                ...clientEnvironment(nuxt, entry),
+              },
+              ssr: {
+                consumer: 'server',
+                dev: {
+                  warmup: [serverEntry],
+                },
+                ...ssrEnvironment(nuxt, serverEntry),
+              },
+            },
+            ssr: ssr(nuxt),
           }
-        },
-      },
-      environments: {
-        client: {
-          consumer: 'client',
-          keepProcessEnv: false,
-          dev: {
-            warmup: [entry],
-          },
-          ...clientEnvironment(nuxt, entry),
-        },
-        ssr: {
-          consumer: 'server',
-          dev: {
-            warmup: [serverEntry],
-          },
-          ...ssrEnvironment(nuxt, serverEntry),
-        },
-      },
-      ssr: ssr(nuxt),
+        : {},
       resolve: {
         alias: {
           [basename(nuxt.options.dir.assets)]: resolve(nuxt.options.srcDir, nuxt.options.dir.assets),
@@ -176,14 +183,20 @@ export const bundle: NuxtBuilder['bundle'] = async (nuxt) => {
         watch: { exclude: [...nuxt.options.ignore, /[\\/]node_modules[\\/]/] },
       },
       plugins: [
+        // per-plugin timing when profiling is enabled
+        PerfPlugin(nuxt),
         // add resolver for modules used in virtual files
         ResolveDeepImportsPlugin(nuxt),
         ResolveExternalsPlugin(nuxt),
-        vuePlugin(viteConfig.vue),
-        viteJsxPlugin(viteConfig.vueJsx),
-        ViteNodePlugin(nuxt),
-        ClientManifestPlugin(nuxt),
-        DevServerPlugin(nuxt),
+        ...nuxt.options.experimental.viteEnvironmentApi
+          ? [
+              vuePlugin(viteConfig.vue),
+              viteJsxPlugin(viteConfig.vueJsx),
+              ViteNodePlugin(nuxt),
+              ClientManifestPlugin(nuxt),
+              DevServerPlugin(nuxt),
+            ]
+          : [],
         // lower decorators after Vue SFC compilation and TypeScript stripping
         DecoratorsPlugin(nuxt),
         // add resolver for files in public assets directories
@@ -261,12 +274,41 @@ export const bundle: NuxtBuilder['bundle'] = async (nuxt) => {
     return
   }
 
+  nuxt._perf?.startPhase('vite:dev-server')
   await withLogs(async () => {
     const server = await createServer(config)
     await server.environments.ssr.pluginContainer.buildStart({})
   }, 'Vite dev server built')
+  nuxt._perf?.endPhase('vite:dev-server')
+}
 
-  await writeDevServer(nuxt)
+export interface ViteBuildContext {
+  nuxt: Nuxt
+  config: ViteConfig
+  entry: string
+  clientServer?: vite.ViteDevServer
+  ssrServer?: vite.ViteDevServer
+}
+
+async function handleSerialBuilds (nuxt: Nuxt, ctx: ViteBuildContext) {
+  nuxt.hook('vite:serverCreated', (server: vite.ViteDevServer, env) => {
+    if (nuxt.options.vite.warmupEntry !== false) {
+      // Don't delay nitro build for warmup
+      useNitro().hooks.hookOnce('compiled', () => {
+        const start = Date.now()
+        warmupViteServer(server, [ctx.entry], env.isServer)
+          .then(() => logger.info(`Vite ${env.isClient ? 'client' : 'server'} warmed up in ${Date.now() - start}ms`))
+          .catch(logger.error)
+      })
+    }
+  })
+
+  nuxt._perf?.startPhase(`vite:client`)
+  await withLogs(() => buildClient(nuxt, ctx), 'Vite client built', nuxt.options.dev)
+  nuxt._perf?.endPhase(`vite:client`)
+  nuxt._perf?.startPhase(`vite:server`)
+  await withLogs(() => buildServer(nuxt, ctx), 'Vite server built', nuxt.options.dev)
+  nuxt._perf?.endPhase(`vite:server`)
 }
 
 async function withLogs (fn: () => Promise<unknown>, message: string, enabled = true) {

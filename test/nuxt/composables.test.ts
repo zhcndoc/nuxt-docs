@@ -371,6 +371,35 @@ describe('clearNuxtState', () => {
     const state3 = useState('clearNuxtState-test', () => 'test')
     expect(state3.value).toBe('test')
   })
+
+  it('should only enumerate useState keys, ignoring internal payload.state entries', () => {
+    const nuxtApp = useNuxtApp()
+    // Simulate internal state entries that don't use the useState prefix
+    nuxtApp.payload.state._layout = 'default'
+    nuxtApp.payload.state._layoutProps = { foo: 'bar' }
+
+    const state = useState('clearNuxtState-test', () => 'test')
+    expect(state.value).toBe('test')
+
+    const matchedKeys: string[] = []
+    clearNuxtState((key) => {
+      matchedKeys.push(key)
+      return true
+    })
+
+    // Filter function should only receive actual useState keys, not garbled internal keys
+    expect(matchedKeys).not.toContain('ayout')
+    expect(matchedKeys).not.toContain('ayoutProps')
+    expect(matchedKeys).toContain('clearNuxtState-test')
+
+    // Internal state entries should not be affected
+    expect(nuxtApp.payload.state._layout).toBe('default')
+    expect(nuxtApp.payload.state._layoutProps).toEqual({ foo: 'bar' })
+
+    // Clean up
+    delete nuxtApp.payload.state._layout
+    delete nuxtApp.payload.state._layoutProps
+  })
 })
 
 describe('url', () => {
@@ -593,7 +622,7 @@ describe('routing utilities: `navigateTo`', () => {
       ['\0data:alert("hi")', 'data'],
     ]
     for (const [url, protocol] of urls) {
-      expect(() => navigateTo(url, { external: true })).toThrowError(`Cannot navigate to a URL with '${protocol}:' protocol.`)
+      expect(() => navigateTo(url, { external: true })).toThrow(`Cannot navigate to a URL with '${protocol}:' protocol.`)
     }
   })
   it('navigateTo should replace current navigation state if called within middleware', () => {
@@ -1032,6 +1061,18 @@ describe('callOnce', () => {
       expect(fn).toHaveBeenCalledTimes(1)
 
       await navigateTo('/test')
+      await execute()
+      expect(fn).toHaveBeenCalledTimes(2)
+    })
+
+    it('should retry after a rejected promise', async () => {
+      const fn = vi.fn()
+        .mockRejectedValueOnce(new Error('fail'))
+        .mockResolvedValueOnce(undefined)
+      const execute = () => options ? callOnce('retry-key', fn, options) : callOnce('retry-key', fn)
+      await expect(execute()).rejects.toThrow('fail')
+      expect(fn).toHaveBeenCalledTimes(1)
+
       await execute()
       expect(fn).toHaveBeenCalledTimes(2)
     })

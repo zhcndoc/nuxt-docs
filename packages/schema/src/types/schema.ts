@@ -39,7 +39,7 @@ import type { SerializableHtmlAttributes } from './head.ts'
 import type { AppConfig, NuxtAppConfig, NuxtOptions, RuntimeConfig, Serializable, ViewTransitionOptions, ViteOptions } from './config.ts'
 import type { ImportsOptions } from './imports.ts'
 import type { ComponentsOptions } from './components.ts'
-import type { KeyedFunction } from './compiler.ts'
+import type { KeyedFunction, KeyedFunctionFactory, NuxtCompilerOptions } from './compiler.ts'
 
 export interface ConfigSchema {
   /**
@@ -57,6 +57,11 @@ export interface ConfigSchema {
    * @see [Nuxt documentation](https://nuxt.com/docs/4.x/directory-structure/app/composables)
    */
   imports: ImportsOptions
+
+  /**
+   * Configure the Nuxt compiler.
+   */
+  compiler: NuxtCompilerOptions
 
   /**
    * Whether to use the vue-router integration in Nuxt 3. If you do not provide a value it will be enabled if you have a `pages/` directory in your source folder.
@@ -505,6 +510,12 @@ export interface ConfigSchema {
      *
      */
     keyedComposables: KeyedFunction[]
+    /**
+     * Factories for functions that should be registered for automatic key injection.
+     *
+     * @see keyedComposables
+     */
+    keyedComposableFactories: KeyedFunctionFactory[]
 
     /**
      * Tree shake code from specific builds.
@@ -1606,6 +1617,23 @@ export interface ConfigSchema {
      * @default false with compatibilityVersion >= 5
      */
     asyncCallHook: boolean
+
+    /**
+     * Whether to use comment nodes instead of `<div>` elements as placeholders for client-only
+     * components during server-side rendering.
+     *
+     * When enabled, `.client.vue` components and `createClientOnly()` wrappers render an HTML
+     * comment (`<!--placeholder-->`) on the server instead of an empty `<div>`. This fixes a
+     * Vue hydration issue where scoped styles may not be applied when the placeholder `<div>`
+     * and the actual component root share the same tag name.
+     *
+     * Note: enabling this means attributes (class, style, etc.) passed to `.client.vue`
+     * components will not be rendered in the SSR HTML. If you need styled placeholders,
+     * use `<ClientOnly>` with a `#fallback` slot instead.
+     * @default false
+     * @default true with compatibilityVersion >= 5
+     */
+    clientNodePlaceholder: boolean
   }
 
   /**
