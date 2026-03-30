@@ -38,37 +38,57 @@ describe('useAsyncData', () => {
     uniqueKey = `key-${++counter}`
   })
 
-  function mountWithAsyncData (...args: any[]) {
-    return new Promise<ReturnType<typeof useAsyncData> & ReturnType<typeof mountSuspended<unknown>>>((resolve) => {
-      let res: ReturnType<typeof useAsyncData & ReturnType<typeof mountSuspended>>
-      const component = defineComponent({
-        setup () {
-          res = useAsyncData(...args as [any])
-          return () => h('div', [res.data.value as any])
-        },
-      })
+  type AsyncDataWithoutPromiseMethods = Omit<ReturnType<typeof useAsyncData>, 'then' | 'catch' | 'finally'>
+  type MountedWrapper = Awaited<ReturnType<typeof mountSuspended<unknown>>>
 
-      mountSuspended(component).then(c => resolve(Object.assign(c, res)))
+  async function mountWithAsyncData (...args: any[]) {
+    let res!: ReturnType<typeof useAsyncData>
+    const component = defineComponent({
+      setup () {
+        res = useAsyncData(...args as [any])
+        return () => h('div', [res.data.value as any])
+      },
     })
+
+    const c = await mountSuspended(component)
+    // Avoid returning a thenable here, otherwise Promise will unwrap it.
+    const { then: _then, catch: _catch, finally: _finally, ...asyncData } = res
+    return Object.assign(c, asyncData) as AsyncDataWithoutPromiseMethods & MountedWrapper
   }
 
   it('should work at basic level', async () => {
     const res = useAsyncData(() => Promise.resolve('test'))
     expect(Object.keys(res).sort()).toMatchInlineSnapshot(`
-        [
-          "clear",
-          "data",
-          "error",
-          "execute",
-          "pending",
-          "refresh",
-          "status",
-        ]
-      `)
+      [
+        "catch",
+        "clear",
+        "data",
+        "error",
+        "execute",
+        "finally",
+        "pending",
+        "refresh",
+        "status",
+        "then",
+      ]
+    `)
     expect(res instanceof Promise).toBeTruthy()
     expect(res.data.value).toBe(asyncDataDefaults.value)
     await res
     expect(res.data.value).toBe('test')
+  })
+
+  it('should keep promise methods after destructuring', async () => {
+    const asyncData = useAsyncData(() => Promise.resolve('test'))
+    const destructured = { ...asyncData, foo: 'foo' }
+
+    expect(typeof destructured.then).toBe('function')
+    expect(typeof destructured.catch).toBe('function')
+    expect(typeof destructured.finally).toBe('function')
+
+    expect(destructured.data.value).toBe(asyncDataDefaults.errorValue)
+    await (destructured as Promise<unknown>)
+    expect(destructured.data.value).toBe('test')
   })
 
   it('should not execute with immediate: false', async () => {
@@ -229,6 +249,31 @@ describe('useAsyncData', () => {
     expect(error.value).toBe(asyncDataDefaults.errorValue)
     expect(pending.value).toBe(false)
     expect(status.value).toBe('idle')
+  })
+
+  it('should not overwrite cleared data when in-flight request completes', async () => {
+    vi.useFakeTimers()
+
+    const { data, status, refresh } = await useAsyncData(uniqueKey, () => Promise.resolve('initial'))
+    expect(data.value).toBe('initial')
+
+    // Start a slow refresh
+    const refreshPromise = refresh()
+
+    // Clear while the refresh is in flight
+    clearNuxtData(uniqueKey)
+    expect(data.value).toBeUndefined()
+    expect(status.value).toBe('idle')
+
+    // Let the refresh complete
+    vi.advanceTimersByTime(0)
+    await refreshPromise
+
+    // Data should stay cleared
+    expect(data.value).toBeUndefined()
+    expect(status.value).toBe('idle')
+
+    vi.useRealTimers()
   })
 
   it('should have correct status for previously fetched requests', async () => {
@@ -1121,21 +1166,42 @@ describe('useAsyncData', () => {
   it('should work when AbortSignal.reason is unavailable (older browsers)', async () => {
     vi.useFakeTimers()
 
+    const originalAbortSignalAny = AbortSignal.any
+
     // Mock older AbortController without .reason property
-    class OldAbortController {
-      signal: any = {
-        aborted: false,
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
+    class OldAbortSignal {
+      aborted = false
+      private listeners: Array<{ event: string, callback: () => void }> = []
+
+      addEventListener (event: string, callback: () => void, _options?: { once?: boolean, signal?: AbortSignal }) {
+        this.listeners.push({ event, callback })
       }
 
-      abort () {
-        this.signal.aborted = true
+      removeEventListener (event: string, callback: () => void) {
+        this.listeners = this.listeners.filter(l => !(l.event === event && l.callback === callback))
+      }
+
+      dispatchAbort () {
+        this.aborted = true
         // No reason property in old browsers
+        for (const listener of this.listeners.filter(l => l.event === 'abort')) {
+          listener.callback()
+        }
+      }
+    }
+
+    class OldAbortController {
+      signal = new OldAbortSignal()
+
+      abort () {
+        this.signal.dispatchAbort()
       }
     }
 
     vi.stubGlobal('AbortController', OldAbortController)
+    // Also remove AbortSignal.any to force polyfill usage
+    // @ts-expect-error - deliberately removing method
+    AbortSignal.any = undefined
 
     const promiseFn = vi.fn(() => new Promise(resolve => setTimeout(() => resolve('test'), 1000)))
 
@@ -1147,6 +1213,7 @@ describe('useAsyncData', () => {
 
     expect(status.value).toBe('idle')
 
+    AbortSignal.any = originalAbortSignalAny
     vi.unstubAllGlobals()
     vi.useRealTimers()
   })

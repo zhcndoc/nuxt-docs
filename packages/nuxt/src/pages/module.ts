@@ -2,7 +2,7 @@ import { existsSync, readdirSync } from 'node:fs'
 import { mkdir, readFile } from 'node:fs/promises'
 import { addBuildPlugin, addComponent, addPlugin, addTemplate, addTypeTemplate, defineNuxtModule, findPath, getLayerDirectories, resolvePath, useNitro } from '@nuxt/kit'
 import { dirname, join, relative, resolve } from 'pathe'
-import { genImport, genObjectFromRawEntries, genSafeVariableName, genString } from 'knitwork'
+import { genImport, genInlineTypeImport, genObjectFromRawEntries, genObjectKey, genString } from 'knitwork'
 import { joinURL } from 'ufo'
 import { createRoutesContext } from 'unplugin-vue-router'
 import { resolveOptions } from 'unplugin-vue-router/options'
@@ -316,7 +316,7 @@ export default defineNuxtModule({
 
     // Add vue-router route guard imports
     nuxt.hook('imports:sources', (sources) => {
-      const routerImports = sources.find(s => s.from === '#app/composables/router' && s.imports.includes('onBeforeRouteLeave'))
+      const routerImports = sources.find(s => 'from' in s && s.from === '#app/composables/router' && s.imports.includes('onBeforeRouteLeave')) as InlinePreset | undefined
       if (routerImports) {
         routerImports.from = 'vue-router'
       }
@@ -413,7 +413,7 @@ export default defineNuxtModule({
       ]
 
       // Inject page patterns that explicitly match `prerender: true` route rule
-      if (!nitro.options.static && !nitro.options.prerender.crawlLinks) {
+      if (!nitro.options.static) {
         const routeRulesRouter = createRou3Router<NitroRouteRules>()
         for (const [route, rules] of Object.entries(nitro.options.routeRules)) {
           addRoute(routeRulesRouter, undefined, route, rules)
@@ -634,20 +634,16 @@ export default defineNuxtModule({
     addTypeTemplate({
       filename: 'types/layouts.d.ts',
       getContents: ({ app }) => {
-        const imports = new Set<string>()
-        const interfaceKeyValues = new Map<string, string>()
-        for (const layout of Object.values(app.layouts)) {
-          const varName = genSafeVariableName(layout.name)
-          imports.add(genImport(layout.file, varName))
-          interfaceKeyValues.set(layout.name, varName)
-        }
-
         return [
-          ...Array.from(imports),
           'import type { ComputedRef, MaybeRef } from \'vue\'',
+          '',
+          'type ComponentProps<T> = T extends new(...args: any) => { $props: infer P } ? NonNullable<P>',
+          '  : T extends (props: infer P, ...args: any) => any ? P',
+          '  : {}',
+          '',
           'declare module \'nuxt/app\' {',
           '  interface NuxtLayouts {',
-          ...Array.from(interfaceKeyValues.entries()).map(([key, value]) => `    '${key}': InstanceType<typeof ${value}>['$props'],`),
+          ...Object.values(app.layouts).map(layout => `    ${genObjectKey(layout.name)}: ComponentProps<${genInlineTypeImport(layout.file)}>,`),
           '}',
           '  export type LayoutKey = keyof NuxtLayouts extends never ? string : keyof NuxtLayouts',
           '  interface PageMeta {',
@@ -693,10 +689,17 @@ if (import.meta.hot) {
       import.meta.hot.invalidate('[nuxt] Cannot replace routes because there is no active router. Reloading.')
       return
     }
+    const addedRoutes = router.getRoutes().filter(r => !r._initial)
     router.clearRoutes()
     const routes = generateRoutes(mod.default || mod)
     function addRoutes (routes) {
       for (const route of routes) {
+        router.addRoute(route)
+      }
+      for (const route of router.getRoutes()) {
+        route._initial = true
+      }
+      for (const route of addedRoutes) {
         router.addRoute(route)
       }
       router.isReady().then(() => {
@@ -722,6 +725,9 @@ export function handleHotUpdate(_router, _generateRoutes) {
     import.meta.hot.data ||= {}
     import.meta.hot.data.router = _router
     import.meta.hot.data.generateRoutes = _generateRoutes
+    for (const route of _router.getRoutes()) {
+      route._initial = true
+    }
   }
 }
 `

@@ -4,7 +4,7 @@ description: "在您的 Nuxt 应用程序中生成实体骨架。"
 links:
   - label: 源码
     icon: i-simple-icons-github
-    to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/add.ts
+    to: https://github.com/nuxt/cli/blob/main/packages/nuxi/src/commands/add-template.ts
     size: xs
 ---
 

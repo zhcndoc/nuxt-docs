@@ -25,7 +25,6 @@ import { PublicDirsPlugin } from './plugins/public-dirs.ts'
 import { ReplacePlugin } from './plugins/replace.ts'
 import { LayerDepOptimizePlugin } from './plugins/layer-dep-optimize.ts'
 import { distDir } from './dirs.ts'
-import { VueFeatureFlagsPlugin } from './plugins/vue-feature-flags.ts'
 import { SourcemapPreserverPlugin } from './plugins/sourcemap-preserver.ts'
 import { DevStyleSSRPlugin } from './plugins/dev-style-ssr.ts'
 import { RuntimePathsPlugin } from './plugins/runtime-paths.ts'
@@ -47,6 +46,15 @@ export const bundle: NuxtBuilder['bundle'] = async (nuxt) => {
   const entry = await resolvePath(resolve(nuxt.options.appDir, useAsyncEntry ? 'entry.async' : 'entry'))
 
   nuxt.options.modulesDir.push(distDir)
+
+  // Register Nitro plugin to fix SSR error stacktraces in dev mode
+  if (nuxt.options.dev) {
+    const nitro = useNitro()
+    nitro.options.virtual['#internal/nitro/ssr-stacktrace'] = `export { default } from ${JSON.stringify(resolve(distDir, 'fix-stacktrace'))}`
+    nitro.options.plugins.push('#internal/nitro/ssr-stacktrace')
+    nitro.options.alias['#vite-node'] = resolve(distDir, 'vite-node')
+    nitro.options.virtual['#internal/nuxt/vite-node-runner'] = () => `export { default } from ${JSON.stringify(resolve(distDir, 'vite-node-runner'))}`
+  }
 
   let allowDirs = [
     nuxt.options.appDir,
@@ -216,8 +224,6 @@ export const bundle: NuxtBuilder['bundle'] = async (nuxt) => {
               // Add type-checking
               VitePluginCheckerPlugin(nuxt),
 
-              // server-only plugins
-              VueFeatureFlagsPlugin(nuxt),
               // tell rollup's nitro build about the original sources of the generated vite server build
               SourcemapPreserverPlugin(nuxt),
 

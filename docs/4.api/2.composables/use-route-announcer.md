@@ -16,8 +16,8 @@ links:
 
 ## 描述
 
-一个组合式函数，用于监听页面标题变化并相应更新播报消息。被 [`<NuxtRouteAnnouncer>`](/docs/api/components/nuxt-route-announcer) 使用并且可以被控制。
-它钩入 Unhead 的 [`dom:rendered`](https://unhead.unjs.io/docs/typescript/head/api/hooks/dom-rendered) 来读取页面标题，并将其设置为播报消息。
+用于观察页面标题的变化，并相应更新播报器消息。由 [`<NuxtRouteAnnouncer>`](/docs/3.x/api/components/nuxt-route-announcer) 使用，并可进行控制。
+它会挂接到 Unhead 的 `dom:rendered` 钩子，以读取页面标题，并将其设置为播报消息。
 
 ## 参数
 

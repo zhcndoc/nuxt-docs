@@ -113,6 +113,8 @@ export default createConfigForNuxt({
     },
     rules: {
       '@typescript-eslint/no-deprecated': 'error',
+      '@typescript-eslint/return-await': ['error', 'in-try-catch'],
+      'no-return-await': 'off',
     },
   })
 
@@ -162,7 +164,6 @@ export default createConfigForNuxt({
         ],
       },
     },
-    // @ts-expect-error type issues
     {
       files: ['**/*.vue', '**/*.ts', '**/*.mts', '**/*.js', '**/*.cjs', '**/*.mjs'],
       name: 'local/rules',
@@ -304,6 +305,7 @@ export default createConfigForNuxt({
         'vue/multi-word-component-names': 'off',
       },
     },
+    // @ts-expect-error type issues between @types/eslint and @eslint/core
     {
       files: ['**/*.md'],
       language: 'markdown/commonmark',
@@ -330,8 +332,6 @@ export default createConfigForNuxt({
   )
 
   // Generate type definitions for the eslint config
-  // @ts-expect-error type issues in eslint
   .onResolved((configs) => {
-    // @ts-expect-error type issues in eslint
     return typegen(configs)
   })

@@ -142,9 +142,8 @@ Nuxt 提供了 [Nuxt Image](https://image.nuxt.com/) 模块，是 Nuxt 应用的
   <NuxtImg
     src="/hero-banner.jpg"
     format="webp"
-    preload
+    :preload="{ fetchPriority: 'high' }"
     loading="eager"
-    fetch-priority="high"
     width="200"
     height="100"
   />
@@ -154,7 +153,7 @@ Nuxt 提供了 [Nuxt Image](https://image.nuxt.com/) 模块，是 Nuxt 应用的
     src="/facebook-logo.jpg"
     format="webp"
     loading="lazy"
-    fetch-priority="low"
+    fetchpriority="low"
     width="200"
     height="100"
   />

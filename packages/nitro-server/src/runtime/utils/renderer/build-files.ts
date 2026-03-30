@@ -11,7 +11,12 @@ import { NUXT_NO_SSR } from '#internal/nuxt/nitro-config.mjs'
 // @ts-expect-error virtual file
 import { appRootAttrs, appRootTag, appSpaLoaderAttrs, appSpaLoaderTag, spaLoadingTemplateOutside } from '#internal/nuxt.config.mjs'
 // @ts-expect-error virtual file
-import { buildAssetsURL } from '#internal/nuxt/paths'
+import { buildAssetsURL, publicAssetsURL } from '#internal/nuxt/paths'
+
+// @ts-expect-error private property consumed by vite-generated url helpers
+globalThis.__buildAssetsURL = buildAssetsURL
+// @ts-expect-error private property consumed by vite-generated url helpers
+globalThis.__publicAssetsURL = publicAssetsURL
 
 const APP_ROOT_OPEN_TAG = `<${appRootTag}${propsToString(appRootAttrs)}>`
 const APP_ROOT_CLOSE_TAG = `</${appRootTag}>`
@@ -41,7 +46,7 @@ interface Renderer {
 }
 
 // -- SSR Renderer --
-export const getSSRRenderer = lazyCachedFunction(async (): Promise<Renderer> => {
+export const getSSRRenderer: () => Promise<Renderer> = lazyCachedFunction(async (): Promise<Renderer> => {
   // Load server bundle
   const createSSRApp = await getServerEntry()
   if (!createSSRApp) { throw new Error('Server bundle is not available') }
@@ -130,4 +135,4 @@ export function getRenderer (ssrContext: NuxtSSRContext): Promise<Renderer> {
 }
 
 // @ts-expect-error file will be produced after app build
-export const getSSRStyles = lazyCachedFunction((): Promise<Record<string, () => Promise<string[]>>> => import('#build/dist/server/styles.mjs').then(r => r.default || r))
+export const getSSRStyles: () => Promise<Record<string, () => Promise<string[]>>> = lazyCachedFunction((): Promise<Record<string, () => Promise<string[]>>> => import('#build/dist/server/styles.mjs').then(r => r.default || r))

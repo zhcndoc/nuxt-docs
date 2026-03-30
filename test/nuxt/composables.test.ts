@@ -1,6 +1,6 @@
 /// <reference path="../fixtures/basic/.nuxt/nuxt.d.ts" />
 
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineEventHandler } from 'h3'
 import { destr } from 'destr'
 
@@ -20,7 +20,7 @@ import { getAppManifest, getRouteRules } from '#app/composables/manifest'
 import { callOnce } from '#app/composables/once'
 import { useLoadingIndicator } from '#app/composables/loading-indicator'
 import { useRouteAnnouncer } from '#app/composables/route-announcer'
-import { encodeURL, resolveRouteObject } from '#app/composables/router'
+import { encodeRoutePath, encodeURL, resolveRouteObject } from '#app/composables/router'
 import { useRuntimeHook } from '#app/composables/runtime-hook'
 
 import { shouldLoadPayload } from '#app/composables/payload'
@@ -152,6 +152,21 @@ describe('errors', () => {
     `)
   })
 
+  // #34165 - TODO: remove in Nuxt 5 when statusCode/statusMessage are removed
+  it('supports status/statusText getters', () => {
+    const error = createError({ status: 404, statusText: 'Not Found' })
+    expect(error.status).toBe(404)
+    expect(error.statusText).toBe('Not Found')
+    // backwards compat
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
+    expect(error.statusCode).toBe(404)
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
+    expect(error.statusMessage).toBe('Not Found')
+    // non-enumerable (no duplicate in toJSON)
+    expect(Object.keys(error.toJSON())).not.toContain('status')
+    expect(Object.keys(error.toJSON())).not.toContain('statusText')
+  })
+
   it('isNuxtError', () => {
     const error = createError({ statusCode: 404 })
     expect(isNuxtError(error)).toBe(true)
@@ -256,6 +271,35 @@ describe('clearNuxtState', () => {
     clearNuxtState()
     expect(state1.value).toBeUndefined()
     expect(state2.value).toBeUndefined()
+  })
+
+  it('should only enumerate useState keys, ignoring internal payload.state entries', () => {
+    const nuxtApp = useNuxtApp()
+    // Simulate internal state entries that don't use the useState prefix
+    nuxtApp.payload.state._layout = 'default'
+    nuxtApp.payload.state._layoutProps = { foo: 'bar' }
+
+    const state = useState('clearNuxtState-test', () => 'test')
+    expect(state.value).toBe('test')
+
+    const matchedKeys: string[] = []
+    clearNuxtState((key) => {
+      matchedKeys.push(key)
+      return true
+    })
+
+    // Filter function should only receive actual useState keys, not garbled internal keys
+    expect(matchedKeys).not.toContain('ayout')
+    expect(matchedKeys).not.toContain('ayoutProps')
+    expect(matchedKeys).toContain('clearNuxtState-test')
+
+    // Internal state entries should not be affected
+    expect(nuxtApp.payload.state._layout).toBe('default')
+    expect(nuxtApp.payload.state._layoutProps).toEqual({ foo: 'bar' })
+
+    // Clean up
+    delete nuxtApp.payload.state._layout
+    delete nuxtApp.payload.state._layoutProps
   })
 })
 
@@ -363,6 +407,10 @@ describe.skipIf(!isTestingAppManifest)('app manifests', () => {
             "/pre": {
               "prerender": true,
             },
+            "/pre/spa": {
+              "prerender": true,
+              "ssr": false,
+            },
           },
         },
         "prerendered": [],
@@ -374,6 +422,12 @@ describe.skipIf(!isTestingAppManifest)('app manifests', () => {
     expect(getRouteRules({ path: '/pre' })).toMatchInlineSnapshot(`
       {
         "prerender": true,
+      }
+    `)
+    expect(getRouteRules({ path: '/pre/spa/thing' })).toMatchInlineSnapshot(`
+      {
+        "prerender": true,
+        "ssr": false,
       }
     `)
     expect(getRouteRules({ path: '/pre/test' })).toMatchInlineSnapshot(`
@@ -392,12 +446,17 @@ describe('compiled route rules', () => {
     expect(await isPrerendered('/test')).toBeFalsy()
     expect(await isPrerendered('/pre/test')).toBeFalsy()
     expect(await isPrerendered('/pre/thing')).toBeTruthy()
+    expect(await isPrerendered('/pre/spa/thing')).toBeTruthy()
   })
 
   it('should determine if payload should be loaded based on route rules', async () => {
     // wildcard routes with prerender: true should load payloads
     const shouldLoadPre = await shouldLoadPayload('/pre/thing')
     expect(shouldLoadPre).toBe(true)
+
+    // prerendered routes with ssr: false should not load payloads
+    const shouldLoadSpaPre = await shouldLoadPayload('/pre/spa/thing')
+    expect(shouldLoadSpaPre).toBe(false)
 
     // specific prerendered routes should load payloads
     const shouldLoadSpecific = await shouldLoadPayload('/specific-prerendered')
@@ -442,9 +501,13 @@ describe('useRuntimeHook', () => {
 })
 
 describe('routing utilities: `navigateTo`', () => {
-  const nuxtApp = useNuxtApp()
+  let nuxtApp: ReturnType<typeof useNuxtApp>
+  let router: ReturnType<typeof useRouter>
 
-  const router = useRouter()
+  beforeEach(() => {
+    nuxtApp = useNuxtApp()
+    router = useRouter()
+  })
 
   function waitForPageChange () {
     return vi.waitFor(() => new Promise<void>(resolve => nuxtApp.hooks.hookOnce('page:finish', () => resolve())))
@@ -460,7 +523,7 @@ describe('routing utilities: `navigateTo`', () => {
       ['\0data:alert("hi")', 'data'],
     ]
     for (const [url, protocol] of urls) {
-      expect(() => navigateTo(url, { external: true })).toThrowError(`Cannot navigate to a URL with '${protocol}:' protocol.`)
+      expect(() => navigateTo(url, { external: true })).toThrow(`Cannot navigate to a URL with '${protocol}:' protocol.`)
     }
   })
   it('navigateTo should replace current navigation state if called within middleware', () => {
@@ -524,9 +587,66 @@ describe('routing utilities: `encodeURL`', () => {
   })
 })
 
+describe('routing utilities: `encodeRoutePath`', () => {
+  it('should encode decoded unicode paths', () => {
+    expect(encodeRoutePath('/café')).toBe(`/${encodeURIComponent('café')}`)
+    expect(encodeRoutePath('/测试')).toBe(`/${encodeURIComponent('测试')}`)
+    expect(encodeRoutePath('/товары')).toBe(`/${encodeURIComponent('товары')}`)
+  })
+
+  it('should not double-encode already-encoded paths', () => {
+    const encoded = `/${encodeURIComponent('café')}`
+    expect(encodeRoutePath(encoded)).toBe(encoded)
+    expect(encodeRoutePath('/%E6%B5%8B%E8%AF%95')).toBe('/%E6%B5%8B%E8%AF%95')
+  })
+
+  it('should preserve query and hash', () => {
+    expect(encodeRoutePath('/café?q=foo')).toBe(`/${encodeURIComponent('café')}?q=foo`)
+    expect(encodeRoutePath('/café?q=foo#bar')).toBe(`/${encodeURIComponent('café')}?q=foo#bar`)
+  })
+
+  it('should encode special characters in path segments', () => {
+    expect(encodeRoutePath('/a&b')).toBe(`/a${encodeURIComponent('&')}b`)
+    expect(encodeRoutePath('/normal')).toBe('/normal')
+  })
+})
+
+describe('routing utilities: `navigateTo` path encoding', () => {
+  it('should encode decoded unicode paths for vue-router', async () => {
+    const router = useRouter()
+    const push = vi.spyOn(router, 'push')
+    await navigateTo('/café')
+    expect(push).toHaveBeenCalledWith(`/${encodeURIComponent('café')}`)
+    push.mockRestore()
+  })
+
+  it('should not double-encode already-encoded paths', async () => {
+    const router = useRouter()
+    const push = vi.spyOn(router, 'push')
+    const encoded = `/${encodeURIComponent('café')}`
+    await navigateTo(encoded)
+    expect(push).toHaveBeenCalledWith(encoded)
+    push.mockRestore()
+  })
+
+  it('should not encode object locations', async () => {
+    const router = useRouter()
+    const push = vi.spyOn(router, 'push')
+    const to = { path: '/test', query: { foo: 'bar' } }
+    await navigateTo(to)
+    expect(push).toHaveBeenCalledWith(to)
+    push.mockRestore()
+  })
+})
+
 describe('routing utilities: `useRoute`', () => {
-  const nuxtApp = useNuxtApp()
-  const router = useRouter()
+  let nuxtApp: ReturnType<typeof useNuxtApp>
+  let router: ReturnType<typeof useRouter>
+
+  beforeEach(() => {
+    nuxtApp = useNuxtApp()
+    router = useRouter()
+  })
 
   function waitForPageChange () {
     return new Promise<void>(resolve => nuxtApp.hooks.hookOnce('page:finish', () => resolve()))
@@ -760,7 +880,10 @@ describe('callOnce', () => {
     ['with "render" option', { mode: 'render' as const }],
     ['with "navigation" option', { mode: 'navigation' as const }],
   ])('%s', (_name, options) => {
-    const nuxtApp = useNuxtApp()
+    let nuxtApp: ReturnType<typeof useNuxtApp>
+    beforeEach(() => {
+      nuxtApp = useNuxtApp()
+    })
     afterEach(() => {
       nuxtApp.payload.once.clear()
     })
@@ -801,6 +924,18 @@ describe('callOnce', () => {
       expect(fn).toHaveBeenCalledTimes(1)
 
       await navigateTo('/test')
+      await execute()
+      expect(fn).toHaveBeenCalledTimes(2)
+    })
+
+    it('should retry after a rejected promise', async () => {
+      const fn = vi.fn()
+        .mockRejectedValueOnce(new Error('fail'))
+        .mockResolvedValueOnce(undefined)
+      const execute = () => options ? callOnce('retry-key', fn, options) : callOnce('retry-key', fn)
+      await expect(execute()).rejects.toThrow('fail')
+      expect(fn).toHaveBeenCalledTimes(1)
+
       await execute()
       expect(fn).toHaveBeenCalledTimes(2)
     })

@@ -2,7 +2,7 @@ import { getCurrentInstance, hasInjectionContext, inject, onScopeDispose } from 
 import type { Ref } from 'vue'
 import type { NavigationFailure, NavigationGuard, RouteLocationNormalized, RouteLocationRaw, Router, useRoute as _useRoute, useRouter as _useRouter } from 'vue-router'
 import { sanitizeStatusCode } from 'h3'
-import { hasProtocol, isScriptProtocol, joinURL, parseQuery, parseURL, withQuery } from 'ufo'
+import { decodePath, encodePath, hasProtocol, isScriptProtocol, joinURL, parseQuery, parseURL, withQuery } from 'ufo'
 
 import type { NuxtLayouts, PageMeta } from '../../pages/runtime/composables'
 
@@ -244,7 +244,10 @@ export const navigateTo = (to: RouteLocationRaw | undefined | null, options?: Na
     return Promise.resolve()
   }
 
-  return options?.replace ? router.replace(to) : router.push(to)
+  // Encode the path portion of string locations to match vue-router's
+  // percent-encoded route records.
+  const encodedTo = typeof to === 'string' ? encodeRoutePath(to) : to
+  return options?.replace ? router.replace(encodedTo) : router.push(encodedTo)
 }
 
 /**
@@ -275,13 +278,13 @@ export const setPageLayout = <Layout extends keyof NuxtLayouts>(layout: unknown 
   const nuxtApp = useNuxtApp()
   if (import.meta.server) {
     if (import.meta.dev && getCurrentInstance() && nuxtApp.payload.state._layout !== layout) {
-      console.warn('[warn] [nuxt] `setPageLayout` should not be called to change the layout on the server within a component as this will cause hydration errors.')
+      console.warn('[nuxt] `setPageLayout` should not be called to change the layout on the server within a component as this will cause hydration errors.')
     }
     nuxtApp.payload.state._layout = layout
     nuxtApp.payload.state._layoutProps = props
   }
   if (import.meta.dev && nuxtApp.isHydrating && nuxtApp.payload.serverRendered && nuxtApp.payload.state._layout !== layout) {
-    console.warn('[warn] [nuxt] `setPageLayout` should not be called to change the layout during hydration as this will cause hydration errors.')
+    console.warn('[nuxt] `setPageLayout` should not be called to change the layout during hydration as this will cause hydration errors.')
   }
   const inMiddleware = isProcessingMiddleware()
   if (inMiddleware || import.meta.server || nuxtApp.isHydrating) {
@@ -317,4 +320,15 @@ export function encodeURL (location: string, isExternalHost = false) {
     return url.toString().replace(url.protocol, '')
   }
   return url.toString()
+}
+
+/**
+ * Encode the pathname of a route location string. Ensures decoded paths like
+ * `/café` are percent-encoded to match vue-router's encoded route records.
+ * Already-encoded paths are not double-encoded.
+ * @internal
+ */
+export function encodeRoutePath (url: string): string {
+  const parsed = parseURL(url)
+  return encodePath(decodePath(parsed.pathname)) + parsed.search + parsed.hash
 }

@@ -446,7 +446,12 @@ export function useAsyncData<
   // Allow directly awaiting on asyncData
   const asyncDataPromise = Promise.resolve(nuxtApp._asyncDataPromises[key.value]).then(() => asyncReturn) as AsyncData<ResT, (NuxtErrorDataT extends Error | NuxtError ? NuxtErrorDataT : NuxtError<NuxtErrorDataT>)>
   Object.assign(asyncDataPromise, asyncReturn)
-
+  // Allow destructuring without losing promise methods
+  Object.defineProperties(asyncDataPromise, {
+    then: { enumerable: true, value: asyncDataPromise.then.bind(asyncDataPromise) },
+    catch: { enumerable: true, value: asyncDataPromise.catch.bind(asyncDataPromise) },
+    finally: { enumerable: true, value: asyncDataPromise.finally.bind(asyncDataPromise) },
+  })
   return asyncDataPromise as AsyncData<PickFrom<DataT, PickKeys>, (NuxtErrorDataT extends Error | NuxtError ? NuxtErrorDataT : NuxtError<NuxtErrorDataT>)>
 }
 
@@ -752,6 +757,11 @@ function createAsyncData<
           }
         })
         .then(async (_result) => {
+          // If the promise was replaced or cleared (e.g. by clearNuxtData), skip the update
+          if (nuxtApp._asyncDataPromises[key] !== promise) {
+            return
+          }
+
           let result = _result as unknown as DataT
           if (options.transform) {
             result = await options.transform(_result)
@@ -774,8 +784,8 @@ function createAsyncData<
           asyncData.status.value = 'success'
         })
         .catch((error: any) => {
-          // If the promise was replaced by another one, we do not update the asyncData
-          if (nuxtApp._asyncDataPromises[key] && nuxtApp._asyncDataPromises[key] !== promise) {
+          // If the promise was replaced or cleared (e.g. by clearNuxtData), do not update the asyncData
+          if (nuxtApp._asyncDataPromises[key] !== promise) {
             return nuxtApp._asyncDataPromises[key]
           }
 
@@ -795,12 +805,15 @@ function createAsyncData<
           asyncData.status.value = 'error'
         })
         .finally(() => {
-          if (pendingWhenIdle) {
-            asyncData.pending.value = false
-          }
           cleanupController.abort()
 
-          delete nuxtApp._asyncDataPromises[key]
+          // Only clean up if this promise is still the current one
+          if (nuxtApp._asyncDataPromises[key] === promise) {
+            if (pendingWhenIdle) {
+              asyncData.pending.value = false
+            }
+            delete nuxtApp._asyncDataPromises[key]
+          }
         })
       nuxtApp._asyncDataPromises[key] = promise
       return nuxtApp._asyncDataPromises[key]!

@@ -143,28 +143,28 @@ const { data, error } = await useAsyncData(
 `handler` 函数应**无副作用**以确保 SSR 和客户端水合期间行为可预测。如果你需要触发副作用，请使用 [`callOnce`](/docs/3.x/api/utils/call-once) 工具实现。
 ::
 - `options`:
-  - `server`：是否在服务器上获取数据（默认为 `true`）
-  - `lazy`：是否在路由加载后才解析异步函数，从而不阻塞客户端导航（默认为 `false`）
-  - `immediate`：设置为 `false` 时，将阻止请求立即触发（默认为 `true`）
-  - `default`：工厂函数，在异步函数解析前设置 `data` 的默认值——在使用 `lazy: true` 或 `immediate: false` 时很有用
-  - `transform`：用于在解析后改变 `handler` 函数结果的函数
-  - `getCachedData`：提供一个函数返回缓存数据。返回 `null` 或 `undefined` 时会触发请求。默认实现为：
+  - `server`: 是否在服务器端获取数据（默认为 `true`）
+  - `lazy`: 是否在加载路由后再解析 async 函数，而不是阻塞客户端导航（默认为 `false`）
+  - `immediate`: 当设置为 `false` 时，将阻止请求立即触发。（默认为 `true`）
+  - `default`: 一个工厂函数，用于在 async 函数解析之前设置 `data` 的默认值——对于 `lazy: true` 或 `immediate: false` 选项非常有用
+  - `transform`: 一个函数，用于在解析 `handler` 函数结果后对其进行转换
+  - `getCachedData`: 提供一个函数，用于返回缓存的数据。若返回 `undefined`，将触发一次获取请求。默认实现如下：
     ```ts
     const getDefaultCachedData = (key, nuxtApp, ctx) => nuxtApp.isHydrating
       ? nuxtApp.payload.data[key]
       : nuxtApp.static.data[key]
     ```
-    该默认实现只有在 `nuxt.config` 启用 `experimental.payloadExtraction` 时才缓存数据。
+    该默认实现仅在 `nuxt.config` 启用 `experimental.payloadExtraction` 时才会缓存数据。
   - `pick`：仅从 `handler` 函数结果中提取该数组指定的键
   - `watch`：监听响应式源以自动刷新
-  - `deep`：使用深层 ref 包装数据（默认值为 `true`）。如果数据无需深度响应，可设为 `false`，提高性能。
+  - `deep`：使用深层 ref 包装数据（默认值为 `true`）。如果数据无需深度响应，可设为 `false`，以提升性能。
   - `dedupe`：避免在同一时间内针对相同键发起多次请求（默认为 `cancel`），可选值：
-    - `cancel` - 在发起新请求时取消现有请求
+    - `cancel` - 发起新请求时取消现有请求
     - `defer` - 如果有挂起请求，则不发起新请求
   - `timeout`：超时时间，单位毫秒（默认为 `undefined`，表示无超时）
   
 ::note
-底层，`lazy: false` 利用 `<Suspense>` 阻塞路由加载直到数据获取完成。建议使用 `lazy: true` 并实现加载状态，以获得更流畅的用户体验。
+底层实现上，`lazy: false` 会利用 `<Suspense>` 阻塞路由加载，直到数据获取完成。建议使用 `lazy: true` 并实现加载状态，以获得更流畅的用户体验。
 ::
 
 ::read-more{to="/docs/3.x/api/composables/use-lazy-async-data"}
@@ -185,7 +185,7 @@ const { data, error } = await useAsyncData(
 - `getCachedData` 函数
 - `default` 值
 
-以下选项可不同且不会触发警告：
+以下选项可以不同且不会触发警告：
 - `server`
 - `lazy`
 - `immediate`

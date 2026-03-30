@@ -93,7 +93,7 @@ export async function bundle (nuxt: Nuxt & { _nitro?: Nitro }): Promise<void> {
     }
   }
 
-  // Resolve aliases in user-provided input - so `~/server/test` will work
+  // Resolve aliases in user-provided input - so `~~/server/test` will work
   nuxt.options.nitro.plugins ||= []
   nuxt.options.nitro.plugins = nuxt.options.nitro.plugins.map(plugin => plugin ? resolveAlias(plugin, nuxt.options.alias) : plugin)
 
@@ -365,7 +365,7 @@ export async function bundle (nuxt: Nuxt & { _nitro?: Nitro }): Promise<void> {
     `!${join(nuxt.options.buildDir, 'dist/client', nuxt.options.app.buildAssetsDir, '**/*')}`,
   )
 
-  const validManifestKeys = ['prerender', 'redirect', 'appMiddleware', 'appLayout', 'cache', 'isr', 'swr']
+  const validManifestKeys = ['prerender', 'redirect', 'appMiddleware', 'appLayout', 'cache', 'isr', 'swr', 'ssr']
 
   function getRouteRulesRouter () {
     const routeRulesRouter = createRou3Router<NitroRouteRules>()
@@ -442,6 +442,7 @@ export async function bundle (nuxt: Nuxt & { _nitro?: Nitro }): Promise<void> {
       nitro.hooks.hook('build:before', (nitro) => {
         for (const [route, value] of Object.entries(nitro.options.routeRules)) {
           if (!route.endsWith('*') && !route.endsWith('/_payload.json')) {
+            if (value.ssr === false) { continue }
             if ((value.isr || value.cache) || (value.prerender && nuxt.options.dev)) {
               const payloadKey = route + '/_payload.json'
               const defaults = {} as Record<string, any>
@@ -623,6 +624,19 @@ export async function bundle (nuxt: Nuxt & { _nitro?: Nitro }): Promise<void> {
     },
   }
 
+  const cacheDriverPath = join(distDir, 'runtime/utils/cache-driver.js')
+  const cacheDriverOption = isWindows ? pathToFileURL(cacheDriverPath).href : cacheDriverPath
+
+  // Use hash-based cache driver for runtime payload cache to avoid conflicts when
+  // path is both a file and a directory prefix: https://github.com/nuxt/nuxt/issues/34547
+  if (nuxt.options.dev) {
+    const payloadCacheDir = resolve(nuxt.options.buildDir, 'cache/nuxt/payload')
+    nitroConfig.devStorage['cache:nuxt:payload'] ||= {
+      driver: cacheDriverOption,
+      base: payloadCacheDir,
+    }
+  }
+
   // Hoist types for nitro implicit dependencies
   nuxt.options.typescript.hoist.push(
     // Nitro auto-imported/augmented dependencies
@@ -703,12 +717,11 @@ export async function bundle (nuxt: Nuxt & { _nitro?: Nitro }): Promise<void> {
   })
 
   const cacheDir = resolve(nuxt.options.buildDir, 'cache/nitro/prerender')
-  const cacheDriverPath = join(distDir, 'runtime/utils/cache-driver.js')
   await fsp.rm(cacheDir, { recursive: true, force: true }).catch(() => {})
   nitro.options._config.storage = defu(nitro.options._config.storage, {
     'internal:nuxt:prerender': {
       // TODO: resolve upstream where file URLs are not being resolved/inlined correctly
-      driver: isWindows ? pathToFileURL(cacheDriverPath).href : cacheDriverPath,
+      driver: cacheDriverOption,
       base: cacheDir,
     },
   })
@@ -724,6 +737,29 @@ export async function bundle (nuxt: Nuxt & { _nitro?: Nitro }): Promise<void> {
     // ensure we only have one version of vue if nitro is going to inline anyway
     ...nitro.options.inlineDynamicImports ? ['vue', '@vue/server-renderer'] : [],
   )
+
+  addVitePlugin({
+    name: 'nuxt:nitro:ssr-conditions',
+    configEnvironment (name, config) {
+      if (name === 'ssr') {
+        config.resolve ||= {}
+        config.resolve.conditions = [...nitro.options.exportConditions || [], 'import']
+      }
+    },
+  })
+
+  // Tree-shake Vue feature flags for non-node Nitro targets
+  addVitePlugin({
+    name: 'nuxt:nitro:vue-feature-flags',
+    applyToEnvironment: environment => environment.name === 'ssr' && environment.config.isProduction,
+    configResolved (config) {
+      for (const key in config.define) {
+        if (key.startsWith('__VUE')) {
+          nitro.options.replace[key] = config.define[key]
+        }
+      }
+    },
+  })
 
   // Connect vfs storages
   nitro.vfs = nuxt.vfs = nitro.vfs || nuxt.vfs || {}

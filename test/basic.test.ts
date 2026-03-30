@@ -110,6 +110,18 @@ describe('route rules', () => {
     const html = await $fetch<string>('/route-rules/layout')
     expect(html).toContain('Custom Layout')
   })
+
+  it('should not generate payload route rules for non-wildcard ssr: false routes', () => {
+    // @ts-expect-error untyped internal property
+    const routeRules = useTestContext().nuxt._nitro.options.routeRules
+
+    expect(routeRules['/route-rules/isr-spa']).toMatchObject({
+      isr: 60,
+      ssr: false,
+    })
+    expect(routeRules['/route-rules/isr-spa/_payload.json']).toBeUndefined()
+    expect(routeRules['/route-rules/isr-spa/_payload.js']).toBeUndefined()
+  })
 })
 
 describe('modules', () => {
@@ -142,6 +154,12 @@ describe('pages', () => {
     expect(html).toContain(isDev ? 'Some dev-only info' : 'Some prod-only info')
     // should apply attributes to client-only components
     expect(html).toContain('<div style="color:red;" class="client-only"></div>')
+    // should strip dev-only with attributes in production
+    if (isDev) {
+      expect(html).toContain('Dev-only with attributes')
+    } else {
+      expect(html).not.toContain('Dev-only with attributes')
+    }
     // should render server-only components
     expect(html.replaceAll(/ data-island-uid="[^"]*"/g, '')).toContain('<div class="server-only" style="background-color:gray;"> server-only component <div> server-only component child (non-server-only) </div></div>')
     // should register global components automatically
@@ -641,6 +659,22 @@ describe('pages', () => {
     expect(html).toContain('should be prerendered: true')
   })
 
+  it('renders unicode routes correctly', async () => {
+    const html = await $fetch('/random/日本語')
+    expect(html).toContain('Japanese random route')
+  })
+
+  it.skipIf(isDev)('reactive query params in prerendered pages', async () => {
+    const { page } = await renderPage('/prerender/query-reactivity?active=true')
+
+    expect(await page.innerText('div')).toContain('true')
+    await page.waitForFunction(() => window.useNuxtApp?.()._route.query.active === 'true')
+    expect(await page.evaluate(() => window.useNuxtApp?.()._route.query.active)).toBe('true')
+    expect(await page.$eval('div', e => getComputedStyle(e).color)).toBe('rgb(255, 0, 0)')
+
+    await page.close()
+  })
+
   it('should trigger page:loading:end only once', async () => {
     const { page, consoleLogs } = await renderPage('/')
 
@@ -1077,16 +1111,6 @@ describe('head tags', () => {
     const html = await $fetch<string>('/head')
     // http-equiv should be rendered kebab case
     expect(html).toContain('<meta http-equiv="content-security-policy" content="default-src https">')
-  })
-
-  // TODO: https://github.com/nuxt/nuxt/issues/32670
-  it.fails('should not duplicate link tags with rel="alternate"', async () => {
-    const page = await createPage('/head-component')
-
-    await page.waitForFunction(() => window.useNuxtApp?.() && !window.useNuxtApp?.().isHydrating)
-
-    expect(await page.locator('link[rel="alternate"]').count()).toBe(1)
-    await page.close()
   })
 
   it('should deduplicate head tags with key', async () => {
@@ -1852,6 +1876,10 @@ describe('automatically keyed composables', () => {
     expect(html).toContain('true')
     expect(html).not.toContain('false')
   })
+  // TODO: remove in Nuxt 5
+  it('should work when imported from #app barrel export', async () => {
+    await expectNoClientErrors('/keyed-composables/barrel-import')
+  })
 })
 
 describe.runIf(isDev && !isWebpack)('css links', () => {
@@ -1879,8 +1907,8 @@ describe.skipIf(isDev)('module identifiers', () => {
 
 describe.skipIf(isDev)('inlining component styles', () => {
   const globalCSS = [
-    '{--plugin:"plugin"}', // CSS imported ambiently in JS/TS
-    '{--global:"global";', // global css from nuxt.config
+    '--plugin:"plugin"', // CSS imported ambiently in JS/TS
+    '--global:"global"', // global css from nuxt.config
   ]
   const nonGlobalCSS = [
     '{--assets:"assets"}', // <script>
@@ -1931,7 +1959,7 @@ describe.skipIf(isDev)('inlining component styles', () => {
     // should not include inlined CSS in generated CSS files
     for (const style of inlinedCSS) {
       // TODO: remove 'ambient global' CSS from generated CSS file
-      if (style === '{--plugin:"plugin"}') {
+      if (style === '--plugin:"plugin"') {
         expect.soft(css).toContain(style)
         continue
       }
@@ -2109,6 +2137,15 @@ describe('server components/islands', () => {
     // test island head
     expect(html).toContain('<meta name="author" content="Nuxt">')
     expect(html).toContain('plugin-style')
+    // #34482 - title should be composed with titleTemplate
+    expect(html).toContain('<title>Server Page - Fixture</title>')
+  })
+
+  it('/server-page - should preserve title after hydration', async () => {
+    const { page } = await renderPage('/server-page')
+    await page.waitForLoadState('networkidle')
+    expect(await page.title()).toBe('Server Page - Fixture')
+    await page.close()
   })
 
   it('/server-page - client side navigation', async () => {
@@ -3176,7 +3213,7 @@ describe('nuxt-time', () => {
     const html = await $fetch<string>('/components/nuxt-time')
     const snap = html.match(/<time[^>]*data-testid="fixed"[^>]*>[^<]*<\/time>/)?.[0].replace(/ data-prehydrate-id="[^"]*"/g, '')
     expect(snap).toContain(
-      '<time data-month="long" data-day="numeric" datetime="2023-02-11T08:24:08.396Z" data-testid="fixed">',
+      '<time data-month="long" data-day="numeric" data-relative="false" data-title="false" datetime="2023-02-11T08:24:08.396Z" data-testid="fixed">',
     )
   })
 
