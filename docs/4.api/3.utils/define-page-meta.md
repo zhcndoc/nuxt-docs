@@ -38,7 +38,7 @@ interface PageMeta {
   viewTransition?: ViewTransitionPageOptions['enabled'] | ViewTransitionPageOptions
   key?: false | string | ((route: RouteLocationNormalizedLoaded) => string)
   keepalive?: boolean | KeepAliveProps
-  layout?: false | LayoutKey | Ref<LayoutKey> | ComputedRef<LayoutKey> | { name?: LayoutKey | false, props?: Record<string, unknown> /* or the selected layout's props */ }
+  layout?: false | LayoutKey | Ref<LayoutKey> | ComputedRef<LayoutKey> | { name?: LayoutKey | false, props?: Record<string, unknown> /* 或所选布局的属性 */ }
   middleware?: MiddlewareKey | NavigationGuard | Array<MiddlewareKey | NavigationGuard>
   scrollToTop?: boolean | ((to: RouteLocationNormalizedLoaded, from: RouteLocationNormalizedLoaded) => boolean)
   [key: string]: unknown
@@ -101,7 +101,7 @@ interface PageMeta {
 
     为每个路由设置静态或动态的布局名称。如果需要禁用默认布局，可将其设置为 `false`。
 
-    You can also pass an object with `name` and `props` to pass typed props to your layout component. When your layout defines props with `defineProps`, they will be fully typed in `definePageMeta`.
+    你也可以传入一个带有 `name` 和 `props` 的对象，以向布局组件传递带类型的 props。当你的布局使用 `defineProps` 定义 props 时，它们会在 `definePageMeta` 中获得完整类型。
 
   **`layoutTransition`**
 
@@ -151,7 +151,7 @@ interface PageMeta {
 
   - **类型**: `boolean | (to: RouteLocationNormalized, from: RouteLocationNormalized) => boolean`
 
-    告诉 Nuxt 在渲染页面之前是否滚动到顶部。如果你想覆盖 Nuxt 的默认滚动行为，可以在 `~/router.options.ts` 中进行设置（更多信息参见[自定义路由](/docs/4.x/guide/recipes/custom-routing#using-routeroptions)）。
+    告诉 Nuxt 在渲染页面之前是否滚动到顶部。导航与渲染是相互独立的，因此即使页面没有重新渲染（例如使用固定的 [`key`](/docs/4.x/api/utils/define-page-meta#key) 时），滚动行为也总会触发。在这种情况下，将 `scrollToTop: false` 可禁用滚动。如果你想覆盖 Nuxt 的默认滚动行为，可以在 `~/router.options.ts` 中进行设置（更多信息参见[自定义路由](/docs/4.x/guide/recipes/custom-routing#using-routeroptions)）。
 
   **`[key: string]`**
 
