@@ -746,9 +746,6 @@ importers:
       seroval:
         specifier: ^1.5.1
         version: 1.5.1
-      std-env:
-        specifier: ^4.0.0
-        version: 4.0.0
       time-fix-plugin:
         specifier: ^2.0.7
         version: 2.0.7(webpack@5.105.4)
@@ -1217,9 +1214,6 @@ importers:
       seroval:
         specifier: ^1.5.1
         version: 1.5.1
-      std-env:
-        specifier: ^4.0.0
-        version: 4.0.0
       time-fix-plugin:
         specifier: ^2.0.7
         version: 2.0.7(webpack@5.105.4)
@@ -5454,6 +5448,9 @@ packages:
 
   defu@6.1.4:
     resolution: {integrity: sha512-mEQCMmwJu317oSz8CwdIOdwf3xMif1ttiM8LTufzc3g6kR+9Pe236twL8j3IYT1F7GfRgGcW6MWxzZjLIkuHIg==}
+
+  defu@6.1.7:
+    resolution: {integrity: sha512-7z22QmUWiQ/2d0KkdYmANbRUVABpZ9SNYyH5vx6PZ+nE5bcC0l7uFvEfHlyld/HcGBFTL536ClDt3DEcSlEJAQ==}
 
   delayed-stream@1.0.0:
     resolution: {integrity: sha512-ZySD7Nf91aLB0RxL4KGrKHBXl7Eds1DAmEdcoVawXnLD7SDhpNgtuII2aAkg7a7QS41jxPSZ17p4VdGnMHk3MQ==}
@@ -10792,7 +10789,7 @@ snapshots:
       '@vue/compiler-core': 3.5.30
       consola: 3.4.2
       debug: 4.4.3
-      defu: 6.1.4
+      defu: 6.1.7
       destr: 2.0.5
       detab: 3.0.2
       github-slugger: 2.0.0
@@ -13538,6 +13535,8 @@ snapshots:
       object-keys: 1.1.1
 
   defu@6.1.4: {}
+
+  defu@6.1.7: {}
 
   delayed-stream@1.0.0: {}
 
