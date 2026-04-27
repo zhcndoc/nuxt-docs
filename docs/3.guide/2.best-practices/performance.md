@@ -16,11 +16,11 @@ Nuxt 提供了若干内置功能，帮助你优化网站性能。理解这些功
 
 ```html
 <template>
-  <NuxtLink to="/about">About page</NuxtLink>
+  <NuxtLink to="/about">关于页面</NuxtLink>
 </template>
 
-<!-- Which will render to with Vue Router & Smart Prefetching -->
-<a href="/about">About page</a>
+<!-- 使用 Vue Router 和智能预取时将渲染为 -->
+<a href="/about">关于页面</a>
 ```
 
 Nuxt 会自动包含智能预取。这意味着它会检测链接何时可见（默认情况下），无论是在视口内还是在滚动时，并预取那些页面的 JavaScript，这样在用户点击链接时页面已经准备就绪。
@@ -32,7 +32,10 @@ export default defineNuxtConfig({
   experimental: {
     defaults: {
       nuxtLink: {
-        prefetchOn: 'interaction',
+        prefetchOn: {
+          interaction: true,
+          visibility: false,
+        },
       },
     },
   },
@@ -81,9 +84,9 @@ const show = ref(false)
 
 <template>
   <div>
-    <h1>Mountains</h1>
+    <h1>山脉</h1>
     <LazyMountainsList v-if="show" />
-    <button v-if="!show" @click="show = true">Show List</button>
+    <button v-if="!show" @click="show = true">显示列表</button>
   </div>
 </template>
 ```
@@ -138,7 +141,7 @@ const show = ref(false)
 
 ```html
 <template>
-  <!-- 🚨 Needs to be loaded ASAP -->
+  <!-- 🚨 需要尽快加载 -->
   <NuxtImg
     src="/hero-banner.jpg"
     format="webp"
@@ -148,7 +151,7 @@ const show = ref(false)
     height="100"
   />
 
-  <!-- 🐌 Can be loaded later -->
+  <!-- 🐌 可以稍后加载 -->
   <NuxtImg
     src="/facebook-logo.jpg"
     format="webp"
@@ -199,11 +202,11 @@ const { onLoaded, proxy } = useScriptGoogleAnalytics(
     },
   },
 )
-// queue events to be sent when ga loads
+// 队列事件，待 ga 加载后发送
 proxy.gtag('config', 'UA-123456789-1')
-// or wait until ga is loaded
+// 或等待直到 ga 加载完成
 onLoaded((gtag) => {
-  // script loaded
+  // 脚本已加载
 })
 ```
 
