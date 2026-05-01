@@ -16,7 +16,7 @@ npx nuxt preview [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>
 
 `preview` 命令在运行 `build` 命令后启动一个服务器以预览你的 Nuxt 应用。`start` 命令是 `preview` 的别名。在生产环境运行你的应用时，请参考 [部署 部分](/docs/4.x/getting-started/deployment)。
 
-## Arguments
+## 参数
 
 <!--preview-args-->
 | Argument      | Description                                    |
@@ -24,7 +24,7 @@ npx nuxt preview [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>
 | `ROOTDIR="."` | 指定工作目录（默认：`.`） |
 <!--/preview-args-->
 
-## Options
+## 选项
 
 <!--preview-opts-->
 | Option                               | Default | Description                                                                                                                                          |
@@ -40,5 +40,5 @@ npx nuxt preview [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>
 此命令会将 `process.env.NODE_ENV` 设置为 `production`。若要覆盖，请在 `.env` 文件中或作为命令行参数定义 `NODE_ENV`。
 
 ::note
-为方便起见，在预览模式下，你的 [`.env`](/docs/4.x/directory-structure/env) 文件将被加载到 `process.env` 中。（但是在生产环境中你需要自己确保环境变量已被设置。例如，在 Node.js 20+ 中，你可以通过运行 `node --env-file .env .output/server/index.mjs` 来启动服务器。）
+为了方便，在预览模式下，你的 [`.env`](/docs/4.x/directory-structure/env) 文件会被加载到 `process.env` 中。（不过在生产环境中，你需要自行确保环境变量已设置。例如，在 Node.js 20+ 中，你可以通过运行 `NODE_ENV=production node --env-file .env .output/server/index.mjs` 来启动服务器。）
 ::
