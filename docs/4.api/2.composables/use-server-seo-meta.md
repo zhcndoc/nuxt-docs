@@ -8,20 +8,26 @@ links:
     size: xs
 ---
 
-和 [`useSeoMeta`](/docs/4.x/api/composables/use-seo-meta) 一样，`useServerSeoMeta` 组合式函数允许你以一个扁平对象并且拥有完整 TypeScript 支持来定义站点的 SEO 元标签。
+::warning
+`useServerSeoMeta` 已弃用。请改为在 `if (import.meta.server)` 块中包裹 [`useSeoMeta`](/docs/4.x/api/composables/use-seo-meta)。在 `future.compatibilityVersion: 5` 下，自动导入将被移除。
+::
+
+`useServerSeoMeta` 允许你像 [`useSeoMeta`](/docs/4.x/api/composables/use-seo-meta) 一样，用一个带有完整 TypeScript 支持的扁平对象来定义你的网站 SEO 元标签，但它只在服务端运行，并且会从客户端 bundle 中被 tree-shaken 掉。
 
 :read-more{to="/docs/4.x/api/composables/use-seo-meta"}
 
-在大多数情况下，meta 不需要是响应式的，因为爬虫只会扫描首次加载。因此我们建议将 [`useServerSeoMeta`](/docs/4.x/api/composables/use-server-seo-meta) 用作面向性能的工具——它在客户端不会执行任何操作（也不会返回 `head` 对象）。
+对于新代码，请直接使用仅服务端模式：
 
 ```vue [app/app.vue]
 <script setup lang="ts">
-useServerSeoMeta({
-  robots: 'index, follow',
-})
+if (import.meta.server) {
+  useSeoMeta({
+    robots: 'index, follow',
+  })
+}
 </script>
 ```
 
-参数与 [`useSeoMeta`](/docs/4.x/api/composables/use-seo-meta) 完全相同
+参数与 [`useSeoMeta`](/docs/4.x/api/composables/use-seo-meta) 完全相同。
 
 :read-more{to="/docs/4.x/getting-started/seo-meta"}

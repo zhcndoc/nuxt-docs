@@ -23,17 +23,17 @@ links:
 
 ### `isLoading`
 
-- **type**: `Ref<boolean>`
+- **type**: `Readonly<ShallowRef<boolean>>`
 - **description**: 加载状态
 
 ### `error`
 
-- **type**: `Ref<boolean>`
+- **type**: `Readonly<ShallowRef<boolean>>`
 - **description**: 错误状态
 
 ### `progress`
 
-- **type**: `Ref<number>`
+- **type**: `Readonly<ShallowRef<number>>`
 - **description**: 进度状态。从 `0` 到 `100`。
 
 ## 方法
