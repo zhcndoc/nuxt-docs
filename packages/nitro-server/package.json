@@ -47,6 +47,7 @@
     "mlly": "^1.8.2",
     "mocked-exports": "^0.1.1",
     "nitro": "^3.0.260311-beta",
+    "ohash": "^2.0.11",
     "pathe": "^2.0.3",
     "srvx": "^0.11.15",
     "std-env": "^4.1.0",
@@ -81,7 +82,7 @@
     "@rollup/plugin-babel": "7.0.0",
     "hookable": "6.1.1",
     "nuxt": "workspace:*",
-    "obuild": "0.4.33",
+    "obuild": "0.4.35",
     "vitest": "4.1.6"
   },
   "engines": {
