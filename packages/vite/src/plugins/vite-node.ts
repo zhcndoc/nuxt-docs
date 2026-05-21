@@ -1,5 +1,5 @@
 import process from 'node:process'
-import { mkdir, unlink, writeFile } from 'node:fs/promises'
+import { unlink } from 'node:fs/promises'
 import type { Socket } from 'node:net'
 import net from 'node:net'
 import os from 'node:os'
@@ -7,7 +7,7 @@ import fs from 'node:fs' // For sync operations like unlinkSync if needed during
 import { pathToFileURL } from 'node:url'
 import { Buffer } from 'node:buffer'
 import { isAbsolute, join, normalize } from 'pathe'
-import { directoryToURL, resolveAlias, tryUseNuxt } from '@nuxt/kit'
+import { directoryToURL, resolveAlias, tryUseNuxt, useNitro } from '@nuxt/kit'
 import type { EnvironmentModuleNode, ModuleNode, PluginContainer, ViteDevServer, Plugin as VitePlugin } from 'vite'
 import { getQuery } from 'ufo'
 import type { FetchResult } from 'vite-node'
@@ -180,7 +180,11 @@ function useInvalidates () {
   }
 }
 
-export function ViteNodePlugin (nuxt: Nuxt): VitePlugin {
+export function ViteNodePlugin (nuxt: Nuxt): VitePlugin | undefined {
+  if (!nuxt.options.dev) {
+    return
+  }
+
   let socketServer: net.Server | undefined
   const socketPath = generateSocketPath()
   const { invalidates, markInvalidate, markInvalidates } = useInvalidates()
@@ -198,6 +202,28 @@ export function ViteNodePlugin (nuxt: Nuxt): VitePlugin {
     }
   }
 
+  const nitro = useNitro()
+
+  const runnerResolvedPath = resolveModulePath('#vite-node-runner', { from: import.meta.url })
+  const serverResolvedPath = resolveModulePath('#vite-node-entry', { from: import.meta.url })
+  const fetchResolvedPath = resolveModulePath('#vite-node', { from: import.meta.url })
+
+  const vfs = {
+    'server.mjs': `export { default } from ${JSON.stringify(pathToFileURL(serverResolvedPath).href)}`,
+    'runner.mjs': `export { default } from ${JSON.stringify(pathToFileURL(runnerResolvedPath).href)}`,
+    'client.manifest.mjs': `import { viteNodeFetch } from ${JSON.stringify(pathToFileURL(fetchResolvedPath))};export default () => viteNodeFetch.getManifest()`,
+    'client.precomputed.mjs': 'export default undefined',
+  }
+
+  nitro.options.virtual ||= {}
+  nitro.options._config.virtual ||= {}
+
+  for (const key in vfs) {
+    const filename = `#build/dist/server/${key}`
+    nitro.options.virtual[filename] = vfs[key as keyof typeof vfs]
+    nitro.options._config.virtual[filename] = vfs[key as keyof typeof vfs]
+  }
+
   return {
     name: 'nuxt:vite-node-server',
     enforce: 'post',
@@ -212,7 +238,7 @@ export function ViteNodePlugin (nuxt: Nuxt): VitePlugin {
           socketPath,
           root: nuxt.options.srcDir,
           entryPath: resolveServerEntry(ssrServer.config),
-          base: ssrServer.config.base || '/_nuxt/',
+          base: '/',
           maxRetryAttempts: nuxt.options.vite.viteNode?.maxRetryAttempts,
           baseRetryDelay: nuxt.options.vite.viteNode?.baseRetryDelay,
           maxRetryDelay: nuxt.options.vite.viteNode?.maxRetryDelay,
@@ -226,7 +252,7 @@ export function ViteNodePlugin (nuxt: Nuxt): VitePlugin {
         socketServer = createViteNodeSocketServer(nuxt, ssrServer, clientServer, invalidates, viteNodeServerOptions)
       }
 
-      if (nuxt.options.experimental.viteEnvironmentApi) {
+      if (nuxt.options.experimental.viteEnvironmentApi || !nuxt.options.ssr) {
         resolveServer(clientServer)
       } else {
         nuxt.hook('vite:serverCreated', (ssrServer, ctx) => ctx.isServer ? resolveServer(ssrServer) : undefined)
@@ -532,24 +558,4 @@ export type ViteNodeServerOptions = {
   baseRetryDelay?: number
   maxRetryDelay?: number
   requestTimeout?: number
-}
-
-export async function writeDevServer (nuxt: Nuxt): Promise<void> {
-  const runnerResolvedPath = resolveModulePath('#vite-node-runner', { from: import.meta.url })
-  const serverResolvedPath = resolveModulePath('#vite-node-entry', { from: import.meta.url })
-  const fetchResolvedPath = resolveModulePath('#vite-node', { from: import.meta.url })
-
-  const serverDist = join(nuxt.options.buildDir, 'dist/server')
-
-  await mkdir(serverDist, { recursive: true })
-
-  await Promise.all([
-    writeFile(join(serverDist, 'server.mjs'), `export { default } from ${JSON.stringify(pathToFileURL(serverResolvedPath).href)}`),
-    writeFile(join(serverDist, 'runner.mjs'), `export { default } from ${JSON.stringify(pathToFileURL(runnerResolvedPath).href)}`),
-    writeFile(join(serverDist, 'client.precomputed.mjs'), `export default undefined`),
-    writeFile(join(serverDist, 'client.manifest.mjs'), `
-import { viteNodeFetch } from ${JSON.stringify(pathToFileURL(fetchResolvedPath))}
-export default () => viteNodeFetch.getManifest()
-    `),
-  ])
 }

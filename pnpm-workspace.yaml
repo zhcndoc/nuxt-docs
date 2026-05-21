@@ -7,11 +7,27 @@ packages:
   - playground
   - test/fixtures/*
 
-ignoredBuiltDependencies:
-  - '@parcel/watcher'
-  - esbuild
-  - oxc-resolver
-  - unrs-resolver
+allowBuilds:
+  '@parcel/watcher': false
+  esbuild: false
+  oxc-resolver: false
+  unrs-resolver: false
+
+overrides:
+  '@nuxt/kit': workspace:*
+  '@nuxt/nitro-server': workspace:*
+  '@nuxt/rspack-builder': workspace:*
+  '@nuxt/schema': workspace:*
+  '@nuxt/vite-builder': workspace:*
+  '@nuxt/webpack-builder': workspace:*
+  '@vue/compiler-core': 3.5.34
+  '@vue/compiler-dom': 3.5.34
+  '@vue/shared': 3.5.34
+  nuxt: workspace:*
+  send: '>=1.2.1'
+  vite: '^7.3.3'
+  vue: 3.5.34
+  typescript: 5.9.3
 
 patchedDependencies:
   changelogen: patches/changelogen.patch
@@ -21,3 +37,5 @@ publicHoistPattern:
   - 'webpack-*'
 
 shellEmulator: true
+
+ignoreWorkspaceCycles: true

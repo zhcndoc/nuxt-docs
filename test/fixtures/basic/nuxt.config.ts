@@ -3,7 +3,7 @@ import type { NuxtPage } from 'nuxt/schema'
 import { defu } from 'defu'
 import { createUnplugin } from 'unplugin'
 import { withoutLeadingSlash } from 'ufo'
-import { withMatrix } from '../../matrix'
+import { isNuxtPrepare, projectSuffix, withMatrix } from '../../matrix'
 
 // (defined in nuxt/src/core/nitro.ts)
 declare module 'nitropack' {
@@ -13,6 +13,7 @@ declare module 'nitropack' {
 }
 
 export default withMatrix({
+  ...(isNuxtPrepare ? {} : { buildDir: `.nuxt-${projectSuffix}` }),
   appId: 'nuxt-app-basic',
   extends: [
     './extends/node_modules/foo',
@@ -190,6 +191,7 @@ export default withMatrix({
     },
     routeRules: {
       '/route-rules/spa': { ssr: false },
+      '/route-rules/spa-async-data': { ssr: false },
       '/redirect/catchall': { ssr: false },
       '/route-rules/middleware': { appMiddleware: 'route-rules-middleware' },
       '/route-rules/layout': { appLayout: 'custom' },
@@ -199,6 +201,8 @@ export default withMatrix({
       '/route-rules/redirect': { redirect: '/' },
       '/isr': { isr: 60 },
       '/route-rules/isr-spa': { isr: 60, ssr: false },
+      '/route-rules/swr-in-spa/**': { ssr: false },
+      '/route-rules/swr-in-spa': { ssr: true, swr: 60 },
       '/swr': { swr: 60 },
     },
     output: { dir: process.env.NITRO_OUTPUT_DIR },

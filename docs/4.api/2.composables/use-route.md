@@ -82,6 +82,6 @@ import { useRoute } from '#app'
 ### `route.fullPath` 的服务端渲染问题
 
 浏览器在发起请求时不会发送[URL 片段](https://url.spec.whatwg.org/#concept-url-fragment)（例如 `#foo`）。
-因此，使用 `route.fullPath` 影响模板可能导致客户端和服务端的内容不一致（包含片段与否），引发 hydration 问题。
+因此，使用 `route.fullPath` 影响模板可能导致客户端和服务端的内容不一致（包含片段与否），引发水合问题。
 
-:read-more{icon="i-simple-icons-vuedotjs" to="https://router.vuejs.org/api/type-aliases/routelocationnormalizedloaded"}
+:read-more{icon="i-simple-icons-vuedotjs" to="https://router.vuejs.org/api/type-aliases/RouteLocationNormalizedLoaded.html"}

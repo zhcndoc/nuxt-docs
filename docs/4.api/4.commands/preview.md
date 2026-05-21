@@ -1,5 +1,5 @@
 ---
-title: "nuxt preview"
+title: "nuxt 预览"
 description: 预览命令在执行构建命令后启动一个服务器来预览你的应用程序。
 links:
   - label: 源码
@@ -40,5 +40,5 @@ npx nuxt preview [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>
 此命令会将 `process.env.NODE_ENV` 设置为 `production`。如需覆盖，请在 `.env` 文件或命令行参数中定义 `NODE_ENV`。
 
 ::note
-为了方便，在预览模式下，你的[`.env`](/docs/3.x/directory-structure/env) 文件将被加载到 `process.env` 中。（不过在生产环境中，你需要自行确保环境变量的设置。例如，在 Node.js 20+ 中，可以通过运行 `node --env-file .env .output/server/index.mjs` 来启动服务器。）
+为了方便，在预览模式下，你的 [`.env`](/docs/3.x/directory-structure/env) 文件会被加载到 `process.env` 中。（不过在生产环境中，你需要自行确保环境变量已设置。例如，在 Node.js 20+ 中，你可以通过运行 `NODE_ENV=production node --env-file .env .output/server/index.mjs` 来启动你的服务器。）
 ::
