@@ -23,18 +23,18 @@ links:
 
 ### `isLoading`
 
-- **type**: `Ref<boolean>`
-- **description**: 加载状态
+- **类型**: `Readonly<ShallowRef<boolean>>`
+- **描述**: 加载状态
 
 ### `error`
 
-- **type**: `Ref<boolean>`
-- **description**: 错误状态
+- **类型**: `Readonly<ShallowRef<boolean>>`
+- **描述**: 错误状态
 
 ### `progress`
 
-- **type**: `Ref<number>`
-- **description**: 进度状态。从 `0` 到 `100`。
+- **类型**: `Readonly<ShallowRef<number>>`
+- **描述**: 进度状态。范围从 `0` 到 `100`。
 
 ## 方法
 

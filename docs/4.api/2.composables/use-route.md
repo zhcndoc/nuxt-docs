@@ -83,4 +83,4 @@ import { useRoute } from '#app'
 
 浏览器在发出请求时不会发送 URL 片段（例如 `#foo`）。因此在模板中使用 `route.fullPath` 可能会触发水合问题，因为它在客户端会包含片段，但在服务器端不会包含。
 
-:read-more{icon="i-simple-icons-vuedotjs" to="https://router.vuejs.org/api/type-aliases/routelocationnormalizedloaded"}
+:read-more{icon="i-simple-icons-vuedotjs" to="https://router.vuejs.org/api/type-aliases/RouteLocationNormalizedLoaded.html"}

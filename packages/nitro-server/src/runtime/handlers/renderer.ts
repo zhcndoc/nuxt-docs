@@ -1,17 +1,17 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { getPrefetchLinks, getPreloadLinks, getRequestDependencies, renderResourceHeaders } from 'vue-bundle-renderer/runtime'
 import type { RenderResponse } from 'nitropack/types'
-import type { EventHandler } from 'h3'
+import type { EventHandler, H3Event } from 'h3'
 import { appendResponseHeader, createError, getQuery, getResponseStatus, getResponseStatusText, writeEarlyHints } from 'h3'
 import { getQuery as getURLQuery, joinURL } from 'ufo'
 import { propsToString, renderSSRHead } from '@unhead/vue/server'
-import type { HeadEntryOptions, Link, Script } from '@unhead/vue/types'
+import type { Link, Script } from '@unhead/vue/types'
 import destr from 'destr'
 import { defineRenderHandler, getRouteRules, useNitroApp } from 'nitropack/runtime'
 import type { NuxtPayload, NuxtRenderHTMLContext, NuxtSSRContext } from 'nuxt/app'
 
 import { getRenderer } from '../utils/renderer/build-files'
-import { payloadCache } from '../utils/cache'
+import { payloadCache, prerenderRenderingURLs } from '../utils/cache'
 
 import { renderPayloadJsonScript, renderPayloadResponse, renderPayloadScript, splitPayload } from '../utils/renderer/payload'
 import { createSSRContext, setSSRError } from '../utils/renderer/app'
@@ -50,9 +50,7 @@ const PAYLOAD_FILENAME = NUXT_JSON_PAYLOADS ? '_payload.json' : '_payload.js'
 
 let entryPath: string
 
-const handler: EventHandler = defineRenderHandler(async (event): Promise<Partial<RenderResponse>> => {
-  const nitroApp = useNitroApp()
-
+const handler: EventHandler = defineRenderHandler((event): Promise<Partial<RenderResponse>> | Partial<RenderResponse> => {
   // Whether we're rendering an error page
   const ssrError = event.path.startsWith('/__nuxt_error')
     ? getQuery(event) as unknown as NuxtPayload['error'] & { url: string }
@@ -66,12 +64,33 @@ const handler: EventHandler = defineRenderHandler(async (event): Promise<Partial
     })
   }
 
+  // During prerender, refuse to recurse into a URL that is already rendering
+  // higher in the same call chain. Without this, a `useFetch`/`$fetch` against
+  // the in-flight URL (typically from route middleware) silently deadlocks the
+  // build. See https://github.com/nuxt/nuxt/issues/33871.
+  if (import.meta.prerender && prerenderRenderingURLs) {
+    const renderingURL = event.path
+    const stack = prerenderRenderingURLs.getStore()
+    if (stack?.includes(renderingURL)) {
+      const chain = [...stack, renderingURL].filter(url => !url.startsWith('/__nuxt_error')).map(url => `"${url}"`).join(' -> ')
+      throw createError({
+        status: 508,
+        statusText: `Loop detected while prerendering "${renderingURL}" (${chain}). Check for \`useFetch\`/\`$fetch\` calls targeting a URL that is currently being rendered.`,
+      })
+    }
+    return prerenderRenderingURLs.run([...(stack || []), renderingURL], () => renderRoute(event, ssrError))
+  }
+
+  return renderRoute(event, ssrError)
+})
+
+async function renderRoute (event: H3Event, ssrError: (NuxtPayload['error'] & { url: string }) | null): Promise<Partial<RenderResponse>> {
+  const nitroApp = useNitroApp()
+
   // Initialize ssr context
   const ssrContext: NuxtSSRContext = createSSRContext(event)
 
-  // needed for hash hydration plugin to work
-  const headEntryOptions: HeadEntryOptions = { mode: 'server' }
-  ssrContext.head.push(appHead, headEntryOptions)
+  ssrContext.head.push(appHead)
 
   if (ssrError) {
     // eslint-disable-next-line @typescript-eslint/no-deprecated
@@ -93,6 +112,10 @@ const handler: EventHandler = defineRenderHandler(async (event): Promise<Partial
   // Get route options (for `ssr: false`, `isr`, `cache` and `noScripts`)
   const routeOptions = getRouteRules(event)
 
+  if (routeOptions.ssr === false) {
+    ssrContext.noSSR = true
+  }
+
   // Whether we are prerendering route or using ISR/SWR caching
   const _PAYLOAD_EXTRACTION = !ssrContext.noSSR && (
     (import.meta.prerender && NUXT_PAYLOAD_EXTRACTION)
@@ -110,13 +133,9 @@ const handler: EventHandler = defineRenderHandler(async (event): Promise<Partial
     ssrContext.url = url
 
     event._path = event.node.req.url = url
-    if (payloadCache && await payloadCache.hasItem(url)) {
-      return payloadCache.getItem(url) as Promise<Partial<RenderResponse>>
+    if (payloadCache && await payloadCache.hasItem(url + '.json')) {
+      return payloadCache.getItem(url + '.json') as Promise<Partial<RenderResponse>>
     }
-  }
-
-  if (routeOptions.ssr === false) {
-    ssrContext.noSSR = true
   }
 
   const payloadURL = _PAYLOAD_EXTRACTION ? joinURL(ssrContext.runtimeConfig.app.cdnURL || ssrContext.runtimeConfig.app.baseURL, ssrContext.url.replace(/\?.*$/, ''), PAYLOAD_FILENAME) + '?' + ssrContext.runtimeConfig.app.buildId : undefined
@@ -171,7 +190,7 @@ const handler: EventHandler = defineRenderHandler(async (event): Promise<Partial
   if (isRenderingPayload) {
     const response = renderPayloadResponse(ssrContext)
     if (payloadCache) {
-      await payloadCache.setItem(ssrContext.url, response)
+      await payloadCache.setItem(ssrContext.url + '.json', response)
     }
     return response
   }
@@ -184,7 +203,7 @@ const handler: EventHandler = defineRenderHandler(async (event): Promise<Partial
     // Cache payload from the current SSR context so _payload.json requests can be served
     // without a full re-render (during prerender via LRU+FS, at runtime via in-memory TTL cache)
     if (payloadCache) {
-      await payloadCache.setItem(ssrContext.url === '/' ? '/' : ssrContext.url.replace(/\/$/, ''), renderPayloadResponse(ssrContext))
+      await payloadCache.setItem((ssrContext.url === '/' ? '/' : ssrContext.url.replace(/\/$/, '')) + '.json', renderPayloadResponse(ssrContext))
     }
   }
 
@@ -212,12 +231,11 @@ const handler: EventHandler = defineRenderHandler(async (event): Promise<Partial
     }
     ssrContext.head.push({
       script: [{
-        tagPosition: 'head',
-        tagPriority: -2,
         type: 'importmap',
-        innerHTML: JSON.stringify({ imports: { '#entry': path } }),
+        // unhead v3 JSON-stringifies object innerHTML for <script> tags
+        innerHTML: { imports: { '#entry': path } },
       }],
-    }, headEntryOptions)
+    })
   }
   // 1. Preload payloads and app manifest
   // Skip preload when inlining full payload in HTML (no separate fetch needed for initial load)
@@ -228,7 +246,7 @@ const handler: EventHandler = defineRenderHandler(async (event): Promise<Partial
           ? { rel: 'preload', as: 'fetch', crossorigin: 'anonymous', href: payloadURL }
           : { rel: 'modulepreload', crossorigin: '', href: payloadURL },
       ],
-    }, headEntryOptions)
+    })
   }
 
   // 2. Styles
@@ -249,7 +267,7 @@ const handler: EventHandler = defineRenderHandler(async (event): Promise<Partial
   }
 
   if (link.length) {
-    ssrContext.head.push({ link }, headEntryOptions)
+    ssrContext.head.push({ link })
   }
 
   if (!NO_SCRIPTS) {
@@ -263,10 +281,10 @@ const handler: EventHandler = defineRenderHandler(async (event): Promise<Partial
     }
     ssrContext.head.push({
       link: getPreloadLinks(ssrContext, renderer.rendererContext) as Link[],
-    }, headEntryOptions)
+    })
     ssrContext.head.push({
       link: getPrefetchLinks(ssrContext, renderer.rendererContext) as Link[],
-    }, headEntryOptions)
+    })
     // 5. Payloads
     ssrContext.head.push({
       script: _PAYLOAD_INLINE
@@ -279,7 +297,6 @@ const handler: EventHandler = defineRenderHandler(async (event): Promise<Partial
           ? renderPayloadJsonScript({ ssrContext, data: splitPayload(ssrContext).initial, src: payloadURL })
           : renderPayloadScript({ ssrContext, data: splitPayload(ssrContext).initial, routeOptions, src: payloadURL }),
     }, {
-      ...headEntryOptions,
       // this should come before another end of body scripts
       tagPosition: 'bodyClose',
       tagPriority: 'high',
@@ -300,10 +317,12 @@ const handler: EventHandler = defineRenderHandler(async (event): Promise<Partial
         tagPosition,
         crossorigin: '',
       })),
-    }, headEntryOptions)
+    })
   }
 
-  const { headTags, bodyTags, bodyTagsOpen, htmlAttrs, bodyAttrs } = await renderSSRHead(ssrContext.head, renderSSRHeadOptions)
+  // TODO: migrate to `ssrContext.head.render()` once `renderSSRHeadOptions` (e.g. `omitLineBreaks`) can be passed to `createServerHead` at construction time.
+  // eslint-disable-next-line @typescript-eslint/no-deprecated
+  const { headTags, bodyTags, bodyTagsOpen, htmlAttrs, bodyAttrs } = renderSSRHead(ssrContext.head, renderSSRHeadOptions)
 
   // Create render context
   const htmlContext: NuxtRenderHTMLContext = {
@@ -331,7 +350,7 @@ const handler: EventHandler = defineRenderHandler(async (event): Promise<Partial
       'x-powered-by': 'Nuxt',
     },
   } satisfies RenderResponse
-})
+}
 
 export default handler
 

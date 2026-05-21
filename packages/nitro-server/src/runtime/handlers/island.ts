@@ -3,10 +3,11 @@ import type { RenderResponse } from 'nitropack/types'
 import type { Link, SerializableHead } from '@unhead/vue/types'
 import { destr } from 'destr'
 import type { EventHandler, H3Event } from 'h3'
-import { createError, defineEventHandler, getQuery, readBody, setResponseHeaders } from 'h3'
+import { createError, defineEventHandler, getQuery, readBody, setResponseHeader, setResponseHeaders, setResponseStatus } from 'h3'
 import { resolveUnrefHeadInput } from '@unhead/vue'
 import { getRequestDependencies } from 'vue-bundle-renderer/runtime'
 import { getQuery as getURLQuery } from 'ufo'
+import { computeIslandHash, filterIslandProps } from '#app/island-hash'
 import type { NuxtIslandContext, NuxtIslandResponse } from 'nuxt/app'
 import { islandCache, islandPropCache } from '../utils/cache'
 import { createSSRContext } from '../utils/renderer/app'
@@ -41,9 +42,27 @@ const handler: EventHandler = defineEventHandler(async (event) => {
   const renderer = await getSSRRenderer()
 
   const renderResult = await renderer.renderToString(ssrContext).catch(async (err) => {
+    if (ssrContext['~renderResponse'] && (err as Error)?.message === 'skipping render') {
+      return {} as Awaited<ReturnType<typeof renderer.renderToString>>
+    }
     await ssrContext.nuxt?.hooks.callHook('app:error', err)
     throw err
   })
+
+  // Fire `app:rendered` before checking `~renderResponse` (matches `renderer.ts`), so
+  // anything hooking into it, like `useCookie`, will still work on redirect/reject.
+  await ssrContext.nuxt?.hooks.callHook('app:rendered', { ssrContext, renderResult })
+
+  if (ssrContext['~renderResponse']) {
+    const response = ssrContext['~renderResponse']
+    if (response.statusCode && response.statusCode >= 400) {
+      throw createError({
+        statusCode: response.statusCode,
+        statusMessage: response.statusMessage,
+      })
+    }
+    return returnIslandResponse(event, response)
+  }
 
   // Handle errors
   if (ssrContext.payload?.error) {
@@ -51,8 +70,6 @@ const handler: EventHandler = defineEventHandler(async (event) => {
   }
 
   const inlinedStyles = await renderInlineStyles(ssrContext.modules ?? [])
-
-  await ssrContext.nuxt?.hooks.callHook('app:rendered', { ssrContext, renderResult })
 
   if (inlinedStyles.length) {
     ssrContext.head.push({ style: inlinedStyles })
@@ -74,7 +91,7 @@ const handler: EventHandler = defineEventHandler(async (event) => {
       }
     }
     if (link.length) {
-      ssrContext.head.push({ link }, { mode: 'server' })
+      ssrContext.head.push({ link })
     }
   }
 
@@ -110,14 +127,26 @@ const handler: EventHandler = defineEventHandler(async (event) => {
 
 export default handler
 
+function returnIslandResponse (event: H3Event, response: Partial<RenderResponse>) {
+  for (const header in response.headers || {}) {
+    setResponseHeader(event, header, response.headers![header]!)
+  }
+  if (response.statusCode) {
+    setResponseStatus(event, response.statusCode, response.statusMessage)
+  }
+  return response.body
+}
+
 const ISLAND_PATH_PREFIX = '/__nuxt_island/'
 const VALID_COMPONENT_NAME_RE = /^[a-z][\w.-]*$/i
 
 async function getIslandContext (event: H3Event): Promise<NuxtIslandContext> {
   let url = event.path || ''
-  if (import.meta.prerender && event.path && await islandPropCache!.hasItem(event.path)) {
-    // rehydrate props from cache so we can rerender island if cache does not have it any more
-    url = await islandPropCache!.getItem(event.path) as string
+  const islandPath = url.replace(/\?.*$/, '')
+  if (import.meta.prerender && event.path && await islandPropCache!.hasItem(islandPath)) {
+    // for prerender, the original request URL (with query) is rehydrated from cache
+    // so that re-renders of the same island path use the original props
+    url = await islandPropCache!.getItem(islandPath) as string
   }
 
   if (!url.startsWith(ISLAND_PATH_PREFIX)) {
@@ -132,14 +161,33 @@ async function getIslandContext (event: H3Event): Promise<NuxtIslandContext> {
     throw createError({ statusCode: 400, statusMessage: 'Invalid island component name' })
   }
 
-  const context = event.method === 'GET' ? getQuery(event) : await readBody(event)
+  const rawContext = event.method === 'GET' ? getQuery<NuxtIslandContext>(event) : await readBody<NuxtIslandContext>(event)
+  const rawProps = destr<Record<string, any> | null | undefined>(rawContext?.props) || {}
+  const filteredProps = filterIslandProps(rawProps)
 
-  // Only extract known context fields to prevent arbitrary data injection
+  // Reconstruct the `context` object as the client computed its hash over.
+  // `<NuxtIsland>` sends `{ ...props.context, props: JSON.stringify(props.props) }`
+  const clientContext: Record<string, any> = {}
+  if (rawContext && typeof rawContext === 'object') {
+    for (const key in rawContext) {
+      if (key !== 'props') {
+        clientContext[key] = (rawContext as Record<string, any>)[key]
+      }
+    }
+  }
+
+  // Bind the response to the URL: a request whose URL-resident `hashId` does not match
+  // the actual (name, props, context) is rejected.
+  const expectedHash = computeIslandHash(componentName, filteredProps, clientContext, undefined)
+  if (!hashId || hashId !== expectedHash) {
+    throw createError({ statusCode: 400, statusMessage: 'Invalid island request hash' })
+  }
+
   return {
-    url: typeof context?.url === 'string' ? context.url : '/',
+    url: typeof rawContext?.url === 'string' ? rawContext.url : '/',
     id: hashId,
     name: componentName,
-    props: destr(context.props) || {},
+    props: rawProps,
     slots: {},
     components: {},
   }
