@@ -158,6 +158,13 @@ describe('modules', () => {
 })
 
 describe('pages', () => {
+  it('exposes the current env name at runtime', async () => {
+    const expectedEnvName = isDev ? 'development' : 'production'
+    const { page } = await renderPage('/env-name')
+    expect(await page.getByTestId('env-name').textContent()).toBe(expectedEnvName)
+    await page.close()
+  })
+
   it('render index', async () => {
     const html = await $fetch<string>('/')
 
@@ -2150,6 +2157,27 @@ describe.skipIf(isDev || isWindows || !isRenderingJson)('prefetching', () => {
     expect(await page.innerHTML('#async-server-component-count')).toBe('34')
 
     expect(requests.some(req => req.startsWith('/__nuxt_island/AsyncServerComponent'))).toBe(false)
+    await page.close()
+  })
+
+  it.skipIf(!isTestingAppManifest)('should forward destination preload tags as prefetch hints on link prefetch', async () => {
+    const { page } = await renderPage()
+
+    await gotoPath(page, '/prefetch')
+    // The NuxtLink to /prefetch/server-components is in view, so visibility-based
+    // prefetching should trigger loading its payload, which includes the
+    // forwarded preload links registered via `useHead` on that page.
+    await page.waitForFunction(
+      () => Array.from(document.head.querySelectorAll('link[rel="prefetch"]'))
+        .some(l => (l as HTMLLinkElement).href.endsWith('/public.svg')),
+    )
+
+    // Confirm the rel was downgraded from preload to prefetch.
+    const preloadCount = await page.evaluate(
+      () => document.head.querySelectorAll('link[rel="preload"][href$="/public.svg"]').length,
+    )
+    expect(preloadCount).toBe(0)
+
     await page.close()
   })
 

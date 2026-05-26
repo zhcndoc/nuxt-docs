@@ -22,6 +22,7 @@ declare global {
     browser: boolean
     client: boolean
     dev: boolean
+    envName: string
     server: boolean
     test: boolean
   }
@@ -53,3 +54,5 @@ declare module 'vue' {
     head?(nuxtApp: NuxtApp): UseHeadInput
   }
 }
+
+export type _NuxtAugmentsAnchor = NuxtApp
