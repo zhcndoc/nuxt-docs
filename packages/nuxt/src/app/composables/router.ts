@@ -156,6 +156,11 @@ export const navigateTo = (to: RouteLocationRaw | undefined | null, options?: Na
 
   // Early open handler
   if (import.meta.client && options?.open) {
+    const { protocol } = new URL(toPath, window.location.href)
+    if (protocol && isScriptProtocol(protocol)) {
+      throw new Error(`Cannot navigate to a URL with '${protocol}' protocol.`)
+    }
+
     const { target = '_blank', windowFeatures = {} } = options.open
 
     const features: string[] = []
@@ -212,8 +217,8 @@ export const navigateTo = (to: RouteLocationRaw | undefined | null, options?: Na
       const redirect = async function (response: any) {
         // TODO: consider deprecating in favour of `app:rendered` and removing
         await nuxtApp.callHook('app:redirected')
-        const encodedLoc = encodeForHtmlAttr(location)
         const encodedHeader = encodeURL(location, isExternalHost)
+        const encodedLoc = encodeForHtmlAttr(encodedHeader)
 
         nuxtApp.ssrContext!['~renderResponse'] = {
           status: sanitizeStatusCode(options?.redirectCode || 302, 302),
@@ -336,7 +341,9 @@ export function resolveRouteObject (to: Exclude<RouteLocationRaw, string>): stri
 export function encodeURL (location: string, isExternalHost = false): string {
   const url = new URL(location, 'http://localhost')
   if (!isExternalHost) {
-    return url.pathname + url.search + url.hash
+    // Collapse leading slashes to keep the redirect same-origin (CWE-601).
+    const pathname = url.pathname.replace(/^\/{2,}/, '/')
+    return pathname + url.search + url.hash
   }
   if (location.startsWith('//')) {
     return url.toString().replace(url.protocol, '')

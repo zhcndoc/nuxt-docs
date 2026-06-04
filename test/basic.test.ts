@@ -558,6 +558,12 @@ describe('pages', () => {
     expect(html).not.toContain('Sugar Counter 12 x 0 = 0')
     // ensure NuxtClientFallback is being rendered with its fallback tag and attributes
     expect(html).toContain('<span class="break-in-ssr">this failed to render</span>')
+
+    const xssHtml = await $fetch<string>('/client-fallback', {
+      query: { unsafe: '<script>alert(1)</script>' },
+    })
+    expect(xssHtml).not.toContain('<section class="escaped-fallback"><script>alert(1)</script></section>')
+    expect(xssHtml).toContain('<section class="escaped-fallback">&lt;script&gt;alert(1)&lt;/script&gt;</section>')
     // ensure Fallback slot is being rendered server side
     expect(html).toContain('Hello world !')
     // ensure fallback is rendered when an async component throws inside a wrapping component
@@ -1249,6 +1255,20 @@ describe('navigate', () => {
     expect(content).toContain('%3E')
     expect(content).toContain('%26')
     expect(content).toContain('%27')
+  })
+
+  it.each([
+    '/..//evil.com',
+    '/.//evil.com',
+    '/%2e%2e//evil.com',
+    '/app/..//evil.com',
+  ])('rejects protocol-relative redirect target via path normalization (%s)', async (next) => {
+    const res = await fetch('/navigate-to-open-redirect?next=' + encodeURIComponent(next), { redirect: 'manual' })
+    const location = res.headers.get('location') || ''
+    expect(location.startsWith('//')).toBe(false)
+    const body = await res.text()
+    const content = body.match(/content="0; url=([^"]*)"/)?.[1] ?? ''
+    expect(content.startsWith('//')).toBe(false)
   })
 })
 
