@@ -21,6 +21,9 @@ Nuxt 的 [配置](/docs/3.x/api/nuxt-config) 和 [钩子](/docs/3.x/guide/going-
   ::card{icon="i-lucide-code" title="添加插件、组件及更多" to="/docs/3.x/guide/modules/recipes-basics"}
   学习如何从模块中注入插件、组件、组合函数和服务器路由。
   ::
+  ::card{icon="i-lucide-link" title="依赖其他模块" to="/docs/3.x/guide/modules/module-dependencies"}
+  使用版本约束和配置合并来声明对其他模块的依赖。
+  ::
   ::card{icon="i-lucide-layers" title="使用钩子并扩展类型" to="/docs/3.x/guide/modules/recipes-advanced"}
   掌握模块中的生命周期钩子、虚拟文件和 TypeScript 声明。
   ::

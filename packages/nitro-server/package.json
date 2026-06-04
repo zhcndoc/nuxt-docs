@@ -1,6 +1,6 @@
 {
   "name": "@nuxt/nitro-server",
-  "version": "3.21.6",
+  "version": "3.21.7",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/nuxt/nuxt.git",
@@ -57,7 +57,7 @@
   "devDependencies": {
     "@nuxt/schema": "workspace:*",
     "nuxt": "workspace:*",
-    "obuild": "0.4.35",
+    "obuild": "0.4.36",
     "vitest": "4.1.6"
   },
   "engines": {
