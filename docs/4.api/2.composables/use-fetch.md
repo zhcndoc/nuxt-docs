@@ -1,6 +1,6 @@
 ---
 title: 'useFetch'
-description: '使用支持 SSR 的组合函数从 API 端点获取数据。'
+description: '从 API 端点获取数据的支持 SSR 的组合函数。'
 links:
   - label: 源码
     icon: i-simple-icons-github
@@ -9,7 +9,7 @@ links:
 ---
 
 此组合函数是对 [`useAsyncData`](/docs/3.x/api/composables/use-async-data) 和 [`$fetch`](/docs/3.x/api/utils/dollarfetch) 的简洁封装。  
-它自动基于 URL 和 fetch 选项生成 key，提供基于服务器路由的请求 URL 类型提示，并推断 API 响应类型。
+它会自动基于 URL 和 fetch 选项生成 key，提供基于服务器路由的请求 URL 类型提示，并推断 API 响应类型。
 
 ::note
 `useFetch` 是一个组合函数，适用于直接在 setup 函数、插件或路由中间件中调用。它返回响应式组合对象，并处理将响应添加到 Nuxt payload，以便在页面水合时无需在客户端重新获取数据。
@@ -242,7 +242,7 @@ const getDefaultCachedData = (key, nuxtApp, ctx) => nuxtApp.isHydrating
 - `error`：请求失败
 
 ::note
-如果服务器端没有预先请求数据（例如 `server: false`），那么直到页面完成水合，数据才会被请求。这意味着即使客户端 await 了 `useFetch`，在 `<script setup>` 中 `data` 依旧会是 null。
+如果你没有在服务器端获取数据（例如使用 `server: false`），那么在 hydration 完成之前都不会获取该数据。这意味着即使你在客户端 `await useFetch`，在 `<script setup>` 中 `data` 仍然会保持为 undefined。
 ::
 
 ### 示例

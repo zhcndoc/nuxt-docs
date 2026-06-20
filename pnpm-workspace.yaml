@@ -20,14 +20,15 @@ overrides:
   '@nuxt/schema': workspace:*
   '@nuxt/vite-builder': workspace:*
   '@nuxt/webpack-builder': workspace:*
-  '@vue/compiler-core': 3.5.34
-  '@vue/compiler-dom': 3.5.34
-  '@vue/shared': 3.5.34
+  '@vue/compiler-core': 3.5.35
+  '@vue/compiler-dom': 3.5.35
+  '@vue/shared': 3.5.35
   nuxt: workspace:*
   send: '>=1.2.1'
-  vite: '^7.3.3'
-  vue: 3.5.34
+  vite: '^7.3.5'
+  vue: 3.5.35
   typescript: 5.9.3
+  webpack: ^5.107.2
 
 patchedDependencies:
   changelogen: patches/changelogen.patch
@@ -43,3 +44,5 @@ ignoreWorkspaceCycles: true
 minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
   - '@nuxt/*'
+  # Renovate security update: esbuild@0.28.1
+  - esbuild@0.28.1
