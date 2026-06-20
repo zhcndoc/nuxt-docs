@@ -14,7 +14,7 @@ links:
 
 ## 描述
 
-一个用于向屏幕阅读器宣布动态内容变化的组合式函数。与自动宣布路由变化的 [`useRouteAnnouncer`](/docs/api/composables/use-route-announcer) 不同，`useAnnouncer` 让你手动控制宣布的内容和时机。
+一个用于向屏幕阅读器宣布动态内容变更的组合式函数。与会自动宣布路由变更的 [`useRouteAnnouncer`](/docs/4.x/api/composables/use-route-announcer) 不同，`useAnnouncer` 让你可以手动控制要宣布的内容以及宣布时机。
 
 适用于页面内更新，如表单验证、异步操作、吐司通知和实时内容变化。
 

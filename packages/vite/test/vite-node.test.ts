@@ -2,7 +2,9 @@ import fs from 'node:fs'
 import net from 'node:net'
 import os from 'node:os'
 import process from 'node:process'
-import { afterEach, describe, expect, it } from 'vitest'
+import { Buffer } from 'node:buffer'
+import { join } from 'pathe'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { listenAndRestrict, pickSocketPath } from '../src/plugins/vite-node.ts'
 
 const createdDirs: string[] = []
@@ -42,7 +44,7 @@ describe('pickSocketPath', () => {
   it('uses a named pipe on Windows', () => {
     const { socketPath, parentDir } = pickSocketPath('win32')
     expect(socketPath.startsWith('\0')).toBe(false)
-    expect(socketPath).toContain('/pipe/')
+    expect(socketPath.startsWith('\\\\.\\pipe\\')).toBe(true)
     expect(parentDir).toBeUndefined()
   })
 
@@ -50,6 +52,20 @@ describe('pickSocketPath', () => {
     const { parentDir } = trackedPick()
     const stat = fs.statSync(parentDir!)
     expect(stat.mode & 0o777).toBe(0o700)
+  })
+
+  it('falls back to /tmp and stays within the `sun_path` limit when $TMPDIR is too long', { skip: process.platform === 'win32' }, () => {
+    const max = process.platform === 'linux' ? 108 : 104
+    const longTmpdir = fs.mkdtempSync(join(os.tmpdir(), 'x'.repeat(80)))
+    createdDirs.push(longTmpdir)
+
+    const { socketPath, parentDir } = pickSocketPath(process.platform, longTmpdir)
+    if (parentDir) {
+      createdDirs.push(parentDir)
+    }
+
+    expect(parentDir?.startsWith('/tmp/')).toBe(true)
+    expect(Buffer.byteLength(socketPath)).toBeLessThanOrEqual(max)
   })
 })
 
@@ -77,5 +93,22 @@ describe('listenAndRestrict', () => {
     const stat = fs.statSync(socketPath)
     expect(stat.mode & 0o077).toBe(0)
     server.close()
+  })
+
+  it.runIf(process.platform === 'win32')('binds on a Windows named pipe without attempting chmod', async () => {
+    const { socketPath } = pickSocketPath('win32')
+    const chmodSpy = vi.spyOn(fs, 'chmodSync')
+    const server = net.createServer()
+    try {
+      await new Promise<void>((resolve, reject) => {
+        server.once('listening', () => resolve())
+        server.once('error', reject)
+        listenAndRestrict(server, socketPath)
+      })
+      expect(chmodSpy).not.toHaveBeenCalledWith(socketPath, expect.anything())
+    } finally {
+      chmodSpy.mockRestore()
+      await new Promise<void>(resolve => server.close(() => resolve()))
+    }
   })
 })

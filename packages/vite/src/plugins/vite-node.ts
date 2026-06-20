@@ -6,6 +6,8 @@ import os from 'node:os'
 import fs from 'node:fs' // For sync operations like unlinkSync if needed during setup
 import { pathToFileURL } from 'node:url'
 import { Buffer } from 'node:buffer'
+import { randomUUID } from 'node:crypto'
+import { win32 as pathWin32 } from 'node:path'
 import { dirname, isAbsolute, join, normalize } from 'pathe'
 import { directoryToURL, resolveAlias, tryUseNuxt, useNitro } from '@nuxt/kit'
 import type { EnvironmentModuleNode, ModuleNode, PluginContainer, ViteDevServer, Plugin as VitePlugin } from 'vite'
@@ -16,7 +18,7 @@ import type { Manifest } from 'vue-bundle-renderer'
 import type { Nuxt } from '@nuxt/schema'
 import { resolveModulePath } from 'exsolve'
 
-import { isCSS } from '../utils/index.ts'
+import { isCSS, toVirtualId } from '../utils/index.ts'
 import { resolveClientEntry, resolveServerEntry } from '../utils/config.ts'
 import type { ErrorPartial } from '../types.ts'
 
@@ -130,17 +132,32 @@ export interface SocketPathInfo {
 }
 
 // only exported for tests
-export function pickSocketPath (platform: NodeJS.Platform): SocketPathInfo {
-  const uniqueSuffix = `${process.pid}-${Date.now()}`
-  const socketName = `nuxt-vite-node-${uniqueSuffix}`
+export function pickSocketPath (platform: NodeJS.Platform, tmpdir: string = os.tmpdir()): SocketPathInfo {
+  const socketName = 'nuxt.sock'
+  const socketDir = `nuxt-vite-`
 
   if (platform === 'win32') {
-    return { socketPath: join(String.raw`\\.\pipe`, socketName) }
+    // use `node:path/win32` so the `\\.\pipe\...` separators stay as backslashes
+    // (for deno compatibility) plus enough randomness to avoid collisions and being predictable
+    return { socketPath: pathWin32.join(String.raw`\\.\pipe`, socketDir + randomUUID().slice(0, 8)) }
   }
-  // place the socket inside a freshly-created 0700 directory to gate access.
-  const parentDir = fs.mkdtempSync(join(os.tmpdir(), 'nuxt-vite-node-'))
+
+  // creates a random suffix and avoids collisions
+  let parentDir = fs.mkdtempSync(join(tmpdir, socketDir))
+
+  // macOS's per-user $TMPDIR can be too long so fall back to /tmp when the
+  // full path exceeds the limit
+  if (Buffer.byteLength(join(parentDir, socketName)) >
+    (platform === 'linux' ? 108 : /* macOS */ 104)) {
+    parentDir = join('/tmp', socketDir + randomUUID().slice(0, 8))
+    // The socket needs its own 0700 directory to gate access on macOS/BSD.
+    // See https://github.com/advisories/GHSA-534h-c3cw-v3h9
+    fs.mkdirSync(parentDir, { mode: 0o700 })
+  }
+
   fs.chmodSync(parentDir, 0o700)
-  return { socketPath: join(parentDir, `${socketName}.sock`), parentDir }
+
+  return { socketPath: join(parentDir, socketName), parentDir }
 }
 
 function generateSocketPath (): SocketPathInfo {
@@ -276,7 +293,7 @@ export function ViteNodePlugin (nuxt: Nuxt): VitePlugin | undefined {
       const client = clientServer.environments.client
       nuxt.hook('app:templatesGenerated', (_app, changedTemplates) => {
         for (const template of changedTemplates) {
-          const mods = client.moduleGraph.getModulesByFile(`virtual:nuxt:${encodeURIComponent(template.dst)}`)
+          const mods = client.moduleGraph.getModulesByFile(toVirtualId(template.dst, nuxt))
           for (const mod of mods || []) {
             markInvalidate(mod)
           }
@@ -350,7 +367,7 @@ function createViteNodeSocketServer (nuxt: Nuxt, ssrServer: ViteDevServer, clien
                     errorData.frame = await ssrServer.environments.client.transformRequest(request.payload.moduleId)
                       .then(res => `${err.message || ''}\n${res?.code}`).catch(() => undefined)
                   } catch {
-                  // Ignore transform errors
+                    // Ignore transform errors
                   }
                 }
                 throw { data: errorData, message: err.message || 'Error fetching module' } satisfies ErrorPartial
@@ -464,7 +481,7 @@ function createViteNodeSocketServer (nuxt: Nuxt, ssrServer: ViteDevServer, clien
 
   listenAndRestrict(server, currentSocketPath)
 
-  server.on('error', () => {})
+  server.on('error', () => { })
 
   return server
 }

@@ -23,10 +23,11 @@ const error = useError()
 ```ts
 interface NuxtError<DataT = unknown> {
   status: number
-  statusText: string
+  statusText?: string
   message: string
   data?: DataT
-  error?: true
+  cause?: unknown
+  fatal: boolean
 }
 
 export const useError: () => Ref<NuxtError | undefined>

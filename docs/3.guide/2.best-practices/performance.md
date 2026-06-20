@@ -16,11 +16,11 @@ Nuxt 提供了若干内置功能，帮助你优化网站性能。理解这些功
 
 ```html
 <template>
-  <NuxtLink to="/about">About page</NuxtLink>
+  <NuxtLink to="/about">关于页面</NuxtLink>
 </template>
 
-<!-- Which will render to with Vue Router & Smart Prefetching -->
-<a href="/about">About page</a>
+<!-- 这将使用 Vue Router 和智能预取渲染为 -->
+<a href="/about">关于页面</a>
 ```
 
 Nuxt 会自动包含智能预取。这意味着它会检测链接何时可见（默认情况下），无论是在视口内还是在滚动时，并预取那些页面的 JavaScript，这样在用户点击链接时页面已经准备就绪。
@@ -84,9 +84,9 @@ const show = ref(false)
 
 <template>
   <div>
-    <h1>Mountains</h1>
+    <h1>山脉</h1>
     <LazyMountainsList v-if="show" />
-    <button v-if="!show" @click="show = true">Show List</button>
+    <button v-if="!show" @click="show = true">显示列表</button>
   </div>
 </template>
 ```
@@ -141,7 +141,7 @@ const show = ref(false)
 
 ```html
 <template>
-  <!-- 🚨 Needs to be loaded ASAP -->
+  <!-- 🚨 需要尽快加载 -->
   <NuxtImg
     src="/hero-banner.jpg"
     format="webp"
@@ -151,7 +151,7 @@ const show = ref(false)
     height="100"
   />
 
-  <!-- 🐌 Can be loaded later -->
+  <!-- 🐌 可以稍后加载 -->
   <NuxtImg
     src="/facebook-logo.jpg"
     format="webp"
@@ -202,11 +202,11 @@ const { onLoaded, proxy } = useScriptGoogleAnalytics(
     },
   },
 )
-// queue events to be sent when ga loads
+// 将事件排队，待 ga 加载后发送
 proxy.gtag('config', 'UA-123456789-1')
-// or wait until ga is loaded
+// 或等待直到 ga 加载完成
 onLoaded((gtag) => {
-  // script loaded
+  // 脚本已加载
 })
 ```
 
@@ -218,7 +218,7 @@ onLoaded((gtag) => {
 
 ### Nuxi Analyze
 
-`nuxi` 的 [此命令](/docs/4.x/api/commands/analyze) 允许分析生产包或你的 Nuxt 应用。它利用 `vite-bundle-visualizer`（类似于 `webpack-bundle-analyzer`）生成应用包的可视化表示，使你更容易识别哪些组件占用了最多空间。
+[`nuxi`](/docs/4.x/api/commands/analyze) 的这个命令允许你分析 Nuxt 应用的生产构建包。它利用 `vite-bundle-visualizer`（类似于 `webpack-bundle-analyzer`）生成应用构建包的可视化表示，从而更容易识别哪些组件占用了最多空间。
 
 当你在可视化中看到一个较大的块时，通常表示存在优化机会——无论是将其拆分为更小的部分、实现懒加载，还是用更高效的替代方案替换，尤其是对于第三方库。
 

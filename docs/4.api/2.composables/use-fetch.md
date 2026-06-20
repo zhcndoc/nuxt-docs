@@ -239,8 +239,8 @@ const getDefaultCachedData = (key, nuxtApp, ctx) => nuxtApp.isHydrating
 - `success`: 请求成功完成
 - `error`: 请求失败
 
-::note  
-如果你没有在服务器上获取数据（例如使用了 `server: false`），那么数据将在水合完成之前不会被获取。这意味着即使你在客户端对 `useFetch` 使用了 await，在 `<script setup>` 中 `data` 仍将保持为空。  
+::note
+如果你没有在服务端获取数据（例如使用 `server: false`），那么在 hydration 完成之前都不会获取该数据。这意味着即使你在客户端 `await useFetch`，在 `<script setup>` 中 `data` 仍将保持 `undefined`。
 ::
 
 ### 示例
