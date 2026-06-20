@@ -6,6 +6,7 @@ import os from 'node:os'
 import fs from 'node:fs' // For sync operations like unlinkSync if needed during setup
 import { pathToFileURL } from 'node:url'
 import { Buffer } from 'node:buffer'
+import { randomUUID } from 'node:crypto'
 import { dirname, isAbsolute, join, normalize } from 'pathe'
 import { directoryToURL, resolveAlias, resolvePath, tryUseNuxt, useNitro } from '@nuxt/kit'
 import type { EnvironmentModuleNode, ModuleNode, PluginContainer, ViteDevServer, Plugin as VitePlugin } from 'vite'
@@ -130,17 +131,31 @@ export interface SocketPathInfo {
 }
 
 // only exported for tests
-export function pickSocketPath (platform: NodeJS.Platform): SocketPathInfo {
-  const uniqueSuffix = `${process.pid}-${Date.now()}`
-  const socketName = `nuxt-vite-node-${uniqueSuffix}`
+export function pickSocketPath (platform: NodeJS.Platform, tmpdir: string = os.tmpdir()): SocketPathInfo {
+  const socketName = 'nuxt.sock'
+  const socketDir = `nuxt-vite-`
 
   if (platform === 'win32') {
-    return { socketPath: join(String.raw`\\.\pipe`, socketName) }
+  // enough randomness to avoid collisions and being predictable
+    return { socketPath: join(String.raw`\\.\pipe`, socketDir + randomUUID().slice(0, 8)) }
   }
-  // place the socket inside a freshly-created 0700 directory to gate access.
-  const parentDir = fs.mkdtempSync(join(os.tmpdir(), 'nuxt-vite-node-'))
+
+  // creates a random suffix and avoids collisions
+  let parentDir = fs.mkdtempSync(join(tmpdir, socketDir))
+
+  // macOS's per-user $TMPDIR can be too long so fall back to /tmp when the
+  // full path exceeds the limit
+  if (Buffer.byteLength(join(parentDir, socketName)) >
+    (platform === 'linux' ? 108 : /* macOS */ 104)) {
+    parentDir = join('/tmp', socketDir + randomUUID().slice(0, 8))
+    // The socket needs its own 0700 directory to gate access on macOS/BSD.
+    // See https://github.com/advisories/GHSA-534h-c3cw-v3h9
+    fs.mkdirSync(parentDir, { mode: 0o700 })
+  }
+
   fs.chmodSync(parentDir, 0o700)
-  return { socketPath: join(parentDir, `${socketName}.sock`), parentDir }
+
+  return { socketPath: join(parentDir, socketName), parentDir }
 }
 
 function generateSocketPath (): SocketPathInfo {
@@ -219,9 +234,27 @@ export function ViteNodePlugin (nuxt: Nuxt): VitePlugin | undefined {
     nitro.options._config.virtual[filename] = vfs[key as keyof typeof vfs]
   }
 
+  // The SSR dev server runs with `hmr: false`, so Vite never fires
+  // `handleHotUpdate` on it and user-plugin invalidations of SSR modules
+  // (e.g. virtual modules via `server.moduleGraph.invalidateModule`) are
+  // lost. Captured below for the legacy two-server path and mirrored from
+  // the client server's `handleHotUpdate`. See nuxt/nuxt#30169.
+  let legacySsrServer: ViteDevServer | undefined
+
   return {
     name: 'nuxt:vite-node-server',
     enforce: 'post',
+    handleHotUpdate ({ server: clientServer, timestamp }) {
+      if (!legacySsrServer) { return }
+      const ssrGraph = legacySsrServer.moduleGraph
+      for (const mod of clientServer.moduleGraph.idToModuleMap.values()) {
+        if (!mod.id || mod.lastInvalidationTimestamp < timestamp) { continue }
+        const ssrMod = ssrGraph.getModuleById(mod.id)
+        if (ssrMod) {
+          ssrGraph.invalidateModule(ssrMod, undefined, timestamp)
+        }
+      }
+    },
     async configureServer (clientServer) {
       // early return if plugins are 'borrowed' for testing/storybook
       if (!tryUseNuxt()) {
@@ -281,7 +314,11 @@ export function ViteNodePlugin (nuxt: Nuxt): VitePlugin | undefined {
       if (nuxt.options.experimental.viteEnvironmentApi || !nuxt.options.ssr) {
         resolveServer(clientServer)
       } else {
-        nuxt.hook('vite:serverCreated', (ssrServer, ctx) => ctx.isServer ? resolveServer(ssrServer) : undefined)
+        nuxt.hook('vite:serverCreated', (ssrServer, ctx) => {
+          if (!ctx.isServer) { return }
+          legacySsrServer = ssrServer
+          resolveServer(ssrServer)
+        })
       }
 
       nuxt.hook('close', cleanupSocket)
@@ -379,7 +416,7 @@ function createViteNodeSocketServer (nuxt: Nuxt, ssrServer: ViteDevServer, clien
                     errorData.frame = await ssrServer.environments.client.transformRequest(request.payload.moduleId)
                       .then(res => `${err.message || ''}\n${res?.code}`).catch(() => undefined)
                   } catch {
-                  // Ignore transform errors
+                    // Ignore transform errors
                   }
                 }
                 throw { data: errorData, message: err.message || 'Error fetching module' } satisfies ErrorPartial
@@ -493,7 +530,7 @@ function createViteNodeSocketServer (nuxt: Nuxt, ssrServer: ViteDevServer, clien
 
   listenAndRestrict(server, currentSocketPath)
 
-  server.on('error', () => {})
+  server.on('error', () => { })
 
   return server
 }

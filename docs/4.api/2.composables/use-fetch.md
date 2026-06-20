@@ -26,7 +26,7 @@ const { data, status, error, refresh, clear } = await useFetch('/api/modules', {
 ```
 
 ::tip{to="/docs/4.x/guide/recipes/custom-usefetch#custom-usefetch-with-createusefetch"}
-Need a custom `useFetch` with pre-defined defaults (like `baseURL` or auth headers)? Use `createUseFetch` to create a fully typed custom composable.
+需要一个带有预定义默认值（如 `baseURL` 或认证请求头）的自定义 `useFetch` 吗？使用 `createUseFetch` 来创建一个完全类型化的自定义可组合函数。
 ::
 
 ::note  
@@ -155,7 +155,7 @@ type UseFetchOptions<DataT> = {
 }
 
 type AsyncDataRequestContext = {
-  /** The reason for this data request */
+  /** 此次数据请求的原因 */
   cause: 'initial' | 'refresh:manual' | 'refresh:hook' | 'watch'
 }
 
@@ -239,8 +239,8 @@ const getDefaultCachedData = (key, nuxtApp, ctx) => nuxtApp.isHydrating
 - `success`: 请求成功完成
 - `error`: 请求失败
 
-::note  
-如果你没有在服务器上获取数据（例如使用了 `server: false`），那么数据将在水合完成之前不会被获取。这意味着即使你在客户端对 `useFetch` 使用了 await，在 `<script setup>` 中 `data` 仍将保持为空。  
+::note
+如果你没有在服务端获取数据（例如使用 `server: false`），那么在水合完成之前，不会获取该数据。这意味着即使你在客户端等待 `useFetch`，在 `<script setup>` 中 `data` 仍然会保持为 undefined。
 ::
 
 ### 示例

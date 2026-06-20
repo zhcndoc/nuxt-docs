@@ -218,7 +218,7 @@ onLoaded((gtag) => {
 
 ### Nuxi Analyze
 
-`nuxi` 的 [此命令](/docs/4.x/api/commands/analyze) 允许分析生产包或你的 Nuxt 应用。它利用 `vite-bundle-visualizer`（类似于 `webpack-bundle-analyzer`）生成应用包的可视化表示，使你更容易识别哪些组件占用了最多空间。
+[`This`](/docs/4.x/api/commands/analyze) 命令 of `nuxi` allows you to analyze the production bundle of your Nuxt application. It leverages `vite-bundle-visualizer` (类似于 `webpack-bundle-analyzer`) to generate a visual representation of your application's bundle, making it easier to identify which components take up the most space.
 
 当你在可视化中看到一个较大的块时，通常表示存在优化机会——无论是将其拆分为更小的部分、实现懒加载，还是用更高效的替代方案替换，尤其是对于第三方库。
 
