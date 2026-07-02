@@ -7,6 +7,7 @@ import type { H3Event as H3V1Event } from 'h3'
 import { useNitro } from '@nuxt/kit'
 import { joinURL } from 'ufo'
 import type { IncomingMessage, ServerResponse } from 'node:http'
+import { toVirtualId } from '../utils/index.ts'
 
 export function DevServerPlugin (nuxt: Nuxt): Plugin {
   let useViteCors = false
@@ -42,9 +43,11 @@ export function DevServerPlugin (nuxt: Nuxt): Plugin {
             protocol: nuxt.options.devServer.https ? 'wss' : undefined,
           },
         }
+        /* eslint-disable-next-line @typescript-eslint/no-deprecated */
         if (typeof config.server.hmr !== 'object' || !config.server.hmr.server) {
           serverDefaults.hmr ??= {}
           const hmrPortDefault = 24678 // Vite's default HMR port
+          /* eslint-disable-next-line @typescript-eslint/no-deprecated */
           serverDefaults.hmr.port = await getPort({
             verbose: false,
             portRange: [hmrPortDefault, hmrPortDefault + 20],
@@ -60,7 +63,7 @@ export function DevServerPlugin (nuxt: Nuxt): Plugin {
       // Invalidate virtual modules when templates are re-generated
       nuxt.hook('app:templatesGenerated', async (_app, changedTemplates) => {
         await Promise.all(changedTemplates.map(async (template) => {
-          for (const mod of viteServer.moduleGraph.getModulesByFile(`virtual:nuxt:${encodeURIComponent(template.dst)}`) || []) {
+          for (const mod of viteServer.moduleGraph.getModulesByFile(toVirtualId(template.dst, nuxt)) || []) {
             viteServer.moduleGraph.invalidateModule(mod)
             await viteServer.reloadModule(mod)
           }

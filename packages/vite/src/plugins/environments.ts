@@ -1,4 +1,4 @@
-import type { Plugin } from 'vite'
+import type { InlineConfig, Plugin } from 'vite'
 import type { Nuxt } from '@nuxt/schema'
 import { withoutLeadingSlash } from 'ufo'
 import type { OutputOptions } from 'rolldown'
@@ -20,6 +20,8 @@ export function EnvironmentsPlugin (nuxt: Nuxt): Plugin {
     // work around vite optimizer bug
     '#app-manifest': resolveModulePath('mocked-exports/empty', { from: import.meta.url }),
   }
+
+  let viteConfig: InlineConfig
 
   return {
     name: 'nuxt:environments',

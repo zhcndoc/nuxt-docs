@@ -8,12 +8,13 @@ export default defineBuildConfig({
       dts: { oxc: true },
       rolldown: {
         external: [
+          '@babel/core',
           '@nuxt/schema',
           '@rspack/core',
           'nitropack/types',
           '#vite-node',
           '#vite-node-runner',
-          '#internal/nuxt/vite-node-runner',
+          '#internal/nuxt/vite-node-runner.mjs',
         ],
       },
     },

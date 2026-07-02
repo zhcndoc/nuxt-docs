@@ -29,7 +29,6 @@ function vuePlugin (options: Options) {
 const WithClientOnly = normalizeLineEndings(readFileSync(path.resolve(componentsFixtureDir, './components/client/WithClientOnlySetup.vue')).toString())
 
 const treeshakeTemplatePlugin = TreeShakeTemplatePlugin({
-  sourcemap: false,
   getComponents () {
     return [{
       pascalName: 'NotDotClientComponent',
@@ -53,7 +52,7 @@ const treeshakeTemplatePlugin = TreeShakeTemplatePlugin({
       mode: 'client',
     }]
   },
-}).raw({}, { framework: 'rollup' }) as Plugin
+}).raw({}, { framework: 'rollup', versions: {} }) as Plugin
 
 const treeshake = async (source: string): Promise<string> => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
