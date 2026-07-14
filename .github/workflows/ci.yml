@@ -182,13 +182,14 @@ jobs:
           name: dist
           path: packages
 
-      - name: Test (types)
-        run: vp run test:types
-        env:
-          MODULE_RESOLUTION: ${{ matrix.module }}
+      - parallel:
+          - name: Test (types)
+            run: vp run test:types
+            env:
+              MODULE_RESOLUTION: ${{ matrix.module }}
 
-      - name: Typecheck (docs)
-        run: vp run typecheck:docs
+          - name: Typecheck (docs)
+            run: vp run typecheck:docs
 
       - name: Cancel workflow on failure
         if: failure() && github.event_name == 'merge_group'
@@ -218,14 +219,15 @@ jobs:
       - name: Build (stub)
         run: vp run dev:prepare
 
-      - name: Lint
-        run: vp run lint
+      - parallel:
+          - name: Lint
+            run: vp run lint
 
-      - name: Test (nuxt runtime)
-        run: vp run test:runtime
+          - name: Test (nuxt runtime)
+            run: vp run test:runtime
 
-      - name: Test (unit)
-        run: vp run test:unit
+          - name: Test (unit)
+            run: vp run test:unit
 
       - name: Check built types
         run: vp run test:attw

@@ -38,8 +38,9 @@ jobs:
           node-version: lts
           cache: true
 
-      - name: Lint monorepo
-        run: vp exec sherif -r multiple-dependency-versions
+      - parallel:
+          - name: Lint monorepo
+            run: vp exec sherif -r multiple-dependency-versions
 
-      - name: Check engine ranges, peer dependency ranges and installed versions
-        run: vp run test:engines
+          - name: Check engine ranges, peer dependency ranges and installed versions
+            run: vp run test:engines
