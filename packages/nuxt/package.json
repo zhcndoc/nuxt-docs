@@ -37,6 +37,28 @@
     "./entry-ids": "./dist/runtime/server/entry-ids.js",
     "./package.json": "./package.json"
   },
+  "typesVersions": {
+    "*": {
+      "entry": [
+        "./dist/runtime/server/entry.d.ts"
+      ],
+      "manifest": [
+        "./dist/runtime/server/manifest.d.ts"
+      ],
+      "precomputed": [
+        "./dist/runtime/server/precomputed.d.ts"
+      ],
+      "styles": [
+        "./dist/runtime/server/styles.d.ts"
+      ],
+      "entry-chunk": [
+        "./dist/runtime/server/entry-chunk.d.ts"
+      ],
+      "entry-ids": [
+        "./dist/runtime/server/entry-ids.d.ts"
+      ]
+    }
+  },
   "imports": {
     "#app": "./dist/app/index.js",
     "#app/nuxt": "./dist/app/nuxt.js",
