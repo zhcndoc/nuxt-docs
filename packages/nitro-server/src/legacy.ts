@@ -20,6 +20,7 @@ export function setupLegacyDevAndBuild (nuxt: Nuxt & { _nitro?: Nitro }, nitro: 
 
   let waitUntilCompile: Promise<void> | undefined
   if (nuxt.options.dev) {
+    let nitroBuilt = false
     for (const builder of ['webpack', 'rspack'] as const) {
       nuxt.hook(`${builder}:compile`, ({ name, compiler }) => {
         if (name === 'server') {
@@ -27,7 +28,9 @@ export function setupLegacyDevAndBuild (nuxt: Nuxt & { _nitro?: Nitro }, nitro: 
           nitro.options.virtual['nuxt/entry'] = () => memfs.readFileSync(join(nuxt.options.buildDir, 'dist/server/server.mjs'), 'utf-8')
         }
       })
-      nuxt.hook(`${builder}:compiled`, () => { nuxt.server.reload() })
+      nuxt.hook(`${builder}:compiled`, () => {
+        if (nitroBuilt) { nitro.hooks.callHook('rollup:reload') }
+      })
     }
     nuxt.hook('vite:compiled', () => { nuxt.server.reload() })
 
@@ -45,7 +48,10 @@ export function setupLegacyDevAndBuild (nuxt: Nuxt & { _nitro?: Nitro }, nitro: 
     })
     nuxt.server = createDevServer(nitro)
 
-    waitUntilCompile = new Promise<void>(resolve => nitro.hooks.hook('compiled', () => resolve()))
+    waitUntilCompile = new Promise<void>(resolve => nitro.hooks.hook('compiled', () => {
+      nitroBuilt = true
+      resolve()
+    }))
   }
 
   nuxt.hook('build:done', async () => {
