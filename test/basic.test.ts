@@ -2696,7 +2696,7 @@ describe('experimental', () => {
   it('decorators support works', async () => {
     const html = await $fetch('/experimental/decorators')
     expect(html).toContain('decorated-decorated')
-    expectNoClientErrors('/experimental/decorators')
+    await expectNoClientErrors('/experimental/decorators')
   })
 
   it('Node.js compatibility for client-side', async () => {
