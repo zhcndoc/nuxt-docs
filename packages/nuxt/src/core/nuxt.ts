@@ -222,6 +222,12 @@ async function initNuxt (nuxt: Nuxt) {
     }
   }
 
+  if (nuxt.options.dev) {
+    nuxt.hook('listen', (server) => {
+      nuxt._devServerListener = server
+    })
+  }
+
   // Prompt to set compatibility date
   nuxt.options.compatibilityDate = resolveCompatibilityDatesFromEnv(nuxt.options.compatibilityDate)
 
