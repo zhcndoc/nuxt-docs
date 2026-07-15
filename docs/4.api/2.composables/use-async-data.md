@@ -254,24 +254,24 @@ Functions from the `Promise` (`then`, `catch`, and `finally`) can safely be dest
 ```ts [Signature]
 export type AsyncDataHandler<ResT> = (nuxtApp: NuxtApp, options: { signal: AbortSignal }) => Promise<ResT>
 
-export function useAsyncData<DataT, DataE> (
-  handler: AsyncDataHandler<DataT>,
-  options?: AsyncDataOptions<DataT>,
+export function useAsyncData<ResT, DataE = unknown, DataT = ResT> (
+  handler: AsyncDataHandler<ResT>,
+  options?: AsyncDataOptions<ResT, DataT>,
 ): AsyncData<DataT, DataE> & Promise<AsyncData<DataT, DataE>>
-export function useAsyncData<DataT, DataE> (
+export function useAsyncData<ResT, DataE = unknown, DataT = ResT> (
   key: MaybeRefOrGetter<string>,
-  handler: AsyncDataHandler<DataT>,
-  options?: AsyncDataOptions<DataT>,
+  handler: AsyncDataHandler<ResT>,
+  options?: AsyncDataOptions<ResT, DataT>,
 ): AsyncData<DataT, DataE> & Promise<AsyncData<DataT, DataE>>
 
-type AsyncDataOptions<DataT> = {
+type AsyncDataOptions<ResT, DataT = ResT> = {
   server?: boolean
   lazy?: boolean
   immediate?: boolean
   deep?: boolean
   dedupe?: 'cancel' | 'defer'
-  default?: () => DataT | Ref<DataT> | null
-  transform?: (input: DataT) => DataT | Promise<DataT>
+  default?: () => DataT | Ref<DataT>
+  transform?: (input: ResT) => DataT | Promise<DataT>
   pick?: string[]
   watch?: MultiWatchSources
   getCachedData?: (key: string, nuxtApp: NuxtApp, ctx: AsyncDataRequestContext) => DataT | undefined
