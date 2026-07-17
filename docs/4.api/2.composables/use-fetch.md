@@ -209,7 +209,6 @@ type AsyncDataRequestStatus = 'idle' | 'pending' | 'success' | 'error'
 | `watch`         | `MultiWatchSources \| false`                                            | -          | Array of reactive sources to watch and auto-refresh. `false` disables watching.                                  |
 | `deep`          | `boolean`                                                               | `false`    | Return data in a deep ref object. Defaults to `false` for improved performance (shallow ref object).             |
 | `dedupe`        | `'cancel' \| 'defer'`                                                   | `'cancel'` | Avoid fetching same key more than once at a time.                                                                |
-| `enabled` :badge[v4.5]{color="info" size="xs" class="align-middle"} | `boolean`                                              | `true`     | Barrier that gates whether the request may run. While `false`, every execution is blocked (initial fetch, `execute`/`refresh`, and watch triggers), and switching `true` → `false` cancels any in-flight request without clearing `data`. Re-enabling does not refetch on its own. |
 | `$fetch`        | `typeof globalThis.$fetch`                                              | -          | Custom $fetch implementation. See [Custom useFetch in Nuxt](/docs/4.x/guide/recipes/custom-usefetch)             |
 
 ::note
