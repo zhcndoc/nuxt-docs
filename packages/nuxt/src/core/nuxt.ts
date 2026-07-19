@@ -342,7 +342,7 @@ async function initNuxt (nuxt: Nuxt) {
     // Add module augmentations directly to NuxtConfig
     opts.nodeReferences.push({ path: resolve(nuxt.options.buildDir, 'types/modules.d.ts') })
     opts.nodeReferences.push({ path: resolve(nuxt.options.buildDir, 'types/runtime-config.d.ts') })
-    opts.nodeReferences.push({ path: resolve(nuxt.options.buildDir, 'types/app.config.d.ts') })
+    opts.nodeReferences.push({ path: resolve(nuxt.options.buildDir, 'types/shared-app.config.d.ts') })
     opts.nodeReferences.push({ types: 'nuxt' })
     opts.nodeReferences.push({ path: resolveModulePath('@nuxt/vite-builder', { from: import.meta.url }).replace('.mjs', '.d.mts') })
     if (typeof nuxt.options.builder === 'string' && nuxt.options.builder !== '@nuxt/vite-builder') {
@@ -359,7 +359,7 @@ async function initNuxt (nuxt: Nuxt) {
     }
 
     opts.sharedReferences.push({ path: resolve(nuxt.options.buildDir, 'types/runtime-config.d.ts') })
-    opts.sharedReferences.push({ path: resolve(nuxt.options.buildDir, 'types/app.config.d.ts') })
+    opts.sharedReferences.push({ path: resolve(nuxt.options.buildDir, 'types/shared-app.config.d.ts') })
     opts.sharedReferences.push({ path: resolve(nuxt.options.buildDir, 'types/shared-imports.d.ts') })
 
     // Set Nuxt resolutions for types that might be obscured with shamefully-hoist=false
@@ -382,7 +382,7 @@ async function initNuxt (nuxt: Nuxt) {
 
   // Add nitro types
   nuxt.hook('nitro:prepare:types', (opts) => {
-    opts.references.push({ path: resolve(nuxt.options.buildDir, 'types/app.config.d.ts') })
+    opts.references.push({ path: resolve(nuxt.options.buildDir, 'types/shared-app.config.d.ts') })
     opts.references.push({ path: resolve(nuxt.options.buildDir, 'types/runtime-config.d.ts') })
 
     const serverBuilderReference = getServerBuilderReference()
