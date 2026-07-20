@@ -258,7 +258,7 @@ jobs:
           cache: true
 
       - name: Prepare
-        run: vp run dev:prepare
+        run: vp run dev:prepare && vp run test:prepare
 
       - parallel:
           - name: Knip
