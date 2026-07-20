@@ -1,6 +1,10 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "ignore": ["**/.nuxt/**", "**/.output/**", "test/fixtures/basic/app/components/Tsx.tsx"],
+  "ignore": [
+    "**/.nuxt/**",
+    "**/.output/**",
+    "test/fixtures/basic/app/components/Tsx.tsx"
+  ],
   "rules": {
     "duplicates": "off"
   },
@@ -15,6 +19,7 @@
     "pkg-pr-new",
     "nuxt",
     "ofetch",
+    "@nuxt/telemetry",
     "@nuxt/webpack-builder",
     "@nuxt/rspack-builder",
     "@rspack/core"
@@ -43,8 +48,12 @@
         "**/*.{js,ts,mjs,vue}!"
       ],
       "paths": {
-        "~~/*": ["./*"],
-        "~/*": ["./*"]
+        "~~/*": [
+          "./*"
+        ],
+        "~/*": [
+          "./*"
+        ]
       }
     },
     "packages/nitro-server": {
