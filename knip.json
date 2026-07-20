@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "ignoreWorkspaces": ["test/fixtures/basic"],
+  "ignore": ["**/.nuxt/**", "**/.output/**", "test/fixtures/basic/app/components/Tsx.tsx"],
   "rules": {
     "duplicates": "off"
   },
@@ -11,6 +11,7 @@
     "somepath",
     "foo",
     "sherif",
+    "nonexistent-package",
     "pkg-pr-new",
     "nuxt",
     "ofetch",
