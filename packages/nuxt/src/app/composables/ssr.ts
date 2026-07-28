@@ -1,12 +1,16 @@
 import type { H3Event } from '@nuxt/nitro-server/h3'
 import { setResponseStatus as _setResponseStatus, appendHeader, getRequestHeader, getRequestHeaders, getResponseHeader, removeResponseHeader, setResponseHeader } from '@nuxt/nitro-server/h3'
 import { computed, getCurrentInstance, ref } from 'vue'
-import type { H3Event$Fetch } from 'nitropack/types'
+import type { $Fetch, H3Event$Fetch } from 'nitropack/types'
+import { $fetch as _$fetch } from '#build/fetch'
 
 import type { NuxtApp } from '../nuxt'
 import { useNuxtApp } from '../nuxt'
 import { toArray } from '../utils'
+import { appDiagnostics } from '../diagnostics/core'
 import { useHead } from './head'
+
+const $fetch = _$fetch as $Fetch
 
 /** @since 3.0.0 */
 export function useRequestEvent (nuxtApp?: NuxtApp): H3Event | undefined {
@@ -42,11 +46,12 @@ export function useRequestHeader (header: string): string | null | undefined {
 }
 
 /** @since 3.2.0 */
-export function useRequestFetch (): H3Event$Fetch | typeof globalThis.$fetch {
+export function useRequestFetch (): H3Event$Fetch | $Fetch {
   if (import.meta.client) {
-    return globalThis.$fetch
+    return $fetch
   }
-  return useRequestEvent()?.$fetch || globalThis.$fetch
+  // Fallback cast keeps this expression a single `H3Event$Fetch`: unioning two route-mapped fetch types here blows the recursion limit under nitropack v2's typed-route matcher.
+  return useRequestEvent()?.$fetch || ($fetch as unknown as H3Event$Fetch)
 }
 
 /** @since 3.0.0 */
@@ -70,7 +75,7 @@ export function useResponseHeader (header: string): import('vue').WritableComput
     if (import.meta.dev) {
       return computed({
         get: () => undefined,
-        set: () => console.warn('[nuxt] Setting response headers is not supported in the browser.'),
+        set: () => appDiagnostics.NUXT_E1010(),
       })
     }
     return ref()
@@ -117,7 +122,7 @@ export function onPrehydrate (callback: string | ((el: HTMLElement) => void), ke
   if (import.meta.client) { return }
 
   if (typeof callback !== 'string') {
-    throw new TypeError('[nuxt] To transform a callback into a string, `onPrehydrate` must be processed by the Nuxt build pipeline. If it is called in a third-party library, make sure to add the library to `build.transpile`.')
+    throw appDiagnostics.NUXT_E1006()
   }
 
   const vm = getCurrentInstance()

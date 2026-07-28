@@ -1,11 +1,11 @@
 import type { EventType } from '@parcel/watcher'
 import type { FSWatcher } from 'chokidar'
 import { watch as chokidarWatch } from 'chokidar'
-import { createIsIgnored, directoryToURL, getLayerDirectories, importModule, isIgnored, useNuxt } from '@nuxt/kit'
+import { buildDiagnostics, createIsIgnored, directoryToURL, getLayerDirectories, importModule, isIgnored, useNuxt } from '@nuxt/kit'
 import { debounce } from 'perfect-debounce'
 import { dirname, join, normalize, relative, resolve } from 'pathe'
 
-import { isDirectory, logger } from '../utils.ts'
+import { isDirectory } from '../utils.ts'
 import { generateApp as _generateApp, createApp } from './app.ts'
 import { checkForExternalConfigurationFiles } from './external-config-files.ts'
 import { cleanupCaches, getVueHash } from './cache.ts'
@@ -41,7 +41,7 @@ export async function build (nuxt: Nuxt): Promise<void> {
         await builder.setupWatcher(nuxt)
       } else {
         if (nuxt.options.experimental.watcher === 'builder') {
-          logger.warn('`experimental.watcher: "builder"` is set but the active builder does not implement `setupWatcher`. Falling back to the default file watcher.')
+          buildDiagnostics.NUXT_B1020()
         }
         watch(nuxt)
       }
@@ -93,7 +93,7 @@ export async function build (nuxt: Nuxt): Promise<void> {
   if (nuxt.options.dev && !nuxt.options.test) {
     nuxt.hooks.hookOnce('build:done', () => {
       checkForExternalConfigurationFiles()
-        .catch(e => logger.warn('Problem checking for external configuration files.', e))
+        .catch(e => buildDiagnostics.NUXT_B1014({ cause: e }))
     })
   }
 
@@ -238,8 +238,14 @@ async function createParcelWatcher () {
     // eslint-disable-next-line no-console
     console.time('[nuxt] builder:parcel:watch')
   }
+  let subscribe: typeof import('@parcel/watcher').subscribe
   try {
-    const { subscribe } = await importModule<typeof import('@parcel/watcher')>('@parcel/watcher', { url: [nuxt.options.rootDir, ...nuxt.options.modulesDir].map(d => directoryToURL(d)) })
+    ({ subscribe } = await importModule<typeof import('@parcel/watcher')>('@parcel/watcher', { url: [nuxt.options.rootDir, ...nuxt.options.modulesDir].map(d => directoryToURL(d)) }))
+  } catch {
+    buildDiagnostics.NUXT_B1015()
+    return false
+  }
+  try {
     const pathsToWatch = resolvePathsToWatch(nuxt, { parentDirectories: true })
     for (const dir of pathsToWatch) {
       if (!await isDirectory(dir)) { continue }
@@ -263,7 +269,7 @@ async function createParcelWatcher () {
     }
     return true
   } catch {
-    logger.warn('Falling back to `chokidar-granular` as `@parcel/watcher` cannot be resolved in your project.')
+    buildDiagnostics.NUXT_B1016()
     return false
   }
 }
@@ -296,10 +302,7 @@ async function loadBuilder (nuxt: Nuxt, builder: string): Promise<NuxtBuilder> {
     }
     return await importModule(builder, { url: [new URL(import.meta.url), directoryToURL(nuxt.options.rootDir)] })
   } catch (err: any) {
-    if (builder === '@nuxt/webpack-builder' && err?.toString?.().includes('Cannot find module \'@nuxt/webpack-builder\'')) {
-      throw new Error('Could not load `@nuxt/webpack-builder`. You may need to add it to your project dependencies, following the steps in `https://github.com/nuxt/framework/pull/2812`.', { cause: err })
-    }
-    throw new Error(`Loading \`${builder}\` builder failed. You can read more about the nuxt \`builder\` option at: \`https://nuxt.com/docs/4.x/api/nuxt-config#builder\``, { cause: err })
+    throw buildDiagnostics.NUXT_B1017({ builder, cause: err })
   }
 }
 

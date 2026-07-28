@@ -1,14 +1,14 @@
 ---
 title: 'definePageMeta'
-description: '为你的页面组件定义元数据。'
+description: 'Define metadata for your page component.'
 links:
-  - label: 源码
+  - label: Source
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/pages/runtime/composables.ts
     size: xs
 ---
 
-`definePageMeta` 是一个编译器宏，可用于为位于 [`app/pages/`](/docs/4.x/directory-structure/app/pages) 目录（除非另有[配置](/docs/4.x/api/nuxt-config#pages)）中的 **页面** 组件设置元数据。通过这种方式，你可以为 Nuxt 应用的每个静态或动态路由设置自定义元数据。
+`definePageMeta` is a compiler macro that can be used to set metadata for **page** components located in the [`app/pages/`](/docs/4.x/directory-structure/app/pages) directory (unless [configured](/docs/4.x/api/nuxt-config#pages) otherwise). In this way, you can set custom metadata for each static or dynamic route in your Nuxt application.
 
 ```vue [app/pages/some-page.vue]
 <script setup lang="ts">
@@ -38,7 +38,7 @@ interface PageMeta {
   viewTransition?: ViewTransitionPageOptions['enabled'] | ViewTransitionPageOptions
   key?: false | string | ((route: RouteLocationNormalizedLoaded) => string)
   keepalive?: boolean | KeepAliveProps
-  layout?: false | LayoutKey | Ref<LayoutKey> | ComputedRef<LayoutKey> | { name?: LayoutKey | false, props?: Record<string, unknown> /* or the selected layout's props */ }
+  layout?: false | LayoutKey | Ref<LayoutKey> | ComputedRef<LayoutKey> | { name?: LayoutKey | false, props?: Record<string, unknown> /* 或所选布局的 props */ }
   middleware?: MiddlewareKey | NavigationGuard | Array<MiddlewareKey | NavigationGuard>
   scrollToTop?: boolean | ((to: RouteLocationNormalizedLoaded, from: RouteLocationNormalizedLoaded) => boolean)
   [key: string]: unknown
@@ -77,7 +77,7 @@ interface PageMeta {
 
     记录的别名。允许定义额外的路径，使其行为像记录的副本。可以使用路径简写例如 `/users/:id` 和 `/u/:id`。所有 `alias` 和 `path` 值必须共享相同的参数。
 
-  **`groups`**
+  **`groups`** :badge[v4.3]{color="info" size="xs" class="align-middle"}
 
   - **类型**: `string[]`
 
@@ -159,7 +159,7 @@ interface PageMeta {
 
     除上述属性之外，你还可以设置 **自定义** 元数据。若要以类型安全的方式使用自定义元数据，可以通过[增强 `meta` 对象的类型](/docs/4.x/directory-structure/app/pages/#typing-custom-metadata)。
 
-## 示例
+## Example
 
 ### 基本用法
 

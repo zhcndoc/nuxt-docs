@@ -53,7 +53,7 @@ export default defineNuxtRouteMiddleware((to, from) => {
   const user = useState('user')
 
   if (!user.value.isAuthorized) {
-    return abortNavigation('Insufficient permissions.')
+    return abortNavigation('权限不足。')
   }
 })
 ```
@@ -65,7 +65,7 @@ export default defineNuxtRouteMiddleware((to, from) => {
 ```ts [app/middleware/auth.ts]
 export default defineNuxtRouteMiddleware((to, from) => {
   try {
-    /* code that might throw an error */
+    /* 可能会抛出错误的代码 */
   } catch (err) {
     return abortNavigation(err)
   }

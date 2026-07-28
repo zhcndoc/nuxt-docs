@@ -1,5 +1,5 @@
 ---
-title: "nuxt module"
+title: "nuxt 模块"
 description: "通过命令行搜索并将模块添加到你的 Nuxt 应用。"
 links:
   - label: 源码
@@ -10,7 +10,7 @@ links:
 
 Nuxt 提供了一些实用工具，可以无缝地与 [Nuxt 模块](/modules) 一起使用。
 
-## nuxt module add
+## `nuxt module add`
 
 <!--module-add-cmd-->
 ```bash [Terminal]
@@ -19,13 +19,13 @@ npx nuxt module add <MODULENAME> [--cwd=<directory>] [--logLevel=<silent|info|ve
 <!--/module-add-cmd-->
 
 <!--module-add-args-->
-| Argument     | Description                                                         |
+| 参数         | 描述                                                         |
 |--------------|---------------------------------------------------------------------|
 | `MODULENAME` | 指定一个或多个要安装的模块名称，使用空格分隔 |
 <!--/module-add-args-->
 
 <!--module-add-opts-->
-| Option                               | Default | Description                         |
+| 选项                                 | 默认值 | 描述                         |
 |--------------------------------------|---------|-------------------------------------|
 | `--cwd=<directory>`                  | `.`     | 指定工作目录       |
 | `--logLevel=<silent\|info\|verbose>` |         | 指定构建时的日志级别        |
@@ -50,7 +50,7 @@ npx nuxt module add <MODULENAME> [--cwd=<directory>] [--logLevel=<silent|info|ve
 npx nuxt module add pinia
 ```
 
-## nuxt module search
+## `nuxt module search`
 
 <!--module-search-cmd-->
 ```bash [Terminal]

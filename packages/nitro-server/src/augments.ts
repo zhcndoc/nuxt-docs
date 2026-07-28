@@ -1,13 +1,31 @@
+/// <reference path="./internal.d.ts" />
 import type { Nitro, NitroConfig, NitroDevEventHandler, NitroEventHandler, NitroOptions, NitroRouteConfig, NitroRuntimeConfig, NitroRuntimeConfigApp } from 'nitropack/types'
 import type { EventHandler, H3Event } from 'h3'
 import type { LogObject } from 'consola'
-import type { NuxtIslandContext, NuxtIslandResponse, NuxtRenderChunkContext, NuxtRenderCloseContext, NuxtRenderHTMLContext, NuxtRenderRouteContext } from 'nuxt/app'
+import type { NuxtIslandContext, NuxtIslandResponse, NuxtRenderChunkContext, NuxtRenderCloseContext, NuxtRenderHTMLContext, NuxtRenderRouteContext } from '#app/types'
 import type { HookResult, RuntimeConfig, TSReference } from 'nuxt/schema'
+
+/**
+ * Per-channel toggles for `tracingChannel`, with a `nuxt` key for Nuxt-owned
+ * channels (`nuxt.render`, `nuxt.island`, `nuxt.data`, `nuxt.plugin`). Channel
+ * names follow the [untracing](https://github.com/unjs/untracing) naming
+ * convention (`{namespace}.{operation}`).
+ *
+ * @experimental Channel names, payload shapes, and option keys may change.
+ */
+export interface NuxtTracingChannelOptions {
+  /** Enable Nuxt-owned channels (`nuxt.render`, `nuxt.island`, `nuxt.data`, `nuxt.plugin`). */
+  nuxt?: boolean
+  srvx?: boolean
+  h3?: boolean
+  unstorage?: boolean
+}
 
 declare module 'nitropack' {
   interface NitroRuntimeConfigApp {
     buildAssetsDir: string
     cdnURL: string
+    buildId: string
   }
   interface NitroRouteRules {
     ssr?: boolean
@@ -16,7 +34,9 @@ declare module 'nitropack' {
     /** @deprecated Use `noScripts` instead */
     experimentalNoScripts?: boolean
     appMiddleware?: Record<string, boolean>
-    appLayout?: string | false
+  }
+  interface NitroConfig {
+    tracingChannel?: boolean | NuxtTracingChannelOptions
   }
 }
 
@@ -24,6 +44,7 @@ declare module 'nitropack/types' {
   interface NitroRuntimeConfigApp {
     buildAssetsDir: string
     cdnURL: string
+    buildId: string
   }
   interface NitroRouteRules {
     ssr?: boolean
@@ -32,7 +53,9 @@ declare module 'nitropack/types' {
     /** @deprecated Use `noScripts` instead */
     experimentalNoScripts?: boolean
     appMiddleware?: Record<string, boolean>
-    appLayout?: string | false
+  }
+  interface NitroConfig {
+    tracingChannel?: boolean | NuxtTracingChannelOptions
   }
 }
 
@@ -161,6 +184,16 @@ declare module '@nuxt/schema' {
      * @see [Nitro server routes documentation](https://nitro.build/guide/routing)
      */
     devServerHandlers: NitroDevEventHandler[]
+
+    /**
+     * Enable [diagnostics-channel](https://nodejs.org/api/diagnostics_channel.html)
+     * tracing for Nuxt-owned subsystems (the `nuxt.*` channels).
+     *
+     * @experimental Channel names, payload shapes, and option keys may change.
+     *
+     * @see [Untracing naming registry](https://github.com/unjs/untracing)
+     */
+    tracingChannel: boolean | NuxtTracingChannelOptions
   }
 
   interface NuxtConfig {
@@ -268,6 +301,16 @@ declare module 'nuxt/schema' {
      * @see [Nitro server routes documentation](https://nitro.build/guide/routing)
      */
     devServerHandlers: NitroDevEventHandler[]
+
+    /**
+     * Enable [diagnostics-channel](https://nodejs.org/api/diagnostics_channel.html)
+     * tracing for Nuxt-owned subsystems (the `nuxt.*` channels).
+     *
+     * @experimental Channel names, payload shapes, and option keys may change.
+     *
+     * @see [Untracing naming registry](https://github.com/unjs/untracing)
+     */
+    tracingChannel: boolean | NuxtTracingChannelOptions
   }
 
   interface NuxtConfig {

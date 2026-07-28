@@ -1,6 +1,6 @@
 import { addDependency } from 'nypm'
 import { resolvePackageJSON } from 'pkg-types'
-import { useNuxt } from '@nuxt/kit'
+import { buildDiagnostics, configDiagnostics, useNuxt } from '@nuxt/kit'
 import { isCI, provider } from 'std-env'
 import { logger } from '../utils.ts'
 
@@ -19,7 +19,8 @@ async function promptToInstall (name: string, installCommand: () => Promise<unkn
     }
   }
 
-  logger.info(`Package ${name} is missing`)
+  configDiagnostics.NUXT_B5011({ name })
+
   if (isCI) {
     return false
   }
@@ -43,7 +44,7 @@ async function promptToInstall (name: string, installCommand: () => Promise<unkn
     logger.success(`Installed ${name}`)
     return true
   } catch (err) {
-    logger.error(err)
+    buildDiagnostics.NUXT_B1004({ packages: name, cause: err })
     return false
   }
 }

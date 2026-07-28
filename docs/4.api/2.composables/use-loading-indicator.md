@@ -1,6 +1,7 @@
 ---
 title: 'useLoadingIndicator'
-description: 该 composable 可让您访问应用页面的加载状态。
+description: 这个组合式函数让你可以访问应用页面的加载状态。
+minimalVersion: "3.9"
 links:
   - label: 源码
     icon: i-simple-icons-github
@@ -8,10 +9,10 @@ links:
     size: xs
 ---
 
-## 描述
+## Description
 
-一个返回页面加载状态的 composable。被 [`<NuxtLoadingIndicator>`](/docs/4.x/api/components/nuxt-loading-indicator) 使用，并且可被控制。
-它会钩入 [`page:loading:start`](/docs/4.x/api/advanced/hooks#app-hooks-runtime) 和 [`page:loading:end`](/docs/4.x/api/advanced/hooks#app-hooks-runtime) 来改变其状态。
+A composable that returns the page loading state. It is used by [`<NuxtLoadingIndicator>`](/docs/4.x/api/components/nuxt-loading-indicator) and can be controlled.
+It hooks into [`page:loading:start`](/docs/4.x/api/advanced/hooks#app-hooks-runtime) and [`page:loading:end`](/docs/4.x/api/advanced/hooks#app-hooks-runtime) to change its state.
 
 ## 参数
 

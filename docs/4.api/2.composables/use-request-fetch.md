@@ -1,6 +1,7 @@
 ---
 title: 'useRequestFetch'
-description: '使用 useRequestFetch 可组合函数在服务器端发起 fetch 请求时转发请求上下文和头信息。'
+description: '使用 useRequestFetch 可组合函数在服务器端 fetch 请求中转发请求上下文和头信息。'
+minimalVersion: "3.2"
 links:
   - label: 源码
     icon: i-simple-icons-github

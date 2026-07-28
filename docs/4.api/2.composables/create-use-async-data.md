@@ -1,6 +1,7 @@
 ---
 title: 'createUseAsyncData'
-description: 一个工厂函数，用于创建带有预定义默认选项的自定义 useAsyncData 可组合项。
+description: 创建一个自定义的 useAsyncData 可组合项工厂函数，并预设默认选项。
+minimalVersion: "4.2"
 links:
   - label: Source
     icon: i-simple-icons-github
@@ -14,7 +15,7 @@ links:
 `createUseAsyncData` 是一个编译宏。它必须作为 `composables/` 目录下（或任何被 Nuxt 编译器扫描的目录）中的**导出**声明来使用。Nuxt 会在构建时自动注入去重键（de-duplication keys）。
 ::
 
-## Usage
+## 用法
 
 ```ts [app/composables/useCachedData.ts]
 export const useCachedData = createUseAsyncData({
@@ -35,7 +36,7 @@ const { data: mountains } = await useCachedData(
 
 生成的可组合项具有与 [`useAsyncData`](/docs/4.x/api/composables/use-async-data) 相同的签名和返回类型，并且所有选项都可供调用者使用或覆盖。
 
-## Type
+## 类型
 
 ```ts [Signature]
 function createUseAsyncData (
@@ -47,15 +48,15 @@ function createUseAsyncData (
 ): typeof useAsyncData
 ```
 
-## Options
+## 选项
 
-`createUseAsyncData` 接受与 [`useAsyncData`](/docs/4.x/api/composables/use-async-data#params) 相同的所有选项，包括 `server`、`lazy`、`immediate`、`default`、`transform`、`pick`、`getCachedData`、`deep`、`dedupe`、`timeout` 和 `watch`。
+`createUseAsyncData` 接受与 [`useAsyncData`](/docs/4.x/api/composables/use-async-data#parameters) 相同的所有选项，包括 `server`、`lazy`、`immediate`、`default`、`transform`、`pick`、`getCachedData`、`deep`、`dedupe`、`timeout` 和 `watch`。
 
-请在 [`useAsyncData 文档`](/docs/4.x/api/composables/use-async-data#params) 中查看完整的选项列表。
+完整的选项列表请参见 [`useAsyncData` 文档](/docs/4.x/api/composables/use-async-data#parameters)。
 
-## Default vs Override Mode
+## 默认模式 vs 覆盖模式
 
-### Default Mode（纯对象）
+### 默认模式（纯对象）
 
 当你传入一个纯对象时，工厂选项充当**默认值**。调用者可以覆盖任意选项：
 
@@ -74,7 +75,7 @@ const { data } = await useLazyData('key', () => fetchSomeData())
 const { data } = await useLazyData('key', () => fetchSomeData(), { server: true })
 ```
 
-### Override Mode（函数）
+### 覆盖模式（函数）
 
 当你传入一个函数时，工厂选项会**覆盖**调用者的选项。该函数会接收调用者的选项作为参数：
 

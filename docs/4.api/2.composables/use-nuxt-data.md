@@ -1,6 +1,7 @@
 ---
 title: 'useNuxtData'
-description: '访问数据获取组合函数的当前缓存值。'
+description: '访问数据获取 composable 的当前缓存值。'
+minimalVersion: "3.1"
 links:
   - label: 源码
     icon: i-simple-icons-github
@@ -21,6 +22,12 @@ links:
 要使用 `useNuxtData`，请确保用于获取数据的组合函数（`useFetch`、`useAsyncData` 等）已使用显式提供的 key 被调用。
 
 :video-accordion{title="观看来自 LearnVue 的有关 useNuxtData 的视频" videoId="e-_u6swXRWk"}
+
+## 类型
+
+```ts [Signature]
+export function useNuxtData<DataT = any> (key: string): { data: Ref<DataT | undefined> }
+```
 
 ## 参数
 
@@ -103,10 +110,4 @@ async function addTodo () {
   })
 }
 </script>
-```
-
-## 类型
-
-```ts [Signature]
-export function useNuxtData<DataT = any> (key: string): { data: Ref<DataT | undefined> }
 ```

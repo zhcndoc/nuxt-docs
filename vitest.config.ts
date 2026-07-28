@@ -12,9 +12,13 @@ const commonSettings: NuxtConfig = {
   pages: true,
   routeRules: {
     '/specific-prerendered': { prerender: true },
+    '/isr/**': { isr: 60 },
     '/pre/test': { redirect: '/' },
     '/pre/spa/**': { prerender: true, ssr: false },
     '/pre/**': { prerender: true },
+    // Mixed-case keys must still match case-insensitively (vue-router's default).
+    '/Secret/Docs/**': { ssr: false },
+    '/Legacy/Home': { redirect: '/target' },
   },
   experimental: {
     appManifest: process.env.TEST_MANIFEST !== 'manifest-off',
@@ -60,10 +64,12 @@ const fixtureMatrix: FixtureMatrixEntry[] = [
   { env: 'dev', builder: 'vite-env-api', context: 'default', manifest: 'manifest-on', payload: 'json' },
   { env: 'built', builder: 'vite-env-api', context: 'async', manifest: 'manifest-on', payload: 'json' },
   { env: 'built', builder: 'vite-env-api', context: 'default', manifest: 'manifest-on', payload: 'json' },
-  // rspack: only built + manifest-on + json payload
+  // rspack: only manifest-on + json payload
+  { env: 'dev', builder: 'rspack', context: 'async', manifest: 'manifest-on', payload: 'json' },
   { env: 'built', builder: 'rspack', context: 'async', manifest: 'manifest-on', payload: 'json' },
   { env: 'built', builder: 'rspack', context: 'default', manifest: 'manifest-on', payload: 'json' },
-  // webpack: only built + manifest-on + json payload
+  // webpack: only manifest-on + json payload
+  { env: 'dev', builder: 'webpack', context: 'async', manifest: 'manifest-on', payload: 'json' },
   { env: 'built', builder: 'webpack', context: 'async', manifest: 'manifest-on', payload: 'json' },
   { env: 'built', builder: 'webpack', context: 'default', manifest: 'manifest-on', payload: 'json' },
 ]
@@ -106,14 +112,15 @@ export default defineConfig({
       },
       ...fixtureMatrix.map(entry => ({
         define: {
-          'import.meta.dev': 'globalThis.__TEST_DEV__',
+          'import.meta.dev': '(globalThis.__TEST_DEV__ ?? false)',
         },
         test: {
           name: fixtureProjectName(entry),
           include: ['test/*.test.ts'],
           exclude: [...fixtureExclude, 'test/bundle.test.ts'],
+          globalSetup: ['./test/setup-prepare.ts'],
           setupFiles: ['./test/setup-env.ts'],
-          testTimeout: isWindows ? 60000 : 10000,
+          testTimeout: isWindows ? 60000 : 20000,
           retry: isCI ? 2 : 0,
           benchmark: { include: [] },
           env: fixtureProjectEnv(entry),
@@ -123,6 +130,7 @@ export default defineConfig({
         test: {
           name: 'bundle',
           include: ['test/bundle.test.ts'],
+          globalSetup: ['./test/setup-prepare.ts'],
           setupFiles: ['./test/setup-env.ts'],
           testTimeout: 180_000,
           retry: isCI ? 2 : 0,
@@ -131,20 +139,22 @@ export default defineConfig({
       },
       {
         define: {
-          'import.meta.dev': 'globalThis.__TEST_DEV__',
+          'import.meta.dev': '(globalThis.__TEST_DEV__ ?? false)',
         },
         resolve: {
           alias: {
             '#build/nuxt.config.mjs': resolve('./test/mocks/nuxt-config'),
             '#build/router.options.mjs': resolve('./test/mocks/router-options'),
+            '#internal/nuxt.config.mjs': resolve('./test/mocks/nitro-nuxt-config'),
             '#internal/nuxt/paths': resolve('./test/mocks/paths'),
             '#build/app.config.mjs': resolve('./test/mocks/app-config'),
-            '#app': resolve('./packages/nuxt/dist/app'),
+            '#app': resolve('./packages/nuxt/src/app'),
           },
         },
         test: {
           name: 'unit',
           benchmark: { include: [] },
+          globalSetup: ['./test/setup-prepare.ts'],
           setupFiles: ['./test/setup-env.ts'],
           include: ['packages/**/*.{test,spec}.ts'],
           testTimeout: isWindows ? 60000 : 10000,
@@ -157,6 +167,7 @@ export default defineConfig({
           name: 'nuxt-universal',
           dir: './test/nuxt/universal',
           environment: 'nuxt',
+          globalSetup: ['./test/setup-prepare.ts'],
           environmentOptions: {
             nuxt: {
               overrides: { pages: false },
@@ -166,13 +177,14 @@ export default defineConfig({
       }),
       ...await Promise.all(Object.entries(nuxtTestProjects).map(([project, config]) => defineVitestProject({
         define: {
-          'import.meta.dev': 'globalThis.__TEST_DEV__',
+          'import.meta.dev': '(globalThis.__TEST_DEV__ ?? false)',
         },
         test: {
           name: project,
           dir: './test/nuxt',
-          exclude: [...defaultExclude, '**/universal/**'],
+          exclude: [...defaultExclude, '**/universal/**', '**/dev/**', '**/sensitive/**'],
           environment: 'nuxt',
+          globalSetup: ['./test/setup-prepare.ts'],
           setupFiles: ['./test/setup-runtime.ts'],
           env: {
             PROJECT: project,
@@ -184,6 +196,45 @@ export default defineConfig({
           },
         },
       }))),
+      await defineVitestProject({
+        define: {
+          'import.meta.dev': 'true',
+        },
+        test: {
+          name: 'nuxt-dev',
+          dir: './test/nuxt/dev',
+          environment: 'nuxt',
+          globalSetup: ['./test/setup-prepare.ts'],
+          setupFiles: ['./test/setup-runtime.ts'],
+          environmentOptions: {
+            nuxt: {
+              overrides: defu(nuxtTestProjects.nuxt, commonSettings),
+            },
+          },
+        },
+      }),
+      await defineVitestProject({
+        define: {
+          'import.meta.dev': '(globalThis.__TEST_DEV__ ?? false)',
+        },
+        test: {
+          name: 'nuxt-sensitive',
+          dir: './test/nuxt/sensitive',
+          environment: 'nuxt',
+          setupFiles: ['./test/setup-runtime.ts'],
+          environmentOptions: {
+            nuxt: {
+              overrides: defu({
+                router: { options: { sensitive: true } },
+                routeRules: {
+                  '/Admin/Dashboard': { redirect: '/admin-target' },
+                  '/admin/dashboard': { redirect: '/lower-target' },
+                },
+              } satisfies NuxtConfig, commonSettings),
+            },
+          },
+        },
+      }),
     ],
   },
 })

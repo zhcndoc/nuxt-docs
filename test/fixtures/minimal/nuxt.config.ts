@@ -1,10 +1,6 @@
-import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
 const testWithInlineVue = process.env.EXTERNAL_VUE === 'false'
-
-const nuxtEntry = fileURLToPath(new URL('../../../packages/nuxt/dist/index.mjs', import.meta.url))
-const isStubbed = readFileSync(nuxtEntry, 'utf-8').includes('const _module = await jiti')
 
 export default defineNuxtConfig({
   $production: {
@@ -22,6 +18,7 @@ export default defineNuxtConfig({
     },
   },
   pages: false,
+  devtools: { enabled: false },
   buildDir: testWithInlineVue ? '.nuxt-inline' : '.nuxt',
   sourcemap: false,
   experimental: {
@@ -30,8 +27,13 @@ export default defineNuxtConfig({
   compatibilityDate: 'latest',
   nitro: {
     output: { dir: fileURLToPath(new URL(testWithInlineVue ? './.output-inline' : './.output', import.meta.url)) },
+    minify: true,
   },
   typescript: {
-    typeCheck: isStubbed ? false : 'build',
+    typeCheck: 'build',
   },
+  // The bundle-size test runs under vitest, so `nuxt build` would otherwise
+  // inherit `test: true` and skip production-only stripping (e.g. diagnostics
+  // `why`/`fix` text). Force it off so we measure the real shipped bundle.
+  test: false,
 })

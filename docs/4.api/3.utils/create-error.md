@@ -30,7 +30,7 @@ links:
 const route = useRoute()
 const { data } = await useFetch(`/api/movies/${route.params.slug}`)
 if (!data.value) {
-  throw createError({ status: 404, statusText: 'Page Not Found' })
+  throw createError({ status: 404, statusText: '页面未找到' })
 }
 </script>
 ```
@@ -45,11 +45,11 @@ if (!data.value) {
 export default eventHandler(() => {
   throw createError({
     status: 404,
-    statusText: 'Page Not Found',
+    statusText: '页面未找到',
   })
 })
 ```
 
-在 API 路由中，建议通过传入带有简短 `statusText` 的对象来使用 `createError`，因为该字段可以在客户端访问。否则，在 API 路由中传递给 `createError` 的 `message` 不会传播到客户端。或者，你可以使用 `data` 属性将数据传回客户端。无论哪种情况，请始终考虑避免将动态用户输入放入 message 中，以防潜在的安全问题。
+在 API 路由中，建议通过传入一个带有简短 `statusText` 的对象来使用 `createError`，因为它可以在客户端访问。否则，在 API 路由中传递给 `createError` 的 `message` 不会传递到客户端。或者，你也可以使用 `data` 属性将数据传回客户端。使用 `useFetch` 处理错误时，自定义数据可在 `error.value.data.data` 中获取。无论如何，都应始终避免将动态用户输入放入 `message` 中，以避免潜在的安全问题。
 
 :read-more{to="/docs/4.x/getting-started/error-handling"}

@@ -14,7 +14,7 @@ links:
 
 ## 类型
 
-```ts
+```ts [签名]
 function addRouteMiddleware (name: string, middleware: RouteMiddleware, options?: AddRouteMiddlewareOptions): void
 function addRouteMiddleware (middleware: RouteMiddleware): void
 

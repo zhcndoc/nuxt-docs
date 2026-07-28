@@ -1,6 +1,7 @@
 ---
 title: "usePreviewMode"
-description: "在 Nuxt 中使用 usePreviewMode 检查和控制预览模式"
+description: "使用 usePreviewMode 检查和控制 Nuxt 中的预览模式"
+minimalVersion: "3.11"
 links:
   - label: 源码
     icon: i-simple-icons-github
@@ -89,12 +90,12 @@ const { data } = await useFetch('/api/preview', {
 
 <template>
   <div>
-    Some base content
+    基础内容
     <p v-if="enabled">
-      Only preview content: {{ state.token }}
+      仅预览内容：{{ state.token }}
       <br>
       <button @click="enabled = false">
-        disable preview mode
+        关闭预览模式
       </button>
     </p>
   </div>

@@ -1,8 +1,9 @@
 ---
 title: 'createUseFetch'
-description: 一个工厂函数，用于创建带有预定义默认选项的自定义 useFetch 组合式函数。
+description: 用于创建一个带有预定义默认选项的自定义 useFetch 组合式函数的工厂函数。
+minimalVersion: "4.2"
 links:
-  - label: Source
+  - label: 来源
     icon: i-simple-icons-github
     to: https://github.com/nuxt/nuxt/blob/main/packages/nuxt/src/app/composables/fetch.ts
     size: xs
@@ -32,7 +33,7 @@ const { data: modules } = await useAPI('/modules')
 
 ## 类型
 
-```ts [Signature]
+```ts [签名]
 function createUseFetch (
   options?: Partial<UseFetchOptions>,
 ): typeof useFetch

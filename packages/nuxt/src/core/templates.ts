@@ -9,9 +9,10 @@ import { camelCase } from 'scule'
 import { filename, reverseResolveAlias } from 'pathe/utils'
 import { useNitro } from '@nuxt/kit'
 
-import { annotatePlugins, checkForCircularDependencies, hasIslandOptOutPlugins, hasParallelPlugins, hasPluginDependencies, hasPluginHooks, sortPluginsByDependsOn } from './app.ts'
+import { annotatePlugins, checkForCircularDependencies, filterPluginDependencies, hasIslandOptOutPlugins, hasParallelPlugins, hasPluginDependencies, hasPluginHooks, sortPluginsByDependsOn } from './app.ts'
+import { setPluginDependenciesForMode } from './plugins/plugin-metadata.ts'
 import { EXTENSION_RE } from './utils/index.ts'
-import type { NuxtOptions, NuxtTemplate } from 'nuxt/schema'
+import type { NuxtApp, NuxtOptions, NuxtTemplate } from 'nuxt/schema'
 
 export const vueShim: NuxtTemplate = {
   filename: 'types/vue-shim.d.ts',
@@ -47,6 +48,21 @@ export const errorComponentTemplate: NuxtTemplate = {
   filename: 'error-component.mjs',
   getContents: ctx => genExport(ctx.app.errorComponent!, ['default']),
 }
+export const islandRendererTemplate: NuxtTemplate = {
+  filename: 'island-renderer.mjs',
+  getContents (ctx) {
+    if (!shouldEnableComponentIslands(ctx.nuxt, ctx.app)) {
+      return 'const IslandRenderer = () => null\nexport default IslandRenderer'
+    }
+
+    const islandRenderer = resolve(ctx.nuxt.options.appDir, 'components/island-renderer')
+    return [
+      'import { defineAsyncComponent } from \'vue\'',
+      `const IslandRenderer = import.meta.server ? defineAsyncComponent(() => ${genDynamicImport(islandRenderer, { wrapper: false })}.then(r => r.default || r)) : () => null`,
+      'export default IslandRenderer',
+    ].join('\n')
+  },
+}
 // TODO: Use an alias
 export const testComponentWrapperTemplate: NuxtTemplate = {
   filename: 'test-component-wrapper.mjs',
@@ -62,7 +78,9 @@ const PLUGIN_TEMPLATE_RE = /_(?:45|46|47)/g
 export const clientPluginTemplate: NuxtTemplate = {
   filename: 'plugins.client.mjs',
   async getContents (ctx) {
-    const clientPlugins = sortPluginsByDependsOn(await annotatePlugins(ctx.nuxt, ctx.app.plugins.filter(p => !p.mode || p.mode !== 'server')))
+    const allPlugins = await annotatePlugins(ctx.nuxt, ctx.app.plugins.filter(p => ctx.nuxt.options.dev || !p.mode || p.mode !== 'server'))
+    const clientPlugins = sortPluginsByDependsOn(filterPluginDependencies(allPlugins.filter(p => !p.mode || p.mode !== 'server'), { warn: ctx.nuxt.options.dev, mode: 'client', allPlugins }))
+    setPluginDependenciesForMode(ctx.nuxt, 'client', clientPlugins)
     checkForCircularDependencies(clientPlugins)
     const exports: string[] = []
     const imports: string[] = []
@@ -82,7 +100,9 @@ export const clientPluginTemplate: NuxtTemplate = {
 export const serverPluginTemplate: NuxtTemplate = {
   filename: 'plugins.server.mjs',
   async getContents (ctx) {
-    const serverPlugins = sortPluginsByDependsOn(await annotatePlugins(ctx.nuxt, ctx.app.plugins.filter(p => !p.mode || p.mode !== 'client')))
+    const allPlugins = await annotatePlugins(ctx.nuxt, ctx.app.plugins.filter(p => ctx.nuxt.options.dev || !p.mode || p.mode !== 'client'))
+    const serverPlugins = sortPluginsByDependsOn(filterPluginDependencies(allPlugins.filter(p => !p.mode || p.mode !== 'client'), { warn: ctx.nuxt.options.dev, mode: 'server', allPlugins }))
+    setPluginDependenciesForMode(ctx.nuxt, 'server', serverPlugins)
     checkForCircularDependencies(serverPlugins)
     const exports: string[] = []
     const imports: string[] = []
@@ -174,7 +194,7 @@ export const schemaTemplate: NuxtTemplate = {
   getContents: async ({ nuxt }) => {
     const privateRuntimeConfig = Object.create(null)
     for (const key in nuxt.options.runtimeConfig) {
-      if (key !== 'public') {
+      if (key !== 'public' && key !== 'nitro') {
         privateRuntimeConfig[key] = nuxt.options.runtimeConfig[key]
       }
     }
@@ -371,6 +391,22 @@ export const clientConfigTemplate: NuxtTemplate = {
   },
 }
 
+const APP_CONFIG_MERGE_TYPES = `type IsAny<T> = 0 extends 1 & T ? true : false
+
+type MergedAppConfig<Resolved extends Record<string, unknown>, Custom extends Record<string, unknown>> = {
+  [K in keyof (Resolved & Custom)]: K extends keyof Custom
+    ? unknown extends Custom[K]
+      ? Resolved[K]
+      : IsAny<Custom[K]> extends true
+        ? Resolved[K]
+        : Custom[K] extends Record<string, any>
+            ? Resolved[K] extends Record<string, any>
+              ? MergedAppConfig<Resolved[K], Custom[K]>
+              : Exclude<Custom[K], undefined>
+            : Exclude<Custom[K], undefined>
+    : Resolved[K]
+}`
+
 export const appConfigDeclarationTemplate: NuxtTemplate = {
   filename: 'types/app.config.d.ts',
   getContents ({ app, nuxt }) {
@@ -388,27 +424,35 @@ declare global {
 
 declare const inlineConfig = ${JSON.stringify(nuxt.options.appConfig, null, 2)}
 type ResolvedAppConfig = Defu<typeof inlineConfig, [${app.configs.map((_id: string, index: number) => `typeof cfg${index}`).join(', ')}]>
-type IsAny<T> = 0 extends 1 & T ? true : false
-
-type MergedAppConfig<Resolved extends Record<string, unknown>, Custom extends Record<string, unknown>> = {
-  [K in keyof (Resolved & Custom)]: K extends keyof Custom
-    ? unknown extends Custom[K]
-      ? Resolved[K]
-      : IsAny<Custom[K]> extends true
-        ? Resolved[K]
-        : Custom[K] extends Record<string, any>
-            ? Resolved[K] extends Record<string, any>
-              ? MergedAppConfig<Resolved[K], Custom[K]>
-              : Exclude<Custom[K], undefined>
-            : Exclude<Custom[K], undefined>
-    : Resolved[K]
-}
+${APP_CONFIG_MERGE_TYPES}
 
 declare module 'nuxt/schema' {
   interface AppConfig extends MergedAppConfig<ResolvedAppConfig, CustomAppConfig> { }
 }
 declare module '@nuxt/schema' {
   interface AppConfig extends MergedAppConfig<ResolvedAppConfig, CustomAppConfig> { }
+}
+`
+  },
+}
+
+// This declaration must not import user `app.config` files: their import graph
+// can rely on app auto-imports, which do not exist in the shared, node and
+// server programs (https://github.com/nuxt/nuxt/issues/34140).
+export const sharedAppConfigDeclarationTemplate: NuxtTemplate = {
+  filename: 'types/shared-app.config.d.ts',
+  getContents ({ nuxt }) {
+    return `
+import type { CustomAppConfig } from 'nuxt/schema'
+
+declare const inlineConfig = ${JSON.stringify(nuxt.options.appConfig, null, 2)}
+${APP_CONFIG_MERGE_TYPES}
+
+declare module 'nuxt/schema' {
+  interface AppConfig extends MergedAppConfig<typeof inlineConfig, CustomAppConfig> { }
+}
+declare module '@nuxt/schema' {
+  interface AppConfig extends MergedAppConfig<typeof inlineConfig, CustomAppConfig> { }
 }
 `
   },
@@ -487,15 +531,37 @@ export const dollarFetchTemplate: NuxtTemplate = {
   filename: 'fetch.mjs',
   getContents () {
     return [
-      'import { $fetch } from \'ofetch\'',
+      'import { $fetch as _$fetch } from \'ofetch\'',
       'import { baseURL } from \'#internal/nuxt/paths\'',
       'if (!globalThis.$fetch) {',
-      '  globalThis.$fetch = $fetch.create({',
+      '  globalThis.$fetch = _$fetch.create({',
       '    baseURL: baseURL()',
       '  })',
       '}',
+      'export const $fetch = globalThis.$fetch',
     ].join('\n')
   },
+}
+
+export const dollarFetchTypeTemplate: NuxtTemplate = {
+  filename: 'fetch.d.ts',
+  getContents () {
+    return 'export declare const $fetch: import(\'nitropack/types\').$Fetch\n'
+  },
+}
+
+function hasActiveComponentIslands (ctx: { nuxt: { options: NuxtOptions }, app: NuxtApp }) {
+  return ctx.nuxt.options.experimental.componentIslands && (
+    ctx.nuxt.options.experimental.componentIslands !== 'auto' ||
+    ctx.app.pages?.some(p => p.mode === 'server') ||
+    ctx.app.components?.some(c => c.mode === 'server' && !ctx.app.components!.some(other => other.pascalName === c.pascalName && other.mode === 'client'))
+  )
+}
+
+function shouldEnableComponentIslands (nuxt: { options: NuxtOptions }, app: NuxtApp) {
+  return nuxt.options.experimental.componentIslands && (
+    nuxt.options.dev || hasActiveComponentIslands({ nuxt, app })
+  )
 }
 
 // Allow direct access to specific exposed nuxt.config
@@ -514,24 +580,16 @@ export const nuxtConfigTemplate: NuxtTemplate = {
       baseURL: undefined,
       headers: undefined,
     }
-    // Whether island components are genuinely used by the app (server pages /
-    // server components, or islands explicitly enabled). This excludes the
-    // dev-only inflation below.
-    const componentIslandsActive = ctx.nuxt.options.experimental.componentIslands && (
-      ctx.nuxt.options.experimental.componentIslands !== 'auto' || ctx.app.pages?.some(p => p.mode === 'server') || ctx.app.components?.some(c => c.mode === 'server' && !ctx.app.components.some(other => other.pascalName === c.pascalName && other.mode === 'client'))
-    )
-    // In dev the islands handler is always wired up so Vite generates the
-    // islands module graph for HMR, regardless of actual island usage.
-    const shouldEnableComponentIslands = ctx.nuxt.options.experimental.componentIslands && (
-      ctx.nuxt.options.dev || componentIslandsActive
-    )
+    const componentIslandsActive = hasActiveComponentIslands(ctx)
+    const componentIslands = shouldEnableComponentIslands(ctx.nuxt, ctx.app)
     const nitro = useNitro()
+
     const hasCachedRoutes = Object.values(nitro.options.routeRules).some(r => r.isr || r.cache)
     const payloadExtraction = !!ctx.nuxt.options.experimental.payloadExtraction && (nitro.options.static || hasCachedRoutes || (nitro.options.prerender.routes && nitro.options.prerender.routes.length > 0) || Object.values(nitro.options.routeRules).some(r => r.prerender))
     return [
       ...Object.entries(ctx.nuxt.options.app).map(([k, v]) => `export const ${camelCase('app-' + k)} = ${JSON.stringify(v)}`),
       `export const renderJsonPayloads = ${!!ctx.nuxt.options.experimental.renderJsonPayloads}`,
-      `export const componentIslands = ${shouldEnableComponentIslands}`,
+      `export const componentIslands = ${componentIslands}`,
       `export const componentIslandsActive = ${componentIslandsActive}`,
       `export const payloadExtraction = ${payloadExtraction}`,
       `export const prefetchPreloadTags = ${!!ctx.nuxt.options.experimental.prefetchPreloadTags}`,
@@ -560,6 +618,8 @@ export const nuxtConfigTemplate: NuxtTemplate = {
       `export const alwaysRunFetchOnKeyChange = ${!!ctx.nuxt.options.experimental.alwaysRunFetchOnKeyChange}`,
       `export const asyncCallHook = ${!!ctx.nuxt.options.experimental.asyncCallHook}`,
       `export const clientNodePlaceholder = ${!!ctx.nuxt.options.experimental.clientNodePlaceholder}`,
+      `export const tracingChannelNuxt = ${!!(ctx.nuxt.options.tracingChannel && typeof ctx.nuxt.options.tracingChannel === 'object' && ctx.nuxt.options.tracingChannel.nuxt)}`,
+      `export const runtimeCompiler = ${!!ctx.nuxt.options.vue.runtimeCompiler}`,
       `export const hasPluginDependencies = ${pluginsHaveDependencies}`,
       `export const hasParallelPlugins = ${pluginsRunInParallel}`,
       `export const hasPluginHooks = ${pluginsHaveHooks}`,
@@ -587,7 +647,13 @@ export const buildTypeTemplate: NuxtTemplate = {
         }
       }
 
-      declarations += 'declare module ' + JSON.stringify(join('#build', file.filename)) + ';\n'
+      // declare both extensioned (`#build/foo.mjs`) and bare (`#build/foo`) module specifiers
+      const fullSpecifier = join('#build', file.filename)
+      declarations += 'declare module ' + JSON.stringify(fullSpecifier) + ';\n'
+      const bareSpecifier = fullSpecifier.replace(/\.m?js$/, '')
+      if (bareSpecifier !== fullSpecifier) {
+        declarations += 'declare module ' + JSON.stringify(bareSpecifier) + ';\n'
+      }
     }
 
     return declarations

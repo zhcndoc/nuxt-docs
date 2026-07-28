@@ -6,6 +6,7 @@ import { useNuxtApp } from '../nuxt'
 import type { NuxtApp, NuxtPayload } from '../nuxt'
 import { isBotUserAgent } from '../utils'
 import { useRouter } from './router'
+import { appDiagnostics } from '../diagnostics/core'
 
 export const NUXT_ERROR_SIGNATURE = '__nuxt_error' as const
 
@@ -16,6 +17,7 @@ export const useError = (): Ref<NuxtPayload['error']> => toRef(useNuxtApp().payl
 // #34138 - `Omit` breaks the Error inheritance chain, causing `@typescript-eslint/only-throw-error` to fail
 // Adding `Error` explicitly restores throwability. TODO: remove `Error` in Nuxt 5 when `Omit` is no longer needed
 export interface NuxtError<DataT = unknown> extends Omit<H3Error<DataT>, 'statusCode' | 'statusMessage'>, Error {
+  readonly __nuxt_error?: true
   error?: true
   status?: number
   statusText?: string
@@ -58,7 +60,7 @@ export const showError = <DataT = unknown>(
  */
 export const _notifyCrawlerError = (nuxtApp: NuxtApp, error: Error): Promise<void> | void => {
   const result = nuxtApp.callHook('app:error', createError(error))
-  console.error(`[nuxt] Not rendering error page for bot with user agent \`${navigator.userAgent}\`:`, error)
+  appDiagnostics.NUXT_E1012({ userAgent: navigator.userAgent, cause: error })
   return result
 }
 
@@ -88,6 +90,12 @@ export const clearError = async (options: { redirect?: string } = {}): Promise<v
   }
 
   error.value = undefined
+
+  if (import.meta.dev && import.meta.client) {
+    for (const el of document.querySelectorAll('nuxt-error-overlay')) {
+      el.remove()
+    }
+  }
 }
 
 /** @since 3.0.0 */

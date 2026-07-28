@@ -1,6 +1,7 @@
 ---
 title: 'prerenderRoutes'
-description: prerenderRoutes 提示 Nitro 预渲染额外的路由。
+description: prerenderRoutes 会提示 Nitro 额外预渲染一个路由。
+minimalVersion: "3.8"
 links:
   - label: 源码
     icon: i-simple-icons-github
@@ -8,10 +9,10 @@ links:
     size: xs
 ---
 
-在预渲染时，你可以提示 Nitro 预渲染额外的路径，即使这些路径的 URL 没有出现在生成页面的 HTML 中。
+在预渲染时，你可以提示 Nitro 预渲染额外的路由，即使这些路由的 URL 没有出现在生成页面的 HTML 中。
 
 ::important
-`prerenderRoutes` 只能在 [Nuxt context](/docs/4.x/guide/going-further/nuxt-app#the-nuxt-context) 中调用。
+`prerenderRoutes` 只能在 [Nuxt 上下文](/docs/4.x/guide/going-further/nuxt-app#the-nuxt-context) 中调用。
 ::
 
 ::note
@@ -34,7 +35,7 @@ prerenderRoutes(['/', '/about'])
 ```ts
 prerenderRoutes('/api/content/article/name-of-article')
 
-// Somewhere later in App
+// 在 App 中稍后某处
 const articleContent = await $fetch('/api/content/article/name-of-article', {
   responseType: 'json',
 })

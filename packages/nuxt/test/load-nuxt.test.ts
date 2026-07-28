@@ -2,6 +2,7 @@ import { fileURLToPath } from 'node:url'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { normalize } from 'pathe'
 import { withoutTrailingSlash } from 'ufo'
+import { defu } from 'defu'
 import { logger, tryUseNuxt, useNuxt } from '@nuxt/kit'
 import { findWorkspaceDir } from 'pkg-types'
 import { loadNuxt } from '../src/index.ts'
@@ -158,6 +159,26 @@ describe('loadNuxt', () => {
     await nuxt.close()
   })
 
+  it('does not leak debug mutation proxies into resolved options', async () => {
+    const nuxt = await loadNuxt({
+      cwd: repoRoot,
+      overrides: {
+        experimental: { debugModuleMutation: true },
+        modules: [
+          (_options, nuxt) => {
+            nuxt.options.runtimeConfig = defu(nuxt.options.runtimeConfig, {
+              exampleModule: { apiKey: '' },
+            }) as unknown as typeof nuxt.options.runtimeConfig
+          },
+        ],
+      },
+    })
+
+    expect(() => structuredClone(nuxt.options.runtimeConfig)).not.toThrow()
+
+    await nuxt.close()
+  })
+
   it('includes #server alias in nitro tsconfig paths', async () => {
     const nuxt = await loadNuxt({ cwd: repoRoot, ready: true })
 
@@ -184,6 +205,12 @@ describe('pages detection', () => {
     const nuxt = await loadNuxt({ cwd: pagesFixtureDir, overrides, ready: true })
     // @ts-expect-error should resolve to object?
     expect(nuxt.options.pages).toMatchObject(result)
+    await nuxt.close()
+  })
+
+  it('generates layout types even when pages are disabled', async () => {
+    const nuxt = await loadNuxt({ cwd: pagesFixtureDir, overrides: { pages: false }, ready: true })
+    expect(nuxt.options.build.templates.some(t => t.filename === 'types/layouts.d.ts')).toBe(true)
     await nuxt.close()
   })
 })

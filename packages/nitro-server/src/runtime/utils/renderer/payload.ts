@@ -4,11 +4,9 @@ import devalue from '@nuxt/devalue'
 import { stringify, uneval } from 'devalue'
 import type { Script } from '@unhead/vue'
 
-import type { NuxtPayload, NuxtSSRContext } from 'nuxt/app'
+import type { NuxtPayload, NuxtSSRContext } from '#app/types'
 
-// @ts-expect-error virtual file
 import { appId, multiApp } from '#internal/nuxt.config.mjs'
-// @ts-expect-error virtual file
 import { NUXT_JSON_PAYLOADS, NUXT_NO_SSR } from '#internal/nuxt/nitro-config.mjs'
 
 export function renderPayloadResponse (ssrContext: NuxtSSRContext): RenderResponse {

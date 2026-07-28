@@ -22,16 +22,12 @@ import { defineAsyncComponent, onErrorCaptured, onServerPrefetch, provide } from
 import { useNuxtApp } from '../nuxt'
 import { _notifyCrawlerError, isNuxtError, showError, useError } from '../composables/error'
 import { isBotUserAgent } from '../utils'
+import { appDiagnostics } from '../diagnostics/core'
 import { useRoute, useRouter } from '../composables/router'
 import { PageRouteSymbol } from '../components/injections'
 import AppComponent from '#build/app-component.mjs'
 import ErrorComponent from '#build/error-component.mjs'
-// @ts-expect-error virtual file
-import { componentIslands } from '#build/nuxt.config.mjs'
-
-const IslandRenderer = import.meta.server && componentIslands
-  ? defineAsyncComponent(() => import('./island-renderer').then(r => r.default || r))
-  : () => null
+import IslandRenderer from '#build/island-renderer.mjs'
 
 const nuxtApp = useNuxtApp()
 const onResolve = nuxtApp.deferHydration()
@@ -53,7 +49,7 @@ provide(PageRouteSymbol, useRoute())
 // vue:setup hook
 const results = nuxtApp.hooks.callHookWith(hooks => hooks.map(hook => hook()), 'vue:setup', [])
 if (import.meta.dev && results && results.some(i => i && 'then' in i)) {
-  console.error('[nuxt] Error in `vue:setup`. Callbacks must be synchronous.')
+  appDiagnostics.NUXT_E1011()
 }
 
 // error handling

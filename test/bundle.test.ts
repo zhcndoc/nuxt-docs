@@ -1,4 +1,3 @@
-import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import fsp from 'node:fs/promises'
 import { beforeAll, describe, expect, it } from 'vitest'
@@ -6,18 +5,17 @@ import { exec } from 'tinyexec'
 import { glob } from 'tinyglobby'
 import { join } from 'pathe'
 
-const nuxtEntry = fileURLToPath(new URL('../packages/nuxt/dist/index.mjs', import.meta.url))
-const isStubbed = readFileSync(nuxtEntry, 'utf-8').includes('const _module = await jiti')
-
-describe.skipIf(isStubbed || process.env.SKIP_BUNDLE_SIZE === 'true' || process.env.ECOSYSTEM_CI)('minimal nuxt application', () => {
+describe.skipIf(process.env.SKIP_BUNDLE_SIZE === 'true' || process.env.ECOSYSTEM_CI)('minimal nuxt application', () => {
   const rootDir = fileURLToPath(new URL('./fixtures/minimal', import.meta.url))
   const pagesRootDir = fileURLToPath(new URL('./fixtures/minimal-pages', import.meta.url))
+  const spaRootDir = fileURLToPath(new URL('./fixtures/spa', import.meta.url))
 
   beforeAll(async () => {
     await Promise.all([
       exec('pnpm', ['nuxt', 'build', rootDir], { nodeOptions: { env: { EXTERNAL_VUE: 'false' } } }),
       exec('pnpm', ['nuxt', 'build', rootDir], { nodeOptions: { env: { EXTERNAL_VUE: 'true' } } }),
       exec('pnpm', ['nuxt', 'build', pagesRootDir]),
+      exec('pnpm', ['nuxt', 'build', spaRootDir]),
     ])
   }, 120 * 1000)
 
@@ -27,8 +25,8 @@ describe.skipIf(isStubbed || process.env.SKIP_BUNDLE_SIZE === 'true' || process.
     const [clientStats, clientStatsInlined] = await Promise.all((['.output', '.output-inline'])
       .map(outputDir => analyzeSizes(['**/*.js'], join(rootDir, outputDir, 'public'), rootDir)))
 
-    expect.soft(roundToKilobytes(clientStats!.totalBytes)).toMatchInlineSnapshot(`"119k"`)
-    expect.soft(roundToKilobytes(clientStatsInlined!.totalBytes)).toMatchInlineSnapshot(`"119k"`)
+    expect.soft(roundToKilobytes(clientStats!.totalBytes)).toMatchInlineSnapshot(`"121k"`)
+    expect.soft(roundToKilobytes(clientStatsInlined!.totalBytes)).toMatchInlineSnapshot(`"121k"`)
 
     const files = new Set([...clientStats!.files, ...clientStatsInlined!.files].map(f => f.replace(/\..*\.js/, '.js')))
 
@@ -39,10 +37,25 @@ describe.skipIf(isStubbed || process.env.SKIP_BUNDLE_SIZE === 'true' || process.
     `)
   })
 
+  it('does not ship payload revival machinery in a spa build', async () => {
+    const clientStats = await analyzeSizes(['**/*.js'], join(spaRootDir, '.output/public'), spaRootDir)
+
+    expect.soft(roundToKilobytes(clientStats!.totalBytes)).toMatchInlineSnapshot(`"117k"`)
+
+    const contents = await Promise.all(
+      (await glob(['**/*.js'], { cwd: join(spaRootDir, '.output/public') }))
+        .map(file => fsp.readFile(join(spaRootDir, '.output/public', file), 'utf8')),
+    )
+    const bundle = contents.join('\n')
+
+    expect(bundle).not.toContain('nuxt:revive-payload:client')
+    expect(bundle).not.toContain('EmptyShallowRef')
+  })
+
   it('default client bundle size (pages)', async () => {
     const clientStats = await analyzeSizes(['**/*.js'], join(pagesRootDir, '.output/public'), pagesRootDir)
 
-    expect.soft(roundToKilobytes(clientStats!.totalBytes)).toMatchInlineSnapshot(`"179k"`)
+    expect.soft(roundToKilobytes(clientStats!.totalBytes)).toMatchInlineSnapshot(`"183k"`)
 
     const files = clientStats!.files.map(f => f.replace(/\..*\.js/, '.js'))
 
@@ -64,10 +77,10 @@ describe.skipIf(isStubbed || process.env.SKIP_BUNDLE_SIZE === 'true' || process.
     const serverDir = join(rootDir, '.output/server')
 
     const serverStats = await analyzeSizes(['**/*.mjs', '!node_modules'], serverDir, rootDir)
-    expect.soft(roundToKilobytes(serverStats.totalBytes)).toMatchInlineSnapshot(`"202k"`)
+    expect.soft(roundToKilobytes(serverStats.totalBytes)).toMatchInlineSnapshot(`"114k"`)
 
     const modules = await analyzeSizes(['node_modules/**/*'], serverDir, rootDir)
-    expect.soft(roundToKilobytes(modules.totalBytes)).toMatchInlineSnapshot(`"1533k"`)
+    expect.soft(roundToKilobytes(modules.totalBytes)).toMatchInlineSnapshot(`"1568k"`)
 
     const packages = modules.files
       .filter(m => m.endsWith('package.json'))
@@ -89,6 +102,7 @@ describe.skipIf(isStubbed || process.env.SKIP_BUNDLE_SIZE === 'true' || process.
         "entities/dist/commonjs",
         "estree-walker",
         "hookable",
+        "nostics",
         "source-map-js",
         "ufo",
         "unhead",
@@ -102,10 +116,10 @@ describe.skipIf(isStubbed || process.env.SKIP_BUNDLE_SIZE === 'true' || process.
     const serverDir = join(rootDir, '.output-inline/server')
 
     const serverStats = await analyzeSizes(['**/*.mjs', '!node_modules'], serverDir, rootDir)
-    expect.soft(roundToKilobytes(serverStats.totalBytes)).toMatchInlineSnapshot(`"574k"`)
+    expect.soft(roundToKilobytes(serverStats.totalBytes)).toMatchInlineSnapshot(`"277k"`)
 
     const modules = await analyzeSizes(['node_modules/**/*'], serverDir, rootDir)
-    expect.soft(roundToKilobytes(modules.totalBytes)).toMatchInlineSnapshot(`"189k"`)
+    expect.soft(roundToKilobytes(modules.totalBytes)).toMatchInlineSnapshot(`"220k"`)
 
     const packages = modules.files
       .filter(m => m.endsWith('package.json'))
@@ -115,6 +129,7 @@ describe.skipIf(isStubbed || process.env.SKIP_BUNDLE_SIZE === 'true' || process.
       [
         "devalue",
         "hookable",
+        "nostics",
         "unhead",
       ]
     `)
@@ -124,10 +139,10 @@ describe.skipIf(isStubbed || process.env.SKIP_BUNDLE_SIZE === 'true' || process.
     const serverDir = join(pagesRootDir, '.output/server')
 
     const serverStats = await analyzeSizes(['**/*.mjs', '!node_modules'], serverDir, pagesRootDir)
-    expect.soft(roundToKilobytes(serverStats.totalBytes)).toMatchInlineSnapshot(`"305k"`)
+    expect.soft(roundToKilobytes(serverStats.totalBytes)).toMatchInlineSnapshot(`"146k"`)
 
     const modules = await analyzeSizes(['node_modules/**/*'], serverDir, pagesRootDir)
-    expect.soft(roundToKilobytes(modules.totalBytes)).toMatchInlineSnapshot(`"1543k"`)
+    expect.soft(roundToKilobytes(modules.totalBytes)).toMatchInlineSnapshot(`"1707k"`)
 
     const packages = modules.files
       .filter(m => m.endsWith('package.json'))
@@ -139,6 +154,7 @@ describe.skipIf(isStubbed || process.env.SKIP_BUNDLE_SIZE === 'true' || process.
         "@vue/compiler-core",
         "@vue/compiler-dom",
         "@vue/compiler-ssr",
+        "@vue/devtools-api",
         "@vue/reactivity",
         "@vue/runtime-core",
         "@vue/runtime-dom",
@@ -149,12 +165,13 @@ describe.skipIf(isStubbed || process.env.SKIP_BUNDLE_SIZE === 'true' || process.
         "entities/dist/commonjs",
         "estree-walker",
         "hookable",
-        "perfect-debounce",
+        "nostics",
         "source-map-js",
         "ufo",
         "unhead",
         "vue",
         "vue-bundle-renderer",
+        "vue-router",
       ]
     `)
   })

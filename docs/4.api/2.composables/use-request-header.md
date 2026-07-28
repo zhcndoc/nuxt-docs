@@ -1,6 +1,7 @@
 ---
 title: "useRequestHeader"
-description: "使用 useRequestHeader 访问某个传入请求头。"
+description: "使用 useRequestHeader 访问某个传入的请求头。"
+minimalVersion: "3.9"
 links:
   - label: 源码
     icon: i-simple-icons-github

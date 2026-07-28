@@ -8,17 +8,17 @@ import { pathToFileURL } from 'node:url'
 import { Buffer } from 'node:buffer'
 import { randomUUID } from 'node:crypto'
 import { win32 as pathWin32 } from 'node:path'
-import { dirname, isAbsolute, join, normalize } from 'pathe'
-import { directoryToURL, resolveAlias, resolvePath, tryUseNuxt, useNitro } from '@nuxt/kit'
+import { dirname, join, normalize } from 'pathe'
+import { bundlerDiagnostics, resolvePath, setBuildOutput, tryUseNuxt, useNitro } from '@nuxt/kit'
 import type { EnvironmentModuleNode, ModuleNode, PluginContainer, ViteDevServer, Plugin as VitePlugin } from 'vite'
-import { getQuery } from 'ufo'
 import type { FetchResult } from 'vite-node'
 import { normalizeViteManifest } from 'vue-bundle-renderer'
 import type { Manifest } from 'vue-bundle-renderer'
 import type { Nuxt } from '@nuxt/schema'
 import { resolveModulePath } from 'exsolve'
 
-import { isCSS, toVirtualId } from '../utils/index.ts'
+import { toVirtualId } from '../utils/index.ts'
+import { collectDevCss } from '../utils/css.ts'
 import { resolveClientEntry, resolveServerEntry } from '../utils/config.ts'
 import type { ErrorPartial } from '../types.ts'
 
@@ -67,46 +67,16 @@ export interface ViteNodeFetch {
 }
 
 function getManifest (nuxt: Nuxt, viteServer: ViteDevServer, clientEntry: string) {
-  const css = new Set<string>()
-  const ssrServer = viteServer.environments.ssr
+  const ssrServer = nuxt.options.experimental.viteEnvironmentApi ? viteServer.environments.ssr : viteServer
 
-  // Collect CSS from module graph (already loaded modules)
-  for (const key of ssrServer.moduleGraph.urlToModuleMap.keys()) {
-    if (isCSS(key)) {
-      const query = getQuery(key)
-      if ('raw' in query) { continue }
-      const importers = ssrServer.moduleGraph.urlToModuleMap.get(key)?.importers
-      if (importers && [...importers].every(i => i.id && 'raw' in getQuery(i.id))) {
-        continue
-      }
-      css.add(key)
-    }
-  }
-
-  // Add global CSS from config as fallback to prevent FOUC
-  // This ensures CSS is in manifest even if moduleGraph isn't populated yet
-  for (const globalCss of nuxt.options.css) {
-    if (typeof globalCss === 'string') {
-      let resolved: string | undefined = resolveAlias(globalCss, nuxt.options.alias)
-
-      // Resolve bare module specifiers to absolute paths
-      if (!isAbsolute(resolved)) {
-        resolved = resolveModulePath(resolved, {
-          try: true,
-          from: nuxt.options.modulesDir.map(d => directoryToURL(d)),
-        })
-        if (!resolved) { continue }
-        css.add('/@fs' + resolved.replace(/^(?!\/)/, '/'))
-      } else {
-        css.add(resolved)
-      }
-    }
-  }
+  // global CSS is included as a fallback to prevent FOUC before the ssr module
+  // graph is populated
+  const css = collectDevCss(nuxt, ssrServer.moduleGraph)
 
   const manifest = normalizeViteManifest({
     '@vite/client': {
       file: '@vite/client',
-      css: [...css],
+      css,
       module: true,
       isEntry: true,
     },
@@ -220,21 +190,29 @@ export function ViteNodePlugin (nuxt: Nuxt): VitePlugin | undefined {
   const serverResolvedPath = resolveModulePath('#vite-node-entry', { from: import.meta.url })
   const fetchResolvedPath = resolveModulePath('#vite-node', { from: import.meta.url })
 
-  const vfs = {
-    'server.mjs': `export { default } from ${JSON.stringify(pathToFileURL(serverResolvedPath).href)}`,
-    'runner.mjs': `export { default } from ${JSON.stringify(pathToFileURL(runnerResolvedPath).href)}`,
-    'client.manifest.mjs': `import { viteNodeFetch } from ${JSON.stringify(pathToFileURL(fetchResolvedPath))};export default () => viteNodeFetch.getManifest()`,
-    'client.precomputed.mjs': 'export default undefined',
+  const externalRuntimeUrls = new Set([runnerResolvedPath, serverResolvedPath, fetchResolvedPath].map(p => pathToFileURL(p).href))
+  const rollupConfig = (nitro.options.rollupConfig ||= {} as NonNullable<typeof nitro.options.rollupConfig>)
+  const existingExternal = rollupConfig.external
+  rollupConfig.external = (id, ...args) => {
+    if (externalRuntimeUrls.has(id)) {
+      return true
+    }
+    if (typeof existingExternal === 'function') {
+      return existingExternal(id, ...args)
+    }
+    const patterns = existingExternal == null ? [] : (Array.isArray(existingExternal) ? existingExternal : [existingExternal])
+    return patterns.some(e => typeof e === 'string' ? e === id : e.test(id))
   }
+
+  const serverEntryCode = `export { default } from ${JSON.stringify(pathToFileURL(serverResolvedPath).href)}`
+  setBuildOutput('serverEntry', () => serverEntryCode)
+  setBuildOutput('clientManifest', () => `import { viteNodeFetch } from ${JSON.stringify(pathToFileURL(fetchResolvedPath))};export default () => viteNodeFetch.getManifest()`)
 
   nitro.options.virtual ||= {}
   nitro.options._config.virtual ||= {}
-
-  for (const key in vfs) {
-    const filename = `#build/dist/server/${key}`
-    nitro.options.virtual[filename] = vfs[key as keyof typeof vfs]
-    nitro.options._config.virtual[filename] = vfs[key as keyof typeof vfs]
-  }
+  const runnerCode = `export { default } from ${JSON.stringify(pathToFileURL(runnerResolvedPath).href)}`
+  nitro.options.virtual['#build/dist/server/runner.mjs'] = runnerCode
+  nitro.options._config.virtual['#build/dist/server/runner.mjs'] = runnerCode
 
   // The SSR dev server runs with `hmr: false`, so Vite never fires
   // `handleHotUpdate` on it and user-plugin invalidations of SSR modules
@@ -534,7 +512,7 @@ function createViteNodeSocketServer (nuxt: Nuxt, ssrServer: ViteDevServer, clien
       const requiredSize = writeOffset + additionalBytes
 
       if (requiredSize > MAX_BUFFER_SIZE) {
-        throw new Error(`Buffer size limit exceeded: ${requiredSize} > ${MAX_BUFFER_SIZE}`)
+        throw bundlerDiagnostics.NUXT_B7012({ requiredSize, maxSize: MAX_BUFFER_SIZE })
       }
 
       if (requiredSize > buffer.length) {
@@ -606,7 +584,7 @@ function createViteNodeSocketServer (nuxt: Nuxt, ssrServer: ViteDevServer, clien
 
   const currentSocketPath = config.socketPath
   if (!currentSocketPath) {
-    throw new Error('Socket path not configured for ViteNodeSocketServer.')
+    throw bundlerDiagnostics.NUXT_B7013()
   }
 
   listenAndRestrict(server, currentSocketPath)
@@ -634,7 +612,7 @@ export function listenAndRestrict (server: net.Server, socketPath: string): void
       try {
         fs.chmodSync(socketPath, 0o600)
       } catch (error) {
-        console.error('[nuxt] Failed to restrict vite-node socket permissions; closing.', error)
+        bundlerDiagnostics.NUXT_B7018({ cause: error })
         server.close()
         try {
           fs.rmSync(dirname(socketPath), { recursive: true, force: true })

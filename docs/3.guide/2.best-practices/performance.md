@@ -4,7 +4,7 @@ title: Nuxt 性能
 description: 提升 Nuxt 应用性能的最佳实践。
 ---
 
-Nuxt 提供了内置功能来提升你的应用性能并有助于改善 [Core Web Vitals](https://web.dev/articles/vitals)。此外，Nuxt 团队也维护了多个核心模块，用于在特定领域进一步提升性能。本指南概述了优化 Nuxt 应用性能的最佳实践。
+Nuxt 提供了内置功能来提升你的应用性能，并有助于改善 [Core Web Vitals](https://web.dev/articles/vitals)。此外，Nuxt 团队也维护了多个核心模块，用于在特定领域进一步提升性能。本指南概述了优化 Nuxt 应用性能的最佳实践。
 
 ## 内置功能
 
@@ -218,7 +218,7 @@ onLoaded((gtag) => {
 
 ### Nuxi Analyze
 
-[`This`](/docs/4.x/api/commands/analyze) 命令 of `nuxi` allows you to analyze the production bundle of your Nuxt application. It leverages `vite-bundle-visualizer` (类似于 `webpack-bundle-analyzer`) to generate a visual representation of your application's bundle, making it easier to identify which components take up the most space.
+[`nuxt`](/docs/4.x/api/commands/analyze) 的 [This](/docs/4.x/api/commands/analyze) 命令允许你分析 Nuxt 应用的生产构建包。它利用 `vite-bundle-visualizer`（类似于 `webpack-bundle-analyzer`）来生成应用构建包的可视化表示，使你更容易识别哪些组件占用了最多空间。
 
 当你在可视化中看到一个较大的块时，通常表示存在优化机会——无论是将其拆分为更小的部分、实现懒加载，还是用更高效的替代方案替换，尤其是对于第三方库。
 
@@ -244,7 +244,7 @@ Chrome 开发者工具提供两个用于衡量性能的有用选项卡：`Perfor
 
 如果你与页面交互，它还会捕获 **Interaction to Next Paint (INP)**，基于你的设备和网络情况给出一套完整的 Core Web Vitals 视图。
 
-![Chrome DevTools Performance Panel](https://developer.chrome.com/static/docs/devtools/performance/image/cpu-throttling_856.png)
+![Chrome DevTools 性能面板](https://developer.chrome.com/static/docs/devtools/performance/image/cpu-throttling_856.png)
 
 [Lighthouse](https://developer.chrome.com/docs/devtools/lighthouse) 对性能、无障碍、SEO、渐进式 Web 应用和最佳实践进行审计。它会对你的页面运行测试并生成报告。使用未通过的审计作为改进网站的指南。
 

@@ -1,6 +1,7 @@
 ---
 title: 'reloadNuxtApp'
 description: reloadNuxtApp 将对页面执行一次硬刷新。
+minimalVersion: "3.3"
 links:
   - label: 源码
     icon: i-simple-icons-github

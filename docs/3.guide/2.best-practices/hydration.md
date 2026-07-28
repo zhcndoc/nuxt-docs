@@ -6,7 +6,7 @@ description: 为什么修复水合问题很重要
 
 在开发过程中，你可能会遇到水合（hydration）问题。不要忽视这些警告。
 
-## 为什么修复它们很重要？
+## 修复它们为什么重要？
 
 水合不匹配不仅仅是警告 —— 它们表明存在严重问题，可能会破坏你的应用：
 
@@ -140,7 +140,7 @@ onMounted(async () => {
 
 <script setup>
 const hour = new Date().getHours()
-const greeting = hour < 12 ? 'Good morning' : 'Good afternoon'
+const greeting = hour < 12 ? '早上好' : '下午好'
 </script>
 ```
 

@@ -1,6 +1,7 @@
 ---
 title: 'useRouteAnnouncer'
-description: 此可组合项会观察页面标题的变化，并相应地更新播报消息。
+description: 此 composable 会观察页面标题的变化，并相应地更新播报器消息。
+minimalVersion: "3.12"
 links:
   - label: 源码
     icon: i-simple-icons-github
@@ -14,7 +15,7 @@ links:
 
 ## 描述
 
-一个 composable，用于监听页面标题的变化并相应地更新播报器消息。由 [`<NuxtRouteAnnouncer>`](/docs/4.x/api/components/nuxt-route-announcer) 使用，并且可以被控制。  
+一个用于监听页面标题变化并相应地更新播报器消息的组合式函数。由 [`<NuxtRouteAnnouncer>`](/docs/4.x/api/components/nuxt-route-announcer) 使用，并且可以被控制。  
 它挂钩到 Unhead 的 [`dom:rendered`](https://unhead.unjs.io/docs/typescript/head/api/hooks/dom-rendered) 来读取页面标题并将其设置为播报器消息。
 
 ## 参数

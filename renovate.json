@@ -11,7 +11,6 @@
     "3.x"
   ],
   "ignoreDeps": [
-    "node",
     "npm"
   ],
   "minimumReleaseAge": "1 day",
@@ -58,6 +57,18 @@
       "groupSlug": "all-non-major",
       "matchPackageNames": [
         "*"
+      ]
+    },
+    {
+      "groupName": "rolldown",
+      "groupSlug": "rolldown",
+      "matchPackageNames": [
+        "rolldown",
+        "obuild",
+        "tsdown",
+        "oxc-parser",
+        "oxc-walker",
+        "@oxc-project/types"
       ]
     },
     {

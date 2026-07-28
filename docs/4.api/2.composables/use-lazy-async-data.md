@@ -36,7 +36,7 @@ const { status, data: posts } = await useLazyAsyncData('posts', () => $fetch('/a
 </template>
 ```
 
-使用 `useLazyAsyncData` 时，导航会在请求完成之前发生，这意味着你必须在组件模板中直接处理 `pending` 和 `error` 状态。
+`useLazyAsyncData` 让导航在获取数据的同时继续进行。在使用结果之前，请在组件模板中检查 `status === 'pending'` 和 `status === 'error'`。
 
 ::warning
 `useLazyAsyncData` 是一个由编译器转换的保留函数名，因此你不应将自己的函数命名为 `useLazyAsyncData`。
@@ -45,16 +45,16 @@ const { status, data: posts } = await useLazyAsyncData('posts', () => $fetch('/a
 ## 类型
 
 ```ts [Signature]
-export function useLazyAsyncData<DataT, ErrorT> (
-  handler: (ctx?: NuxtApp) => Promise<DataT>,
-  options?: AsyncDataOptions<DataT>,
-): AsyncData<DataT, ErrorT>
+export function useLazyAsyncData<ResT, DataE = unknown, DataT = ResT> (
+  handler: AsyncDataHandler<ResT>,
+  options?: AsyncDataOptions<ResT, DataT>,
+): AsyncData<DataT, DataE> & Promise<AsyncData<DataT, DataE>>
 
-export function useLazyAsyncData<DataT, ErrorT> (
-  key: string,
-  handler: (ctx?: NuxtApp) => Promise<DataT>,
-  options?: AsyncDataOptions<DataT>,
-): AsyncData<DataT, ErrorT>
+export function useLazyAsyncData<ResT, DataE = unknown, DataT = ResT> (
+  key: MaybeRefOrGetter<string>,
+  handler: AsyncDataHandler<ResT>,
+  options?: AsyncDataOptions<ResT, DataT>,
+): AsyncData<DataT, DataE> & Promise<AsyncData<DataT, DataE>>
 ```
 
 `useLazyAsyncData` 与 [`useAsyncData`](/docs/4.x/api/composables/use-async-data) 具有相同的签名。
@@ -75,8 +75,8 @@ export function useLazyAsyncData<DataT, ErrorT> (
 
 ```vue [app/pages/index.vue]
 <script setup lang="ts">
-/* 导航会在数据获取完成之前发生。
-  请直接在组件模板中处理 'pending' 和 'error' 状态
+/* useLazyAsyncData 允许导航在获取完成前继续。
+  在模板中处理加载和错误状态。
 */
 const { status, data: count } = await useLazyAsyncData('count', () => $fetch('/api/count'))
 
@@ -87,8 +87,14 @@ watch(count, (newCount) => {
 </script>
 
 <template>
-  <div>
-    {{ status === 'pending' ? '加载中' : count }}
+  <div v-if="status === 'pending'">
+    加载中
+  </div>
+  <div v-else-if="status === 'error'">
+    加载 count 时出错
+  </div>
+  <div v-else>
+    {{ count }}
   </div>
 </template>
 ```

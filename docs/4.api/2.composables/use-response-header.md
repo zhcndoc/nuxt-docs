@@ -1,6 +1,7 @@
 ---
 title: "useResponseHeader"
-description: "使用 useResponseHeader 设置服务器响应头。"
+description: "使用 useResponseHeader 来设置服务器响应头。"
+minimalVersion: "3.14"
 links:
   - label: 源码
     icon: i-simple-icons-github
@@ -15,7 +16,7 @@ links:
 您可以在页面、组件和插件中使用内置的 [`useResponseHeader`](/docs/4.x/api/composables/use-response-header) 组合式函数来设置任意服务器响应头。
 
 ```ts
-// Set a custom response header
+// 设置自定义响应头
 const header = useResponseHeader('X-My-Header')
 header.value = 'my-value'
 ```

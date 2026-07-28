@@ -1,6 +1,7 @@
 ---
 title: "callOnce"
-description: "在 SSR 或 CSR 期间运行一次指定的函数或代码块。"
+description: "在 SSR 或 CSR 期间仅运行一次给定的函数或代码块。"
+minimalVersion: "3.9"
 links:
   - label: 源码
     icon: i-simple-icons-github
@@ -12,7 +13,7 @@ links:
 此工具自 [Nuxt v3.9](/blog/v3-9) 起可用。
 ::
 
-## 目的
+## Purpose
 
 `callOnce` 函数用于仅在以下情况之一中执行给定的函数或代码块一次：
 - 在服务端渲染（SSR）期间，但不在水合（hydration）期间执行
@@ -35,7 +36,7 @@ await callOnce(async () => {
 </script>
 ```
 
-也可以在每次导航时运行，同时仍避免初始的服务器/客户端双重加载。为此，可以使用 `navigation` 模式：
+也可以在每次导航时运行，同时仍然避免首次服务器/客户端的双重执行。为此，可以使用 `navigation` 模式 :badge[v3.15]{color="info" size="xs" class="align-middle"}：
 
 ```vue [app/app.vue]
 <script setup lang="ts">
@@ -74,7 +75,7 @@ export function callOnce (fn?: (() => any | Promise<any>), options?: CallOnceOpt
 
 type CallOnceOptions = {
   /**
-   * Execution mode for the callOnce function
+   * callOnce 函数的执行模式
    * @default 'render'
    */
   mode?: 'navigation' | 'render'

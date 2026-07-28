@@ -1,6 +1,7 @@
 ---
 title: "onPrehydrate"
-description: "在 Nuxt 在客户端进行 hydration 之前使用 onPrehydrate 在客户端立即运行回调。"
+description: "使用 onPrehydrate 在 Nuxt 对页面进行 hydration 之前，立即在客户端运行一个回调。"
+minimalVersion: "3.12"
 links:
   - label: 源码
     icon: i-simple-icons-github
@@ -19,7 +20,7 @@ links:
 
 ## 使用
 
-在 Vue 组件的 setup 函数中调用 `onPrehydrate`（例如在 `<script setup>` 中）或在插件中调用。只有在服务器端调用时才会生效，并且不会包含在你的客户端构建中。
+在 Vue 组件的 setup 函数中（例如在 `<script setup>` 中）或在插件中调用 `onPrehydrate`。该调用本身只有在服务端执行时才会生效，并且会从你的客户端构建中移除。不过，你传入的回调会被序列化并内联到 HTML 中，因此它会在 Nuxt 进行 hydration 之前立即在**浏览器**中运行。这意味着它可以访问诸如 `window` 和 DOM 之类的浏览器全局对象。
 
 ## 类型
 
@@ -46,8 +47,8 @@ export function onPrehydrate (callback: string | ((el: HTMLElement) => void), ke
 <script setup lang="ts">
 declare const window: Window
 // ---cut---
-// 在 Nuxt 执行 hydration 之前运行代码
 onPrehydrate(() => {
+  // 在浏览器中运行，正好在 Nuxt 开始水合之前
   console.log(window)
 })
 
@@ -67,3 +68,13 @@ const prehydrateId = onPrehydrate((el) => {})
   </div>
 </template>
 ```
+
+在底层，这个回调会在构建时被转成字符串并进行压缩，然后以内联 `<script>` 标签的形式注入到服务端渲染的 HTML 中，位置就在 `</body>` 结束标签之前。对于上面的示例，渲染后的 HTML 大致如下：
+
+```html
+<div data-prehydrate-id=":b3qlvSiBeH:"> 你好 </div>
+<script>(()=>{console.log(window)})()</script>
+<script>document.querySelectorAll('[data-prehydrate-id*=":b3qlvSiBeH:"]').forEach(el=>{console.log(el.outerHTML)})</script>
+```
+
+当回调接收一个 `el` 参数时，组件的根元素会被标记上一个 `data-prehydrate-id` 属性，这样内联脚本就可以找到它。

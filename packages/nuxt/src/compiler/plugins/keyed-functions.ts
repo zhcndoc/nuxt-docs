@@ -7,12 +7,12 @@ import { camelCase } from 'scule'
 import escapeRE from 'escape-string-regexp'
 import { findStaticImports, parseStaticImport } from 'mlly'
 import { ScopeTracker, type ScopeTrackerNode, parseAndWalk, walk } from 'oxc-walker'
-import { resolveAlias } from '@nuxt/kit'
+import { buildDiagnostics, resolveAlias } from '@nuxt/kit'
 import type { KeyedFunction } from '@nuxt/schema'
 import type { ESTree } from 'rolldown/utils'
 import type { Import } from 'unimport'
 
-import { MACRO_QUERY_RE, NUXT_LIB_RE, STYLE_QUERY_RE, isWhitespace, logger, stripExtension } from '../../utils.ts'
+import { MACRO_QUERY_RE, NUXT_LIB_RE, STYLE_QUERY_RE, isWhitespace, stripExtension } from '../../utils.ts'
 import { type FunctionCallMetadata, parseStaticExportIdentifiers, parseStaticFunctionCall, processImports } from '../../core/utils/parse-utils.ts'
 
 interface KeyedFunctionsOptions {
@@ -23,6 +23,14 @@ interface KeyedFunctionsOptions {
   getAutoImports: () => Promise<Import[]>
   // TODO: remove in Nuxt 5
   appDir: string
+  /**
+   * Whether `source` is required for every keyed function. When enabled, keyed functions
+   * registered without a `source` (or with a `RegExp` source) are no longer matched.
+   *
+   * Enabled by default with `compatibilityVersion: 5`.
+   */
+  // TODO: remove in Nuxt 5 (always behave as if `true`)
+  requireSource: boolean
   dev?: boolean
 }
 
@@ -60,7 +68,7 @@ function buildKeyedFunctionsState (keyedFunctions: KeyedFunction[]) {
       const sourcesToFunctionMeta = namesToSourcesToFunctionMeta.get(functionName)
       const existingEntry = sourcesToFunctionMeta?.get(fnSource)
       if (existingEntry?.source && existingEntry.source === fnSource) {
-        logger.warn(`[nuxt:compiler] [keyed-functions] Duplicate function name \`${functionName}\`${functionName !== f.name ? ` defined as \`${f.name}\`` : ''} with ${f.source ? `the same source \`${f.source}\`` : 'no source'} found. Overwriting the existing entry.`)
+        buildDiagnostics.NUXT_B1009({ functionName, name: f.name, source: f.source })
       }
     }
 
@@ -193,14 +201,16 @@ export const KeyedFunctionsPlugin = (options: KeyedFunctionsOptions) => createUn
               }
             }
 
-            const backwardsCompatibleFnMeta = sourcesToMetas.get('') // functions without a source or with a regex fall under ''
-            if (backwardsCompatibleFnMeta?.source === undefined) {
-              const autoImportResolvedSource = stripExtension(resolveAlias(autoImportsToSources.get(localName) ?? ''))
-              if (autoImportResolvedSource === source) {
+            if (!options.requireSource) {
+              const backwardsCompatibleFnMeta = sourcesToMetas.get('') // functions without a source or with a regex fall under ''
+              if (backwardsCompatibleFnMeta?.source === undefined) {
+                const autoImportResolvedSource = stripExtension(resolveAlias(autoImportsToSources.get(localName) ?? ''))
+                if (autoImportResolvedSource === source) {
+                  return backwardsCompatibleFnMeta
+                }
+              } else if (backwardsCompatibleFnMeta.source instanceof RegExp && backwardsCompatibleFnMeta.source.test(source)) {
                 return backwardsCompatibleFnMeta
               }
-            } else if (backwardsCompatibleFnMeta.source instanceof RegExp && backwardsCompatibleFnMeta.source.test(source)) {
-              return backwardsCompatibleFnMeta
             }
 
             return
@@ -325,13 +335,13 @@ export const KeyedFunctionsPlugin = (options: KeyedFunctionsOptions) => createUn
                 && (
                   // the function is imported from the correct source when `source` is specified
                   (typeof fnMeta.source === 'string' && (stripExtension(fnMeta.source) === importSourceResolved))
-                  // TODO: remove the checks below in Nuxt 5
-                  // or the function is auto-imported when there is no source specified
-                  || (!fnMeta.source && stripExtension(_resolvePath(autoImportsToSources.get(parsedCall.name) ?? '')) === importSourceResolved)
-                  // or the specified function's source RegExp matches the import source
-                  || (fnMeta.source instanceof RegExp && fnMeta.source.test(importSourceResolved))
                   // or the function is from the Nuxt source (`#app` barrel export, for example)
                   || (typeof fnMeta.source === 'string' && fnMeta.source.startsWith(options.appDir))
+                  // TODO: remove the checks below in Nuxt 5
+                  // or the function is auto-imported when there is no source specified
+                  || (!options.requireSource && !fnMeta.source && stripExtension(_resolvePath(autoImportsToSources.get(parsedCall.name) ?? '')) === importSourceResolved)
+                  // or the specified function's source RegExp matches the import source
+                  || (!options.requireSource && fnMeta.source instanceof RegExp && fnMeta.source.test(importSourceResolved))
                 )
               )
               // or the function is defined in the current file, and we're considering the root level scope declaration

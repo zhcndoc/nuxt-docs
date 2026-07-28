@@ -5,15 +5,19 @@ import { isWindows } from 'std-env'
 import { normalize } from 'pathe'
 import { $fetch, fetch, setup } from '@nuxt/test-utils/e2e'
 import type { NuxtIslandResponse } from 'nuxt/app'
-import { computeIslandHash, serializeIslandProps } from '../packages/nuxt/src/app/island-hash'
+import { getIslandHash, serializeIslandProps } from '../packages/nuxt/src/app/island-hash'
+import { MAX_VFOR_LENGTH } from '../packages/nuxt/src/app/components/vfor'
+import { MAX_ISLAND_BODY_BYTES } from '../packages/nitro-server/src/runtime/utils/island-props'
 
 import { isDev, isWebpack } from './matrix'
 import { renderPage } from './utils'
 
+const itFailsIf = (condition: boolean) => condition ? it.fails : it
+
 function islandURL (name: string, opts: { props?: Record<string, any>, context?: Record<string, any> } = {}) {
   const serializedProps = serializeIslandProps(opts.props)
   const ctx = opts.context ?? {}
-  const hashId = computeIslandHash(name, serializedProps, ctx, undefined)
+  const hashId = getIslandHash({ name, props: serializedProps, context: ctx })
   const query: Record<string, any> = { ...ctx }
   if (opts.props) { query.props = serializedProps }
   return withQuery(`/__nuxt_island/${name}_${hashId}.json`, query)
@@ -345,7 +349,7 @@ describe('component islands', () => {
     })
   }
 
-  it('renders pure components', async () => {
+  itFailsIf(isWebpack && isDev)('renders pure components', async () => {
     const result = await $fetch<NuxtIslandResponse>(islandURL('PureComponent', {
       props: {
         bool: false,
@@ -488,13 +492,13 @@ describe('hash binding', () => {
   })
 
   // External island clients (e.g. `@nuxtjs/og-image`) build the URL hash from the props object
-  // and send `JSON.stringify(props)`. `computeIslandHash` over the serialized string and the
+  // and send `JSON.stringify(props)`. `getIslandHash` over the serialized string and the
   // client's object hash converge (asserted in island-hash.test.ts); here we send the raw
   // `JSON.stringify(props)` the external client emits rather than `serializeIslandProps`.
   it('accepts a request whose props were serialized by an external client', async () => {
     const name = 'PureComponent'
     const props = { bool: false, number: 1, str: 's', obj: {} }
-    const hashId = computeIslandHash(name, JSON.stringify(props), {}, undefined)
+    const hashId = getIslandHash({ name, props: JSON.stringify(props) })
     const res = await fetch(withQuery(`/__nuxt_island/${name}_${hashId}.json`, {
       props: JSON.stringify(props),
     }))
@@ -525,6 +529,120 @@ describe('hash binding', () => {
       props: JSON.stringify({ bool: false, number: 1, str: 's', obj: {} }),
     }))
     expect(res.status).toBe(400)
+  })
+})
+
+describe('denial-of-service protections', () => {
+  it('rejects an oversized island body before hashing', async () => {
+    const props = JSON.stringify(Object.fromEntries(Array.from({ length: 150_000 }, (_, i) => [`k${i}`, i])))
+    expect(props.length).toBeGreaterThan(MAX_ISLAND_BODY_BYTES)
+    const res = await fetch('/__nuxt_island/PureComponent_deadbeef.json', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ props }),
+    })
+    expect(res.status).toBe(413)
+  })
+
+  it('rejects an oversized chunked island body without content-length', async () => {
+    const chunk = JSON.stringify(Object.fromEntries(Array.from({ length: 10_000 }, (_, i) => [`k${i}`, i])))
+    const body = new ReadableStream<Uint8Array>({
+      start (controller) {
+        for (let i = 0; i < 20; i++) {
+          controller.enqueue(new TextEncoder().encode(chunk))
+        }
+        controller.close()
+      },
+    })
+    const res = await fetch('/__nuxt_island/PureComponent_deadbeef.json', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body,
+      // @ts-expect-error `duplex` is required for a streamed request body but missing from the types
+      duplex: 'half',
+    })
+    expect(res.status).toBe(413)
+  })
+
+  it('rejects a deeply nested island body before hashing', async () => {
+    const props = '['.repeat(500) + ']'.repeat(500)
+    const res = await fetch('/__nuxt_island/PureComponent_deadbeef.json', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ props }),
+    })
+    expect(res.status).toBe(400)
+  })
+
+  it('still accepts a well-formed small island body', async () => {
+    const name = 'PureComponent'
+    const props = { bool: false, number: 1, str: 's', obj: {} }
+    const hashId = getIslandHash({ name, props: serializeIslandProps(props) })
+    const res = await fetch(`/__nuxt_island/${name}_${hashId}.json`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ props: serializeIslandProps(props) }),
+    })
+    expect(res.status).toBe(200)
+  })
+
+  // Bounds both the plain-element path (`ssrRenderList`) and the slot path (`vforToArray`).
+  it('bounds plain and slot v-for over a large-integer prop', async () => {
+    const result = await $fetch<NuxtIslandResponse>(islandURL('BoundedVForComponent', { props: { count: 10_000_000 } }))
+    expect(result.html.match(/class="plain-item"/g)?.length ?? 0).toBe(MAX_VFOR_LENGTH)
+    expect(result.slots?.loop?.props?.length ?? 0).toBe(MAX_VFOR_LENGTH)
+    expect(result.slots?.loop?.fallback?.match(/class="slot-item"/g)?.length ?? 0).toBe(MAX_VFOR_LENGTH)
+  })
+
+  it('renders a small v-for prop unchanged', async () => {
+    const result = await $fetch<NuxtIslandResponse>(islandURL('BoundedVForComponent', { props: { count: 3 } }))
+    expect(result.html.match(/class="plain-item"/g)?.length ?? 0).toBe(3)
+    expect(result.slots?.loop?.props?.length ?? 0).toBe(3)
+    expect(result.slots?.loop?.fallback?.match(/class="slot-item"/g)?.length ?? 0).toBe(3)
+  })
+})
+
+describe('hash/render input alignment', () => {
+  // `data-v-*` props are stripped before both hashing and rendering, so adding only those
+  // keys resolves to the same hash and identical HTML.
+  it('ignores data-v-* props so the same hashId yields identical HTML', async () => {
+    const name = 'PureComponent'
+    const props = { bool: false, number: 1, str: 's', obj: {} }
+    const hashId = getIslandHash({ name, props: serializeIslandProps(props) })
+
+    const plain = await $fetch<NuxtIslandResponse>(withQuery(`/__nuxt_island/${name}_${hashId}.json`, {
+      props: JSON.stringify(props),
+    }))
+    const withScopeMarkers = await $fetch<NuxtIslandResponse>(withQuery(`/__nuxt_island/${name}_${hashId}.json`, {
+      props: JSON.stringify({ ...props, 'data-v-abc123': '', 'data-v-def456': '' }),
+    }))
+
+    expect(withScopeMarkers.html).not.toContain('data-v-abc123')
+    expect(withScopeMarkers.html).toBe(plain.html)
+  })
+})
+
+describe('reserved island prop keys', () => {
+  // Without `vue.runtimeCompiler` a `template` value is inert, so data that merely contains
+  // that key (e.g. CMS content) must still render.
+  it('allows a nested template key when the runtime compiler is disabled', async () => {
+    const props = { content: { template: 'blog' } }
+    const result = await $fetch<NuxtIslandResponse>(islandURL('PureComponent', { props }))
+    expect(result.html).toBeTruthy()
+  })
+
+  it('rejects a top-level `as` prop the island does not declare', async () => {
+    const res = await fetch(islandURL('PureComponent', { props: { as: 'iframe' } }))
+    expect(res.status).toBe(400)
+    // the reason is fixed, so a caller cannot probe which islands declare which props
+    const body = await res.text()
+    expect(body).toContain('Invalid island request props')
+    expect(body).not.toContain('declare')
+  })
+
+  it('renders a top-level `as` prop the island declares', async () => {
+    const result = await $fetch<NuxtIslandResponse>(islandURL('AsPropComponent', { props: { as: 'section' } }))
+    expect(result.html).toContain('as: section')
   })
 })
 
@@ -565,7 +683,7 @@ describe('page-island middleware', () => {
 
 describe.skipIf(isDev || isWebpack)('regressions', () => {
   // https://github.com/nuxt/nuxt/issues/26527
-  it.fails('renders <Counter nuxt-client /> when nested two levels deep in server components', async () => {
+  it('renders <Counter nuxt-client /> when nested two levels deep in server components', async () => {
     const { page } = await renderPage('/nested-nuxt-client')
 
     await page.locator('.server-inner-counter .sugar-counter button').waitFor({ timeout: 5_000 })

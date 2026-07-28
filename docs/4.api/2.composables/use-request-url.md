@@ -1,6 +1,7 @@
 ---
 title: 'useRequestURL'
-description: '使用 useRequestURL 组合函数访问传入请求的 URL。'
+description: '使用 useRequestURL 组合函数访问传入的请求 URL。'
+minimalVersion: "3.5"
 links:
   - label: 源码
     icon: i-simple-icons-github

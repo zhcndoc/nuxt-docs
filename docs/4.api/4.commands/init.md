@@ -19,7 +19,7 @@ npm create nuxt@latest [DIR] [--cwd=<directory>] [--logLevel=<silent|info|verbos
 ## 参数
 
 <!--init-args-->
-| Argument | Description       |
+| 参数 | 描述       |
 |----------|-------------------|
 | `DIR=""` | 项目目录 |
 <!--/init-args-->
@@ -46,5 +46,5 @@ npm create nuxt@latest [DIR] [--cwd=<directory>] [--logLevel=<silent|info|verbos
 
 ## 环境变量
 
-- `NUXI_INIT_REGISTRY`: 设置自定义模板注册表。（[了解更多](https://github.com/unjs/giget#custom-registry)）
+- `NUXI_INIT_REGISTRY`：设置自定义模板注册表。（[了解更多](https://github.com/unjs/giget#custom-registry)）
   - 默认注册表从 [nuxt/starter/templates](https://github.com/nuxt/starter/tree/templates/templates) 加载。

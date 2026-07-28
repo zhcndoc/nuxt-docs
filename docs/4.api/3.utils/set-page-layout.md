@@ -19,9 +19,9 @@ export default defineNuxtRouteMiddleware((to) => {
 })
 ```
 
-## Passing Props to Layouts
+## 向布局传递 Props :badge[v4.3]{color="info" size="xs" class="align-middle"}
 
-You can pass props to the layout by providing an object as the second argument:
+你可以通过提供一个对象作为第二个参数，将 props 传递给布局：
 
 ```ts [app/middleware/admin-layout.ts]
 export default defineNuxtRouteMiddleware((to) => {
@@ -32,7 +32,7 @@ export default defineNuxtRouteMiddleware((to) => {
 })
 ```
 
-The layout can then receive these props:
+然后布局就可以接收这些 props：
 
 ```vue [app/layouts/admin.vue]
 <script setup lang="ts">

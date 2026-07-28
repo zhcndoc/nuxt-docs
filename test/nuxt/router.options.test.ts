@@ -74,7 +74,7 @@ describe('scrollBehavior of router options with global transition', () => {
     await navigateTo('/about')
     await completeNavigation()
 
-    expect(scrollTo).toHaveBeenCalled()
+    await expect.poll(() => scrollTo.mock.calls.length).toBeGreaterThan(0)
     vi.clearAllMocks()
 
     await navigateTo('/about/')
@@ -87,7 +87,7 @@ describe('scrollBehavior of router options with global transition', () => {
     await navigateTo('/transitions/async')
     await completeNavigation()
 
-    expect(scrollTo).toHaveBeenCalled()
+    await expect.poll(() => scrollTo.mock.calls.length).toBeGreaterThan(0)
     expect(pageTransitionFinish).toHaveBeenCalledBefore(scrollTo)
   })
 
@@ -95,7 +95,7 @@ describe('scrollBehavior of router options with global transition', () => {
     await navigateTo('/transitions/sync')
     await completeNavigation()
 
-    expect(scrollTo).toHaveBeenCalled()
+    await expect.poll(() => scrollTo.mock.calls.length).toBeGreaterThan(0)
     expect(pageTransitionFinish).toHaveBeenCalledBefore(scrollTo)
   })
 
@@ -120,7 +120,7 @@ describe('scrollBehavior of router options with global transition', () => {
     expect(nuxtApp['~transitionFinish']).toBeUndefined()
     expect(pageStartSpy).toHaveBeenCalled()
     expect(pageLoadingEnd).toHaveBeenCalled()
-    expect(scrollTo).toHaveBeenCalled()
+    await expect.poll(() => scrollTo.mock.calls.length).toBeGreaterThan(0)
     expect(pageTransitionFinish).toHaveBeenCalledBefore(scrollTo)
   })
 
@@ -146,7 +146,7 @@ describe('scrollBehavior of router options with global transition', () => {
     // Verify pageLoadingEnd and scrollTo are also called
     expect(pageStartSpy).toHaveBeenCalled()
     expect(pageLoadingEnd).toHaveBeenCalled()
-    expect(scrollTo).toHaveBeenCalled()
+    await expect.poll(() => scrollTo.mock.calls.length).toBeGreaterThan(0)
     expect(pageTransitionFinish).toHaveBeenCalledBefore(scrollTo)
   })
 })
