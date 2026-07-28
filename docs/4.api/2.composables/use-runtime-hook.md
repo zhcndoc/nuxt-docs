@@ -1,6 +1,7 @@
 ---
 title: useRuntimeHook
-description: 在 Nuxt 应用中注册一个运行时钩子，并在作用域销毁时确保其被正确释放。
+description: 在 Nuxt 应用中注册一个运行时钩子，并确保在作用域被销毁时正确释放。
+minimalVersion: "3.14"
 links:
   - label: 源码
     icon: i-simple-icons-github
@@ -12,7 +13,7 @@ links:
 此组合式函数在 Nuxt v3.14+ 可用。
 ::
 
-```ts [signature]
+```ts [Signature]
 function useRuntimeHook<THookName extends keyof RuntimeNuxtHooks> (
   name: THookName,
   fn: RuntimeNuxtHooks[THookName] extends HookCallback ? RuntimeNuxtHooks[THookName] : never,
@@ -28,9 +29,7 @@ function useRuntimeHook<THookName extends keyof RuntimeNuxtHooks> (
 
 ### 返回值
 
-该组合式函数不会返回值，但在组件的作用域销毁时会自动取消注册该钩子。
-
-## 示例
+该组合式函数不会返回值，但会在组件的作用域销毁时自动取消注册该钩子。
 
 ```vue twoslash [pages/index.vue]
 <script setup lang="ts">

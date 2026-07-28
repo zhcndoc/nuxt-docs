@@ -14,7 +14,7 @@ links:
 
 ## 类型
 
-```ts
+```ts [Signature]
 function addRouteMiddleware (name: string, middleware: RouteMiddleware, options?: AddRouteMiddlewareOptions): void
 function addRouteMiddleware (middleware: RouteMiddleware): void
 
@@ -54,7 +54,7 @@ interface AddRouteMiddlewareOptions {
 ```ts [app/plugins/my-plugin.ts]
 export default defineNuxtPlugin(() => {
   addRouteMiddleware('named-middleware', () => {
-    console.log('named middleware added in Nuxt plugin')
+    console.log('在 Nuxt 插件中添加的命名中间件')
   })
 })
 ```
@@ -70,7 +70,7 @@ export default defineNuxtPlugin(() => {
   ```ts [app/plugins/my-plugin.ts]
   export default defineNuxtPlugin(() => {
     addRouteMiddleware((to, from) => {
-      console.log('anonymous global middleware that runs on every route change')
+      console.log('在每次路由变化时运行的匿名全局中间件')
     })
   })
   ```
@@ -80,7 +80,7 @@ export default defineNuxtPlugin(() => {
   ```ts [app/plugins/my-plugin.ts]
   export default defineNuxtPlugin(() => {
     addRouteMiddleware('global-middleware', (to, from) => {
-      console.log('global middleware that runs on every route change')
+      console.log('在每次路由变化时运行的全局中间件')
     },
     { global: true },
     )

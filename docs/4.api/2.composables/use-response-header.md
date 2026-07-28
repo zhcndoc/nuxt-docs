@@ -1,6 +1,7 @@
 ---
 title: "useResponseHeader"
 description: "使用 useResponseHeader 设置服务器响应头。"
+minimalVersion: "3.14"
 links:
   - label: 源码
     icon: i-simple-icons-github
@@ -15,12 +16,10 @@ links:
 您可以在页面、组件和插件中使用内置的 [`useResponseHeader`](/docs/4.x/api/composables/use-response-header) 组合式函数来设置任意服务器响应头。
 
 ```ts
-// Set a custom response header
+// 设置自定义响应头
 const header = useResponseHeader('X-My-Header')
 header.value = 'my-value'
 ```
-
-## 示例
 
 我们可以使用 `useResponseHeader` 在每个页面级别上轻松设置响应头。
 
@@ -32,8 +31,8 @@ header.value = 'my-value'
 </script>
 
 <template>
-  <h1>Test page with custom header</h1>
-  <p>The response from the server for this "/test" page will have a custom "X-My-Header" header.</p>
+  <h1>带有自定义响应头的测试页面</h1>
+  <p>服务器针对这个 “/test” 页面返回的响应将会带有一个自定义的 “X-My-Header” 响应头。</p>
 </template>
 ```
 
@@ -42,6 +41,6 @@ header.value = 'my-value'
 ```ts [app/middleware/my-header-middleware.ts]
 export default defineNuxtRouteMiddleware((to, from) => {
   const header = useResponseHeader('X-My-Always-Header')
-  header.value = `I'm Always here!`
+  header.value = `我总是在这里！`
 })
 ```

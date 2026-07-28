@@ -1,6 +1,7 @@
 ---
 title: 'useRequestURL'
-description: '使用 useRequestURL 组合函数访问传入请求的 URL。'
+description: '使用 useRequestURL 可组合函数获取传入的请求 URL。'
+minimalVersion: "3.5"
 links:
   - label: 源码
     icon: i-simple-icons-github
@@ -11,9 +12,9 @@ links:
 `useRequestURL` 是一个辅助函数，返回一个在服务器端和客户端均可使用的 [URL 对象](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL)。
 
 ::important
-在使用带有缓存策略的 [Hybrid Rendering](/docs/4.x/guide/concepts/rendering#hybrid-rendering) 时，通过 [Nitro 缓存层](https://nitro.zhcndoc.com/guide/cache) 处理缓存响应时会丢弃所有传入的请求头（这意味着 `useRequestURL` 在 `host` 上会返回 `localhost`）。
+在使用带有缓存策略的 [混合渲染](/docs/4.x/guide/concepts/rendering#hybrid-rendering) 时，通过 [Nitro 缓存层](https://nitro.zhcndoc.com/guide/cache) 处理缓存响应时会丢弃所有传入的请求头（这意味着 `useRequestURL` 在 `host` 上会返回 `localhost`）。
 
-你可以定义 [`cache.varies` 选项](https://nitro.zhcndoc.com/guide/cache#options) 来指定在缓存和提供响应时要考虑的头，例如用于多租户环境的 `host` 和 `x-forwarded-host`。
+你可以定义 [`cache.varies` 选项](https://nitro.zhcndoc.com/guide/cache#options) 来指定在缓存和提供响应时需要考虑的头，例如用于多租户环境的 `host` 和 `x-forwarded-host`。
 ::
 
 ::code-group

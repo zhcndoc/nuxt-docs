@@ -1,6 +1,6 @@
 ---
 title: useHead
-description: useHead customizes the head properties of individual pages of your Nuxt app.
+description: useHead 自定义 Nuxt 应用中各个页面的 head 属性。
 links:
   - label: 源码
     icon: i-simple-icons-github
@@ -8,16 +8,16 @@ links:
     size: xs
 ---
 
-## Usage
+## 用法
 
-The `useHead` composable allows you to manage your head tags in a programmatic and reactive way, powered by [Unhead](https://unhead.unjs.io). It lets you customize the meta tags, links, scripts, and other elements in the `<head>` section of your HTML document.
+`useHead` 组合式函数允许你以编程和响应式的方式管理你的 head 标签，由 [Unhead](https://unhead.unjs.io) 提供支持。它让你能够自定义 HTML 文档 `<head>` 部分中的 meta 标签、链接、脚本以及其他元素。
 
 ```vue [app/app.vue]
 <script setup lang="ts">
 useHead({
-  title: 'My App',
+  title: '我的应用',
   meta: [
-    { name: 'description', content: 'My amazing site.' },
+    { name: 'description', content: '我的精彩网站。' },
   ],
   bodyAttrs: {
     class: 'test',
@@ -28,14 +28,14 @@ useHead({
 ```
 
 ::warning
-If the data comes from a user or other untrusted source, we recommend you check out [`useHeadSafe`](/docs/4.x/api/composables/use-head-safe).
+如果数据来自用户或其他不可信来源，我们建议你查看 [`useHeadSafe`](/docs/4.x/api/composables/use-head-safe)。
 ::
 
 ::note
-The properties of `useHead` can be dynamic, accepting `ref`, `computed` and `reactive` properties. The `meta` parameter can also accept a function returning an object to make the entire object reactive.
+`useHead` 的属性可以是动态的，接受 `ref`、`computed` 和 `reactive` 属性。`meta` 参数也可以接受一个返回对象的函数，以使整个对象具有响应性。
 ::
 
-## Type
+## 类型
 
 ```ts [Signature]
 export function useHead (meta: MaybeComputedRef<MetaObject>): ActiveHeadEntry<UseHeadInput>
@@ -55,61 +55,59 @@ interface MetaObject {
 
 interface ActiveHeadEntry<Input> {
   /**
-   * Updates the entry with new input.
+   * 使用新的输入更新条目。
    *
-   * Will first clear any side effects for previous input.
+   * 会先清除之前输入的任何副作用。
    */
   patch: (input: Input) => void
   /**
-   * Dispose the entry, removing it from the active head.
+   * 销毁该条目，将其从激活的 head 中移除。
    *
-   * Will queue side effects for removal.
+   * 会将移除的副作用加入队列。
    */
   dispose: () => void
 }
 ```
 
-See [@unhead/schema](https://github.com/unjs/unhead/blob/main/packages/vue/src/types/schema.ts) for more detailed types.
+请参阅 [@unhead/schema](https://github.com/unjs/unhead/blob/main/packages/vue/src/types/schema.ts) 以了解更详细的类型。
 
-## Parameters
+## 参数
 
-`meta`: An object accepting head metadata properties to customize the page's `<head>` section. All properties support reactive values (`ref`, `computed`, `reactive`) or can be a function returning the metadata object.
+`meta`：一个接受 head 元数据属性的对象，用于自定义页面的 `<head>` 部分。所有属性都支持响应式值（`ref`、`computed`、`reactive`），或者可以是一个返回元数据对象的函数。
 
-| Property | Type | Description |
+| 属性 | 类型 | 描述 |
 | --- | --- | --- |
-| `title` | `string` | Sets the page title. |
-| `titleTemplate` | `string \| ((title?: string) => string)` | Configures a dynamic template to customize the page title. Can be a string with `%s` placeholder or a function. |
-| `base` | `Base` | Sets the `<base>` tag for the document. |
-| `link` | `Link[]` | Array of link objects. Each element is mapped to a `<link>` tag, where object properties correspond to HTML attributes. |
-| `meta` | `Meta[]` | Array of meta objects. Each element is mapped to a `<meta>` tag, where object properties correspond to HTML attributes. |
-| `style` | `Style[]` | Array of style objects. Each element is mapped to a `<style>` tag, where object properties correspond to HTML attributes. |
-| `script` | `Script[]` | Array of script objects. Each element is mapped to a `<script>` tag, where object properties correspond to HTML attributes. |
-| `noscript` | `Noscript[]` | Array of noscript objects. Each element is mapped to a `<noscript>` tag, where object properties correspond to HTML attributes. |
-| `htmlAttrs` | `HtmlAttributes` | Sets attributes of the `<html>` tag. Each object property is mapped to the corresponding attribute. |
-| `bodyAttrs` | `BodyAttributes` | Sets attributes of the `<body>` tag. Each object property is mapped to the corresponding attribute. |
+| `title` | `string` | 设置页面标题。 |
+| `titleTemplate` | `string \| ((title?: string) => string)` | 配置一个动态模板来自定义页面标题。可以是带有 `%s` 占位符的字符串或一个函数。 |
+| `base` | `Base` | 设置文档的 `<base>` 标签。 |
+| `link` | `Link[]` | 链接对象数组。每个元素都会映射为一个 `<link>` 标签，对象属性对应 HTML 属性。 |
+| `meta` | `Meta[]` | 元数据对象数组。每个元素都会映射为一个 `<meta>` 标签，对象属性对应 HTML 属性。 |
+| `style` | `Style[]` | 样式对象数组。每个元素都会映射为一个 `<style>` 标签，对象属性对应 HTML 属性。 |
+| `script` | `Script[]` | 脚本对象数组。每个元素都会映射为一个 `<script>` 标签，对象属性对应 HTML 属性。 |
+| `noscript` | `Noscript[]` | noscript 对象数组。每个元素都会映射为一个 `<noscript>` 标签，对象属性对应 HTML 属性。 |
+| `htmlAttrs` | `HtmlAttributes` | 设置 `<html>` 标签的属性。每个对象属性都会映射到对应的属性。 |
+| `bodyAttrs` | `BodyAttributes` | 设置 `<body>` 标签的属性。每个对象属性都会映射到对应的属性。 |
 
-## Return Values
+## 返回值
 
-This composable does not return any value. It registers the head metadata with Unhead, which manages the actual DOM updates.
+这个可组合函数不返回任何值。它会将 head 元数据注册到 Unhead，由 Unhead 负责实际的 DOM 更新。
 
-## Examples
-
-### Basic Meta Tags
+### 基础 Meta 标签
 
 ```vue [app/pages/about.vue]
 <script setup lang="ts">
 useHead({
-  title: 'About Us',
+  title: '关于我们',
   meta: [
-    { name: 'description', content: 'Learn more about our company' },
-    { property: 'og:title', content: 'About Us' },
-    { property: 'og:description', content: 'Learn more about our company' },
+    { name: 'description', content: '了解更多关于我们公司的信息' },
+    { property: 'og:title', content: '关于我们' },
+    { property: 'og:description', content: '了解更多关于我们公司的信息' },
   ],
 })
 </script>
 ```
 
-### Reactive Meta Tags
+### 响应式 Meta 标签
 
 ```vue [app/pages/profile.vue]
 <script setup lang="ts">
@@ -120,29 +118,29 @@ useHead({
   meta: [
     {
       name: 'description',
-      content: computed(() => `Profile page for ${profile.value.name}`),
+      content: computed(() => `个人资料页面：${profile.value.name}`),
     },
   ],
 })
 </script>
 ```
 
-### Using a Function for Full Reactivity
+### 使用函数实现完整响应式
 
 ```vue [app/pages/dynamic.vue]
 <script setup lang="ts">
 const count = ref(0)
 
 useHead(() => ({
-  title: `Count: ${count.value}`,
+  title: `计数：${count.value}`,
   meta: [
-    { name: 'description', content: `Current count is ${count.value}` },
+    { name: 'description', content: `当前计数是 ${count.value}` },
   ],
 }))
 </script>
 ```
 
-### Adding External Scripts and Styles
+### 添加外部脚本和样式
 
 ```vue [app/pages/external.vue]
 <script setup lang="ts">
@@ -163,7 +161,7 @@ useHead({
 </script>
 ```
 
-### Body and HTML Attributes
+### body 和 HTML 属性
 
 ```vue [app/pages/themed.vue]
 <script setup lang="ts">

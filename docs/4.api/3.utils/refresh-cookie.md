@@ -1,6 +1,7 @@
 ---
 title: "refreshCookie"
-description: "当 cookie 发生变化时，手动刷新 useCookie 的值"
+description: "当 cookie 已更改时，手动刷新 useCookie 的值"
+minimalVersion: "3.10"
 links:
   - label: 源码
     icon: i-simple-icons-github

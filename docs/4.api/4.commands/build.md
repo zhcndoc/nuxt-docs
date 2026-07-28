@@ -29,14 +29,14 @@ npx nuxt build [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose>] 
 <!--build-opts-->
 | 选项                               | 默认 | 描述                                                                                                                                          |
 |--------------------------------------|---------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `--cwd=<directory>`                  |         | 指定工作目录，该选项优先于 ROOTDIR（默认： `.`）                                                                     |
-| `--logLevel=<silent\|info\|verbose>` |         | 指定构建时的日志级别                                                                                                                         |
-| `--prerender`                        |         | 构建 Nuxt 并对静态路由进行预渲染                                                                                                               |
+| `--cwd=<directory>`                  |         | 指定工作目录，这将优先于 ROOTDIR（默认：`.`）                                                                     |
+| `--logLevel=<silent\|info\|verbose>` |         | 指定构建时日志级别                                                                                                                         |
+| `--prerender`                        |         | 构建 Nuxt 并预渲染静态路由                                                                                                               |
 | `--preset=<preset>`                  |         | 指定 Nitro 服务器预设。可用预设取决于 Nitro（例如 `node-server`、`vercel`、`netlify`、`static`）                                  |
-| `--dotenv`                           |         | 要加载的 `.env` 文件路径，相对于项目根目录                                                                                          |
-| `--envName`                          |         | 在解析配置覆盖时使用的环境（构建时默认是 `production`，运行开发服务器时默认是 `development`） |
+| `--dotenv`                           |         | 要加载的 `.env` 文件路径，相对于根目录                                                                                          |
+| `--envName`                          |         | 解析配置覆盖时使用的环境（构建时默认为 `production`，运行开发服务器时默认为 `development`） |
 | `-e, --extends=<layer-name>`         |         | 从 Nuxt 层扩展                                                                                                                             |
-| `--profile`                          |         | 性能分析（v4.4+）。退出时会写入 V8 CPU 性能分析和 JSON 报告。使用 `--profile=verbose` 可获得完整的控制台报告。                     |
+| `--profile` :badge[v4.4]{color="info" size="xs" class="align-middle"} |         | 性能分析。退出时会写入 V8 CPU 配置文件和 JSON 报告。使用 `--profile=verbose` 可获得完整的控制台报告。                             |
 <!--/build-opts-->
 
 ::note

@@ -1,6 +1,7 @@
 ---
 title: 'createUseAsyncData'
-description: 一个工厂函数，用于创建带有预定义默认选项的自定义 useAsyncData 组合函数。
+description: 一个用于创建带有预定义默认选项的自定义 useAsyncData 组合函数的工厂函数。
+minimalVersion: "4.2"
 links:
   - label: 源码
     icon: i-simple-icons-github
@@ -49,9 +50,9 @@ function createUseAsyncData (
 
 ## 选项
 
-`createUseAsyncData` 接受与 [`useAsyncData`](/docs/4.x/api/composables/use-async-data#params) 相同的所有选项，包括 `server`、`lazy`、`immediate`、`default`、`transform`、`pick`、`getCachedData`、`deep`、`dedupe`、`timeout` 和 `watch`。
+`createUseAsyncData` 接受与 [`useAsyncData`](/docs/4.x/api/composables/use-async-data#parameters) 相同的所有选项，包括 `server`、`lazy`、`immediate`、`default`、`transform`、`pick`、`getCachedData`、`deep`、`dedupe`、`timeout` 和 `watch`。
 
-完整选项列表请参见 [`useAsyncData` 文档](/docs/4.x/api/composables/use-async-data#params)。
+请参阅 [`useAsyncData` 文档](/docs/4.x/api/composables/use-async-data#parameters) 中的完整选项列表。
 
 ## 默认模式与覆盖模式
 

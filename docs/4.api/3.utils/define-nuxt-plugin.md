@@ -12,7 +12,7 @@ links:
 
 ```ts twoslash [plugins/hello.ts]
 export default defineNuxtPlugin((nuxtApp) => {
-  // Doing something with nuxtApp
+  // 使用 nuxtApp 做一些事情
 })
 ```
 
@@ -66,7 +66,7 @@ interface ObjectPlugin<T> {
 
 ```ts twoslash [plugins/hello.ts]
 export default defineNuxtPlugin((nuxtApp) => {
-  // Add a global method
+  // 添加一个全局方法
   return {
     provide: {
       hello: (name: string) => `Hello ${name}!`,
@@ -84,7 +84,7 @@ export default defineNuxtPlugin({
   name: 'my-plugin',
   enforce: 'pre',
   async setup (nuxtApp) {
-    // Plugin setup logic
+    // 插件设置逻辑
     const data = await $fetch('/api/config')
 
     return {

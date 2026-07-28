@@ -1,6 +1,7 @@
 ---
 title: "useRequestHeader"
-description: "使用 useRequestHeader 访问某个传入请求头。"
+description: "使用 useRequestHeader 访问某个传入的请求头。"
+minimalVersion: "3.9"
 links:
   - label: 源码
     icon: i-simple-icons-github
@@ -18,8 +19,6 @@ const authorization = useRequestHeader('authorization')
 ::tip
 在浏览器中，`useRequestHeader` 将返回 `undefined`。
 ::
-
-## 示例
 
 我们可以使用 `useRequestHeader` 来轻松判断用户是否已授权。
 

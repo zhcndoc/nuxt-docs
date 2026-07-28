@@ -1,6 +1,7 @@
 ---
 title: "callOnce"
-description: "在 SSR 或 CSR 期间运行一次指定的函数或代码块。"
+description: "在 SSR 或 CSR 期间仅运行一次给定函数或代码块。"
+minimalVersion: "3.9"
 links:
   - label: 源码
     icon: i-simple-icons-github
@@ -29,20 +30,20 @@ links:
 const websiteConfig = useState('config')
 
 await callOnce(async () => {
-  console.log('This will only be logged once')
+  console.log('这只会被记录一次')
   websiteConfig.value = await $fetch('https://my-cms.com/api/website-config')
 })
 </script>
 ```
 
-也可以在每次导航时运行，同时仍避免初始的服务器/客户端双重加载。为此，可以使用 `navigation` 模式：
+还可以在每次导航时运行，同时仍然避免首次服务器/客户端的重复执行。为此，可以使用 `navigation` 模式 :badge[v3.15]{color="info" size="xs" class="align-middle"}:
 
 ```vue [app/app.vue]
 <script setup lang="ts">
 const websiteConfig = useState('config')
 
 await callOnce(async () => {
-  console.log('This will only be logged once and then on every client side navigation')
+  console.log('这只会被记录一次，然后在每次客户端导航时执行')
   websiteConfig.value = await $fetch('https://my-cms.com/api/website-config')
 }, { mode: 'navigation' })
 </script>
@@ -74,7 +75,7 @@ export function callOnce (fn?: (() => any | Promise<any>), options?: CallOnceOpt
 
 type CallOnceOptions = {
   /**
-   * Execution mode for the callOnce function
+   * callOnce 函数的执行模式
    * @default 'render'
    */
   mode?: 'navigation' | 'render'
@@ -87,4 +88,4 @@ type CallOnceOptions = {
 - `fn`：要运行一次的函数。它可以是异步的。
 - `options`：设置模式，选择在导航时重新执行（`navigation`）或仅在应用生命周期内执行一次（`render`）。默认值为 `render`。
   - `render`：在初始渲染期间执行一次（无论是 SSR 还是 CSR）- 默认模式
-  - `navigation`：在初始渲染期间执行一次，并在随后的每次客户端导航时执行一次
+  - `navigation`：在初始渲染期间执行一次，并在随后每次客户端导航时执行一次

@@ -1,6 +1,7 @@
 ---
 title: 'useNuxtData'
-description: '访问数据获取组合函数的当前缓存值。'
+description: '访问数据获取组合式函数当前缓存的值。'
+minimalVersion: "3.1"
 links:
   - label: 源码
     icon: i-simple-icons-github
@@ -12,15 +13,21 @@ links:
 `useNuxtData` 让你访问使用显式提供的 key 的 [`useAsyncData`](/docs/4.x/api/composables/use-async-data)、[`useLazyAsyncData`](/docs/4.x/api/composables/use-lazy-async-data)、[`useFetch`](/docs/4.x/api/composables/use-fetch) 和 [`useLazyFetch`](/docs/4.x/api/composables/use-lazy-fetch) 的当前缓存值。
 ::
 
-## 用法
+## Usage
 
-`useNuxtData` 组合函数用于访问数据获取组合函数（例如 `useAsyncData`、`useLazyAsyncData`、`useFetch` 和 `useLazyFetch`）的当前缓存值。通过提供在数据获取期间使用的键（key），你可以检索缓存的数据并按需使用它。
+The `useNuxtData` composable is used to access the current cached value of data fetching composables such as `useAsyncData`, `useLazyAsyncData`, `useFetch`, and `useLazyFetch`. By providing the key used during data fetching, you can retrieve cached data and use it on demand.
 
-这对于通过重用已获取的数据来优化性能或实现诸如乐观更新（Optimistic Updates）或级联数据更新之类的功能特别有用。
+This is particularly useful for optimizing performance by reusing already fetched data, or for implementing features such as optimistic updates or cascading data updates.
 
-要使用 `useNuxtData`，请确保用于获取数据的组合函数（`useFetch`、`useAsyncData` 等）已使用显式提供的 key 被调用。
+To use `useNuxtData`, make sure the data fetching composable (`useFetch`, `useAsyncData`, etc.) has been called with an explicitly provided key.
 
-:video-accordion{title="观看来自 LearnVue 的有关 useNuxtData 的视频" videoId="e-_u6swXRWk"}
+:video-accordion{title="Watch a video about useNuxtData from LearnVue" videoId="e-_u6swXRWk"}
+
+## 类型
+
+```ts [Signature]
+export function useNuxtData<DataT = any> (key: string): { data: Ref<DataT | undefined> }
+```
 
 ## 参数
 
@@ -30,20 +37,20 @@ links:
 
 - `data`: 关联到所提供键的缓存数据的响应式引用。如果不存在缓存数据，则该值将为 `undefined`。当缓存数据发生变化时，此 `Ref` 会自动更新，从而让组件中的响应式表现无缝衔接。
 
-## 示例
+## Example
 
-下面的示例展示了如何在从服务器获取最新数据时使用缓存数据作为占位符。
+The following example shows how to use cached data as a placeholder while fetching the latest data from the server.
 
 ```vue [app/pages/posts.vue]
 <script setup lang="ts">
-// 我们可以使用 'posts' 键在稍后访问相同的数据
+// We can use the 'posts' key to access the same data later
 const { data } = await useFetch('/api/posts', { key: 'posts' })
 </script>
 ```
 
 ```vue [app/pages/posts/[id\\].vue]
 <script setup lang="ts">
-// 访问 posts.vue（父路由）中 useFetch 的缓存值
+// Access the cached value of useFetch in posts.vue (parent route)
 const { data: posts } = useNuxtData('posts')
 
 const route = useRoute()
@@ -51,7 +58,7 @@ const route = useRoute()
 const { data } = useLazyFetch(`/api/posts/${route.params.id}`, {
   key: `post-${route.params.id}`,
   default () {
-    // 从缓存中查找单个文章并将其设置为默认值。
+    // Find a single post in the cache and set it as the default value.
     return posts.value.find(post => post.id === route.params.id)
   },
 })
@@ -103,10 +110,4 @@ async function addTodo () {
   })
 }
 </script>
-```
-
-## 类型
-
-```ts [Signature]
-export function useNuxtData<DataT = any> (key: string): { data: Ref<DataT | undefined> }
 ```

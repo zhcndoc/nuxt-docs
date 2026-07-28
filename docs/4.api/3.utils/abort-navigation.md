@@ -53,19 +53,19 @@ export default defineNuxtRouteMiddleware((to, from) => {
   const user = useState('user')
 
   if (!user.value.isAuthorized) {
-    return abortNavigation('Insufficient permissions.')
+    return abortNavigation('权限不足。')
   }
 })
 ```
 
 ### 将 `err` 作为 Error 对象
 
-你可以将错误作为一个 [`Error`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) 对象传递，例如在 `catch` 块中捕获到的错误：
+你可以将错误作为一个 [`Error`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Error) 对象传递，例如在 `catch` 块中捕获到的错误：
 
 ```ts [app/middleware/auth.ts]
 export default defineNuxtRouteMiddleware((to, from) => {
   try {
-    /* code that might throw an error */
+    /* 可能会抛出错误的代码 */
   } catch (err) {
     return abortNavigation(err)
   }

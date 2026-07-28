@@ -1,6 +1,7 @@
 ---
 title: 'useLoadingIndicator'
-description: 该 composable 可让您访问应用页面的加载状态。
+description: 这个组合式函数让你可以访问应用页面的加载状态。
+minimalVersion: "3.9"
 links:
   - label: 源码
     icon: i-simple-icons-github
@@ -54,14 +55,12 @@ links:
 
 由 `finish()` 使用。清除该 composable 使用的所有定时器和间隔。
 
-## 示例
-
 ```vue
 <script setup lang="ts">
 const { progress, isLoading, start, finish, clear } = useLoadingIndicator({
   duration: 2000,
   throttle: 200,
-  // 下面是默认的进度计算方式
+  // 以下是默认的进度计算方式
   estimatedProgress: (duration, elapsed) => (2 / Math.PI * 100) * Math.atan(elapsed / duration * 100 / 50),
 })
 </script>
@@ -70,7 +69,7 @@ const { progress, isLoading, start, finish, clear } = useLoadingIndicator({
 ```vue
 <script setup lang="ts">
 const { start, set } = useLoadingIndicator()
-// 等同于 set(0, { force: true })
+// 相当于 set(0, { force: true })
 // 将进度设为 0，并立即显示加载
 start({ force: true })
 </script>

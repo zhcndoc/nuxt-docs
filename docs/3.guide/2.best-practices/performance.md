@@ -111,6 +111,10 @@ const show = ref(false)
 
 :read-more{title="延迟水合" to="/docs/4.x/directory-structure/app/components#delayed-or-lazy-hydration"}
 
+对于内容站点和营销站点，如果只需要很少或不需要客户端交互，你可以更进一步，结合预渲染、`noScripts` 路由规则、[服务端组件](/docs/4.x/guide/concepts/server-components) 和延迟水合，以尽可能少地发送 JavaScript。
+
+:read-more{title="Mostly-static sites" to="/docs/4.x/guide/recipes/mostly-static-sites"}
+
 ### 数据获取
 
 为避免重复获取相同数据（在服务端和客户端各获取一次），Nuxt 提供了 [`useFetch`](/docs/4.x/api/composables/use-fetch) 和 [`useAsyncData`](/docs/4.x/api/composables/use-async-data)。它们会确保如果在服务端进行了 API 调用，数据会在载荷中转发到客户端，而不是再次被获取。
@@ -218,7 +222,7 @@ onLoaded((gtag) => {
 
 ### Nuxi Analyze
 
-[`nuxi`](/docs/4.x/api/commands/analyze) 的这个命令允许你分析 Nuxt 应用的生产构建包。它利用 `vite-bundle-visualizer`（类似于 `webpack-bundle-analyzer`）生成应用构建包的可视化表示，从而更容易识别哪些组件占用了最多空间。
+[`nuxt`](/docs/4.x/api/commands/analyze) 的 [此](/docs/4.x/api/commands/analyze) 命令允许你分析 Nuxt 应用的生产构建包。它利用 `vite-bundle-visualizer`（类似于 `webpack-bundle-analyzer`）生成应用包的可视化表示，从而更容易识别哪些组件占用最多空间。
 
 当你在可视化中看到一个较大的块时，通常表示存在优化机会——无论是将其拆分为更小的部分、实现懒加载，还是用更高效的替代方案替换，尤其是对于第三方库。
 

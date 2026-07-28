@@ -77,7 +77,7 @@ interface PageMeta {
 
     记录的别名。允许定义额外的路径，使其行为像记录的副本。可以使用路径简写例如 `/users/:id` 和 `/u/:id`。所有 `alias` 和 `path` 值必须共享相同的参数。
 
-  **`groups`**
+  **`groups`** :badge[v4.3]{color="info" size="xs" class="align-middle"}
 
   - **类型**: `string[]`
 
@@ -178,7 +178,7 @@ definePageMeta({
     exclude: ['modal'],
   },
 
-  pageType: 'Checkout',
+  pageType: '结账',
 })
 </script>
 ```
@@ -190,7 +190,7 @@ definePageMeta({
 ```vue [app/pages/some-page.vue]
 <script setup lang="ts">
 definePageMeta({
-  // define middleware as a function
+  // 将中间件定义为函数
   middleware: [
     function (to, from) {
       const auth = useState('auth')
@@ -205,10 +205,10 @@ definePageMeta({
     },
   ],
 
-  // ... or a string
+  // ... 或者使用字符串
   middleware: 'auth',
 
-  // ... or multiple strings
+  // ... 或者多个字符串
   middleware: ['auth', 'another-named-middleware'],
 })
 </script>
@@ -239,10 +239,10 @@ definePageMeta({
 ```vue [app/pages/some-page.vue]
 <script setup lang="ts">
 definePageMeta({
-  // set custom layout
+  // 设置自定义布局
   layout: 'admin',
 
-  // ... or disable a default layout
+  // ... 或者禁用默认布局
   layout: false,
 })
 </script>
@@ -261,7 +261,7 @@ definePageMeta({
     name: 'panel',
     props: {
       sidebar: true,
-      title: 'Dashboard',
+      title: '仪表盘',
     },
   },
 })
@@ -279,7 +279,7 @@ const props = defineProps<{
 <template>
   <div>
     <aside v-if="sidebar">
-      Sidebar
+      侧边栏
     </aside>
     <main>
       <h1>{{ title }}</h1>

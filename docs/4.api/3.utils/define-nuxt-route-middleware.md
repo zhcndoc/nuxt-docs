@@ -39,7 +39,7 @@ interface RouteMiddleware {
 ```ts [app/middleware/error.ts]
 export default defineNuxtRouteMiddleware((to) => {
   if (to.params.id === '1') {
-    throw createError({ status: 404, statusText: 'Page Not Found' })
+    throw createError({ status: 404, statusText: '页面未找到' })
   }
 })
 ```

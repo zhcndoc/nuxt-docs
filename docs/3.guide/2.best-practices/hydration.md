@@ -6,7 +6,7 @@ description: 为什么修复水合问题很重要
 
 在开发过程中，你可能会遇到水合（hydration）问题。不要忽视这些警告。
 
-## 为什么修复它们很重要？
+## 修复它们为什么重要？
 
 水合不匹配不仅仅是警告 —— 它们表明存在严重问题，可能会破坏你的应用：
 
@@ -21,7 +21,7 @@ description: 为什么修复水合问题很重要
 - **状态不一致**：应用状态可能在用户看到的内容和应用认为已渲染的内容之间不同步
 - **SEO 问题**：搜索引擎可能会索引与用户实际看到的不同的内容
 
-# 如何检测它们
+## 如何检测它们
 
 ## 开发时控制台警告
 ### Development Console Warnings
@@ -30,7 +30,7 @@ Vue 会在开发时在浏览器控制台记录水合不匹配的警告：
 
 ![浏览器控制台中 Vue 水合不匹配警告的截图](/assets/docs/best-practices/vue-console-hydration.png)
 
-# 常见原因
+## 常见原因
 
 ## 在服务器上下文中使用仅限浏览器的 API
 
@@ -141,7 +141,7 @@ onMounted(async () => {
 
 <script setup>
 const hour = new Date().getHours()
-const greeting = hour < 12 ? 'Good morning' : 'Good afternoon'
+const greeting = hour < 12 ? '早上好' : '下午好'
 </script>
 ```
 

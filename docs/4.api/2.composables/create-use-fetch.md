@@ -1,6 +1,7 @@
 ---
 title: 'createUseFetch'
-description: 一个工厂函数，用于创建带有预定义默认选项的自定义 useFetch 组合函数。
+description: 创建一个工厂函数，用于生成带有预定义默认选项的自定义 useFetch 组合函数。
+minimalVersion: "4.2"
 links:
   - label: 源码
     icon: i-simple-icons-github

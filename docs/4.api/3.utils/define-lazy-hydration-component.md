@@ -1,6 +1,7 @@
 ---
 title: 'defineLazyHydrationComponent'
-description: '使用特定策略定义延迟水合（lazy hydration）的组件。'
+description: '定义一个具有特定策略的延迟水合组件。'
+minimalVersion: "3.18"
 links:
   - label: 源码
     icon: i-simple-icons-github
@@ -27,8 +28,7 @@ const LazyHydrationMyComponent = defineLazyHydrationComponent(
 <template>
   <div>
     <!--
-      Hydration will be triggered when
-      the element(s) is 100px away from entering the viewport.
+      当元素距离进入视口还有 100px 时，将触发水合。
     -->
     <LazyHydrationMyComponent :hydrate-on-visible="{ rootMargin: '100px' }" />
   </div>
@@ -59,7 +59,7 @@ const LazyHydrationMyComponent = defineLazyHydrationComponent(
 
 <template>
   <div>
-    <!-- Hydration will be triggered when the browser is idle or after 2000ms. -->
+    <!-- 浏览器空闲时或在 2000ms 后将触发水合。 -->
     <LazyHydrationMyComponent :hydrate-on-idle="2000" />
   </div>
 </template>
@@ -88,8 +88,7 @@ const LazyHydrationMyComponent = defineLazyHydrationComponent(
 <template>
   <div>
     <!--
-      Hydration will be triggered when
-      the element(s) is hovered over by the pointer.
+      当元素被指针悬停时，将触发水合。
     -->
     <LazyHydrationMyComponent hydrate-on-interaction="mouseover" />
   </div>
@@ -117,8 +116,7 @@ const LazyHydrationMyComponent = defineLazyHydrationComponent(
 <template>
   <div>
     <!--
-      Hydration will be triggered when
-      the window width is greater than or equal to 768px.
+      当窗口宽度大于或等于 768px 时，将触发水合。
     -->
     <LazyHydrationMyComponent hydrate-on-media-query="(min-width: 768px)" />
   </div>
@@ -143,7 +141,7 @@ const LazyHydrationMyComponent = defineLazyHydrationComponent(
 
 <template>
   <div>
-    <!-- Hydration is triggered after 1000ms. -->
+    <!-- 在 1000ms 后触发水合。 -->
     <LazyHydrationMyComponent :hydrate-after="1000" />
   </div>
 </template>
@@ -165,14 +163,14 @@ const LazyHydrationMyComponent = defineLazyHydrationComponent(
 const isReady = ref(false)
 
 function myFunction () {
-  // Trigger custom hydration strategy...
+  // 触发自定义水合策略...
   isReady.value = true
 }
 </script>
 
 <template>
   <div>
-    <!-- Hydration is triggered when isReady becomes true. -->
+    <!-- 当 isReady 变为 true 时，将触发水合。 -->
     <LazyHydrationMyComponent :hydrate-when="isReady" />
   </div>
 </template>
@@ -194,7 +192,7 @@ const LazyHydrationMyComponent = defineLazyHydrationComponent(
 
 <template>
   <div>
-    <!-- This component will never be hydrated by Vue. -->
+    <!-- 该组件永远不会被 Vue 水合。 -->
     <LazyHydrationMyComponent />
   </div>
 </template>
@@ -212,7 +210,7 @@ const LazyHydrationMyComponent = defineLazyHydrationComponent(
 )
 
 function onHydrate () {
-  console.log('Component has been hydrated!')
+  console.log('组件已完成水合！')
 }
 </script>
 

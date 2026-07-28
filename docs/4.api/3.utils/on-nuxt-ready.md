@@ -1,6 +1,7 @@
 ---
 title: "onNuxtReady"
-description: onNuxtReady 可组合函数允许在应用完成初始化后运行回调。
+description: onNuxtReady 组合式函数允许在你的应用完成初始化后运行一个回调。
+minimalVersion: "3.1"
 links:
   - label: 源码
     icon: i-simple-icons-github

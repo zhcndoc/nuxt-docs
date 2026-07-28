@@ -1,6 +1,7 @@
 ---
 title: 'useAnnouncer'
-description: 一个用于向屏幕阅读器宣布消息的组合式函数。
+description: 一个用于向屏幕阅读器播报消息的组合式函数。
+minimalVersion: "4.4"
 links:
   - label: 源码
     icon: i-simple-icons-github
@@ -47,8 +48,6 @@ links:
 ### `assertive(message)`
 
 以 `politeness = "assertive"` 设置消息。用于紧急更新，应立即打断屏幕阅读器。
-
-## 示例
 
 ```vue [app/pages/contact.vue]
 <script setup lang="ts">

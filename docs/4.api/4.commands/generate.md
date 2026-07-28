@@ -19,7 +19,7 @@ npx nuxt generate [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose
 ## 参数
 
 <!--generate-args-->
-| Argument      | Description                                    |
+| 参数      | 描述                                    |
 |---------------|------------------------------------------------|
 | `ROOTDIR="."` | 指定工作目录（默认： `.`） |
 <!--/generate-args-->
@@ -27,15 +27,15 @@ npx nuxt generate [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose
 ## 选项
 
 <!--generate-opts-->
-| Option                               | Default | Description                                                                                                                                          |
-|--------------------------------------|---------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `--cwd=<directory>`                  |         | 指定工作目录，此选项优先于 ROOTDIR（默认： `.`）                                                                                                     |
-| `--logLevel=<silent\|info\|verbose>` |         | 指定构建时的日志级别                                                                                                                               |
-| `--preset`                           |         | Nitro 服务器预设                                                                                                                                     |
-| `--dotenv`                           |         | 要加载的 `.env` 文件路径，相对于根目录                                                                                                             |
-| `--envName`                          |         | 解析配置覆盖时使用的环境（在构建时默认是 `production`，在运行开发服务器时默认是 `development`）                                                      |
-| `-e, --extends=<layer-name>`         |         | 从 Nuxt 层扩展                                                                                                                                     |
-| `--profile`                          |         | 性能分析（v4.4+）。程序退出时会生成 V8 CPU 分析文件和 JSON 报告。使用 `--profile=verbose` 可生成完整的控制台报告。                                      |
+| 选项                                 | 默认值 | 描述                                                                                                                                               |
+|--------------------------------------|--------|----------------------------------------------------------------------------------------------------------------------------------------------------|
+| `--cwd=<directory>`                  |        | 指定工作目录，这将优先于 ROOTDIR（默认：`.`）                                                                                                       |
+| `--logLevel=<silent\|info\|verbose>` |        | 指定构建时日志级别                                                                                                                                |
+| `--preset`                           |        | Nitro 服务器预设                                                                                                                                   |
+| `--dotenv`                           |        | 要加载的 `.env` 文件路径，相对于根目录                                                                                                             |
+| `--envName`                          |        | 用于解析配置覆盖项的环境（构建时默认为 `production`，运行开发服务器时默认为 `development`）                                                       |
+| `-e, --extends=<layer-name>`         |        | 扩展一个 Nuxt 层                                                                                                                                     |
+| `--profile` :badge[v4.4]{color="info" size="xs" class="align-middle"} |        | 性能分析。退出时会写入 V8 CPU 分析文件和 JSON 报告。使用 `--profile=verbose` 可输出完整的控制台报告。                                               |
 <!--/generate-opts-->
 
 ::read-more{to="/docs/4.x/getting-started/deployment#static-hosting"}
