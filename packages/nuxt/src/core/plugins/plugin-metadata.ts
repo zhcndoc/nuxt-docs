@@ -131,7 +131,7 @@ export const RemovePluginMetadataPlugin = (nuxt: Nuxt) => createUnplugin(() => {
       }
 
       const exports = findExports(code)
-      const defaultExport = exports.find(e => e.type === 'default' || e.name === 'default')
+      const defaultExport = exports.find(e => e.type === 'default' || e.names.includes('default'))
       if (!defaultExport) {
         logger.warn(`Plugin \`${plugin.src}\` has no default export and will be ignored at build time. Add \`export default defineNuxtPlugin(() => {})\` to your plugin.`)
         return {

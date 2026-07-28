@@ -164,6 +164,9 @@ interface _NuxtApp {
   '_processingMiddleware'?: string | boolean
 
   /** @internal */
+  '_middlewareTo'?: Pick<RouteLocationNormalizedLoaded, 'meta'>
+
+  /** @internal */
   '_once': {
     [key: string]: Promise<any>
   }
@@ -177,6 +180,12 @@ interface _NuxtApp {
   '_route': RouteLocationNormalizedLoaded & {
     sync?: () => void
   }
+  /**
+   * Restore the real route after a prerendered page hydrates against the query-less
+   * payload route. Called by `<NuxtPage>` as its `Suspense` resolves, before mounted hooks flush.
+   * @internal
+   */
+  '~restoreDeferredRoute'?: () => void
 
   /** @internal */
   '_islandPromises'?: Record<string, Promise<any>>

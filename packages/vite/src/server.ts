@@ -9,6 +9,7 @@ import { getPort } from 'get-port-please'
 
 import type { ViteBuildContext } from './vite.ts'
 import { createViteLogger } from './utils/logger.ts'
+import { toVirtualId } from './utils/index.ts'
 import { writeManifest } from './manifest.ts'
 import { SourcemapPreserverPlugin } from './plugins/sourcemap-preserver.ts'
 import { VitePluginCheckerPlugin } from './plugins/vite-plugin-checker.ts'
@@ -100,7 +101,7 @@ export async function buildServer (nuxt: Nuxt, ctx: ViteBuildContext) {
   // Invalidate virtual modules when templates are re-generated
   nuxt.hook('app:templatesGenerated', async (_app, changedTemplates) => {
     await Promise.all(changedTemplates.map(async (template) => {
-      for (const mod of ssrServer.moduleGraph.getModulesByFile(`virtual:nuxt:${encodeURIComponent(template.dst)}`) || []) {
+      for (const mod of ssrServer.moduleGraph.getModulesByFile(toVirtualId(template.dst, nuxt)) || []) {
         ssrServer.moduleGraph.invalidateModule(mod)
         await ssrServer.reloadModule(mod)
       }

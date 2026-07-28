@@ -261,11 +261,26 @@ describe('pages', () => {
     await page.getByText('should throw a 404 error').click()
     expect(await page.getByRole('heading').textContent()).toMatchInlineSnapshot('"Page Not Found: /catchall/forbidden"')
     expect(await page.getByTestId('path').textContent()).toMatchInlineSnapshot('" Path: /catchall/forbidden"')
+    expect(new URL(page.url()).pathname).toBe('/catchall/forbidden')
+
+    await page.goBack()
+    await page.waitForFunction(() => window.useNuxtApp?.()._route.fullPath === '/navigate-to-forbidden')
+    expect(new URL(page.url()).pathname).toBe('/navigate-to-forbidden')
 
     await gotoPath(page, '/navigate-to-forbidden')
     await page.getByText('should be caught by catchall').click()
     expect(await page.getByRole('heading').textContent()).toMatchInlineSnapshot('"[...slug].vue"')
 
+    await page.close()
+  })
+
+  it('updates the URL after a fatal middleware error on client navigation (#19954)', async () => {
+    const { page } = await renderPage('/navigate-to-middleware-error')
+    await page.getByText('trigger middleware error').click()
+    await page.waitForSelector('h1')
+    expect(new URL(page.url()).pathname).toBe('/middleware-error')
+    await page.goBack()
+    expect(new URL(page.url()).pathname).toBe('/navigate-to-middleware-error')
     await page.close()
   })
 
@@ -740,6 +755,10 @@ describe('pages', () => {
     await page.waitForFunction(() => window.useNuxtApp?.()._route.query.active === 'true')
     expect(await page.evaluate(() => window.useNuxtApp?.()._route.query.active)).toBe('true')
     expect(await page.$eval('div', e => getComputedStyle(e).color)).toBe('rgb(255, 0, 0)')
+
+    // the query should already be restored by the time the page is mounted, so
+    // `onMounted` reads the real query rather than the prerendered empty one
+    expect(await page.innerText('#mounted-query')).toBe('true')
 
     await page.close()
   })
@@ -1563,6 +1582,7 @@ describe('layouts', () => {
     expect(html).toContain('with-dynamic-layout')
     expect(html).toContain('Custom Layout:')
     expect(html).toContain('set from sets-layouts middleware')
+    expect(html).toContain('middleware layout: custom')
     await expectNoClientErrors('/with-dynamic-layout')
   })
   it('should work with a computed layout', async () => {
@@ -2428,6 +2448,43 @@ describe.skipIf(isWindows || !isRenderingJson)('payload rendering', () => {
     expect(Array.isArray(data.data['swr-data'])).toBe(true)
   })
 
+  it('preserves query parameters in extracted payloads for cached routes', async () => {
+    const { page, requests } = await renderPage('/payload-query?page=1')
+
+    requests.length = 0
+    const payloadRequestPromise = page.waitForRequest(request => request.url().includes('/payload-query/_payload.json'))
+    await page.getByTestId('payload-query-next').click()
+    await page.waitForURL(url('/payload-query?page=2'))
+
+    const payloadRequest = await payloadRequestPromise
+    const payloadURL = new URL(payloadRequest.url())
+    expect.soft(payloadURL.searchParams.get('page')).toBe('2')
+    expect(await page.locator('#payload-query').textContent()).toContain('2')
+
+    requests.length = 0
+    await page.getByTestId('payload-query-hash').click()
+    await page.waitForURL(url('/payload-query?page=2#section'))
+    expect(requests.filter(request => request.includes('/payload-query/_payload.json'))).toHaveLength(0)
+
+    await page.close()
+
+    const payload = await $fetch<string>('/payload-query/_payload.json?page=2', { responseType: 'text' })
+    const data = parsePayload(payload)
+    expect(data.data['payload-query-2']).toEqual({ page: 2 })
+    expect(data.data['payload-query-1']).toBeUndefined()
+  })
+
+  it('does not refetch payloads on query-only navigation for prerendered routes', async () => {
+    const { page, requests } = await renderPage('/random/a')
+
+    requests.length = 0
+    await page.evaluate(() => (window.useNuxtApp!() as unknown as { $router: { push: (to: string) => void } }).$router.push('/random/a?foo=bar'))
+    await page.waitForURL(url('/random/a?foo=bar'))
+    expect(requests.filter(request => request.includes('_payload.json'))).toHaveLength(0)
+
+    await page.close()
+  })
+
   // https://github.com/nuxt/nuxt/issues/34856
   it('should render payload for SSR+SWR routes that opt out of a catch-all `ssr: false` rule', async () => {
     const payload = await $fetch<string>('/route-rules/swr-in-spa/_payload.json', { responseType: 'text' })
@@ -2624,7 +2681,7 @@ describe('experimental', () => {
   it('decorators support works', async () => {
     const html = await $fetch('/experimental/decorators')
     expect(html).toContain('decorated-decorated')
-    expectNoClientErrors('/experimental/decorators')
+    await expectNoClientErrors('/experimental/decorators')
   })
 
   it('Node.js compatibility for client-side', async () => {

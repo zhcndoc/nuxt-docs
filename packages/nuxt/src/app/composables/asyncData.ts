@@ -362,15 +362,13 @@ export function useAsyncData<
 
         // Ensure destination container exists; read/migrate value BEFORE unregistering the old key.
         if (!nuxtApp._asyncData[newKey]?._init) {
-          let initialValue: NoInfer<DataT> | undefined
-
-          if (oldKey && hadData) {
-            initialValue = nuxtApp._asyncData[oldKey]!.data.value as NoInfer<DataT>
-          } else {
-            initialValue = options.getCachedData!(newKey, nuxtApp, { cause: 'initial' })
-            initialFetchOptions.cachedData = initialValue
-          }
-
+          // Resolve the new key's cached data before seeding the container, so getCachedData
+          // cannot see the previous key's display-only data as a cache hit for the new key.
+          const cachedData = options.getCachedData!(newKey, nuxtApp, { cause: 'initial' })
+          initialFetchOptions.cachedData = cachedData
+          const initialValue = (oldKey && hadData && cachedData === undefined)
+            ? nuxtApp._asyncData[oldKey]!.data.value as NoInfer<DataT>
+            : cachedData
           nuxtApp._asyncData[newKey] = createAsyncData(nuxtApp, newKey, _handler, options, initialValue)
         }
 

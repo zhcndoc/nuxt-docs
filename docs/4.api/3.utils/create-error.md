@@ -50,6 +50,6 @@ export default eventHandler(() => {
 })
 ```
 
-在 API 路由中，建议通过传入带有简短 `statusText` 的对象来使用 `createError`，因为它可以在客户端访问。否则，传给 API 路由的 `createError` 的 `message` 将不会传递到客户端。或者，您可以使用 `data` 属性将数据传回客户端。无论如何，请始终考虑避免将动态用户输入写入消息，以避免潜在的安全问题。
+在 API 路由中，建议通过传入一个带有简短 `statusText` 的对象来使用 `createError`，因为它可以在客户端被访问。否则，在 API 路由中传递给 `createError` 的 `message` 不会传播到客户端。或者，你也可以使用 `data` 属性将数据返回给客户端。当使用 `useFetch` 处理错误时，自定义数据可在 `error.value.data.data` 中获取。无论如何，都应始终考虑避免在 message 中放入动态的用户输入，以防止潜在的安全问题。
 
 :read-more{to="/docs/3.x/getting-started/error-handling"}

@@ -21,7 +21,10 @@ export async function loadPayload (url: string, opts: LoadPayloadOptions = {}): 
   if (import.meta.server || !payloadExtraction) { return null }
   if (await shouldLoadPayload(url)) {
     const payloadURL = await _getPayloadURL(url, opts)
-    return await _importPayload(payloadURL) || null
+    // cached (`isr`/`swr`/`cache`) payloads are mutable within a deploy, so `?buildId`
+    // cannot invalidate them - defer to normal HTTP cache semantics instead
+    const cache: RequestCache = isCachedPayloadRoute(url) ? 'default' : 'force-cache'
+    return await _importPayload(payloadURL, cache) || null
   }
   return null
 }
@@ -74,6 +77,7 @@ export function preloadPayload (url: string, opts: LoadPayloadOptions = {}): Pro
 // --- Internal ---
 
 const filename = renderJsonPayloads ? '_payload.json' : '_payload.js'
+const payloadBuildIdParam = '_b'
 async function _getPayloadURL (url: string, opts: LoadPayloadOptions = {}) {
   const u = new URL(url, 'http://localhost')
   if (u.host !== 'localhost' || hasProtocol(u.pathname, { acceptRelative: true })) {
@@ -83,14 +87,23 @@ async function _getPayloadURL (url: string, opts: LoadPayloadOptions = {}) {
   const hash = opts.hash || (opts.fresh || import.meta.dev ? Date.now() : config.app.buildId)
   const cdnURL = config.app.cdnURL
   const baseOrCdnURL = cdnURL && await isPrerendered(url) ? cdnURL : config.app.baseURL
-  return joinURL(baseOrCdnURL, u.pathname, filename + (hash ? `?${hash}` : ''))
+  const payloadURL = joinURL(baseOrCdnURL, u.pathname, filename)
+
+  if (!isCachedPayloadRoute(url)) {
+    u.search = ''
+  }
+  if (hash) {
+    u.searchParams.set(payloadBuildIdParam, String(hash))
+  }
+
+  return payloadURL + u.search
 }
 
-async function _importPayload (payloadURL: string) {
+async function _importPayload (payloadURL: string, cache: RequestCache) {
   if (import.meta.server || !payloadExtraction) { return null }
   try {
     if (renderJsonPayloads) {
-      const res = await fetch(payloadURL, import.meta.dev ? {} : { cache: 'force-cache' })
+      const res = await fetch(payloadURL, import.meta.dev ? {} : { cache })
       if (!res.ok) {
         if (import.meta.dev) {
           console.warn(`[nuxt] Cannot load payload ${payloadURL}: ${res.status} ${res.statusText}`)
@@ -116,11 +129,21 @@ function _shouldLoadPrerenderedPayload (rules: Record<string, any>) {
   }
 }
 
+function _getRoutePath (url: string) {
+  return new URL(url, 'http://localhost').pathname
+}
+
+/** @internal */
+export function isCachedPayloadRoute (url: string): boolean {
+  return !!getRouteRules({ path: _getRoutePath(url) }).payload
+}
+
 async function _isPrerenderedInManifest (url: string) {
   // Note: Alternative for server is checking x-nitro-prerender header
   if (!appManifest) {
     return false
   }
+  url = _getRoutePath(url)
   url = url === '/' ? url : url.replace(/\/$/, '')
   try {
     const manifest = await getAppManifest()
@@ -135,7 +158,7 @@ async function _isPrerenderedInManifest (url: string) {
  * @internal
  */
 export async function shouldLoadPayload (url = useRoute().path) {
-  const rules = getRouteRules({ path: url })
+  const rules = getRouteRules({ path: _getRoutePath(url) })
   if (rules.ssr === false) {
     return false
   }
@@ -154,7 +177,7 @@ export async function shouldLoadPayload (url = useRoute().path) {
 
 /** @since 3.0.0 */
 export async function isPrerendered (url = useRoute().path) {
-  const res = _shouldLoadPrerenderedPayload(getRouteRules({ path: url }))
+  const res = _shouldLoadPrerenderedPayload(getRouteRules({ path: _getRoutePath(url) }))
   if (res !== undefined) {
     return res
   }
@@ -181,7 +204,10 @@ export async function getNuxtClientPayload () {
 
   const inlineData = await parsePayload(el.textContent || '')
 
-  const externalData = el.dataset.src ? await _importPayload(el.dataset.src) : undefined
+  // `prerenderedAt` is only set for build-time prerendered HTML - without it, the page
+  // was rendered at runtime (`isr`/`swr`/`cache`) and the external payload must match
+  // the HTML we were just served, so revalidate instead of trusting the browser cache
+  const externalData = el.dataset.src ? await _importPayload(el.dataset.src, inlineData.prerenderedAt ? 'force-cache' : 'no-cache') : undefined
 
   payloadCache = {
     ...inlineData,

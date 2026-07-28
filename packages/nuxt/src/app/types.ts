@@ -16,6 +16,7 @@ export interface NuxtIslandClientResponse {
   props: unknown
   chunk: string
   slots?: Record<string, string>
+  uid?: string
 }
 
 export interface NuxtIslandContext {

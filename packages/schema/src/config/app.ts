@@ -79,6 +79,28 @@ export default defineResolvers({
      * ```bash
      * NUXT_APP_BASE_URL=/prefix/ node .output/server/index.mjs
      * ```
+     *
+     * ::note
+     * Relative paths (like `./`) are not supported directly in `nuxt.config.ts` due to Nitro limitations. For static hosting with relative asset paths, use one of these approaches:
+     *
+     * ```bash
+     * # Option 1: Environment variable at build time
+     * NUXT_APP_BASE_URL=./ npm run generate
+     * ```
+     *
+     * ```ts
+     * // Option 2: Nitro runtime config
+     * export default defineNuxtConfig({
+     *   nitro: {
+     *     runtimeConfig: {
+     *       app: {
+     *         baseURL: './',
+     *       },
+     *     },
+     *   },
+     * })
+     * ```
+     * ::
      */
     baseURL: {
       $resolve: (val) => {
@@ -92,10 +114,9 @@ export default defineResolvers({
     /** The folder name for the built site assets, relative to `baseURL` (or `cdnURL` if set). This is set at build time and should not be customized at runtime. */
     buildAssetsDir: {
       $resolve: (val) => {
-        if (typeof val === 'string') {
-          return val
-        }
-        return process.env.NUXT_APP_BUILD_ASSETS_DIR || '/_nuxt/'
+        const dir = typeof val === 'string' ? val : (process.env.NUXT_APP_BUILD_ASSETS_DIR || '/_nuxt/')
+        // normalised so consumers can compare it directly against request paths
+        return dir.replace(/^\/?/, '/').replace(/\/?$/, '/')
       },
     },
 

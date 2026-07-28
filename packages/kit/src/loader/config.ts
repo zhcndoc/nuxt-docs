@@ -7,6 +7,7 @@ import { loadConfig, setupDotenv } from 'c12'
 import type { NuxtConfig, NuxtOptions } from '@nuxt/schema'
 import { glob } from 'tinyglobby'
 import { defu } from 'defu'
+import { klona } from 'klona/full'
 import { basename, join, relative } from 'pathe'
 import { resolveModuleURL } from 'exsolve'
 import { withTrailingSlash, withoutTrailingSlash } from 'ufo'
@@ -35,7 +36,7 @@ export async function loadNuxtConfig (opts: LoadNuxtConfigOptions): Promise<Nuxt
     })
   }
 
-  const { configFile, layers = [], cwd, config: nuxtConfig, meta } = await withDefineNuxtConfig(
+  const resolved = await withDefineNuxtConfig(
     () => loadConfig<NuxtConfig>({
       name: 'nuxt',
       configFile: 'nuxt.config',
@@ -46,6 +47,8 @@ export async function loadNuxtConfig (opts: LoadNuxtConfigOptions): Promise<Nuxt
       dotenv: false, // already loaded above
     }),
   )
+  const { configFile, layers = [], cwd, meta } = resolved
+  const nuxtConfig = klona(resolved.config)
 
   // Fill config
   nuxtConfig.rootDir ||= cwd

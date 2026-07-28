@@ -23,7 +23,7 @@ import { useRouteAnnouncer } from '#app/composables/route-announcer'
 import { encodeRoutePath, encodeURL, resolveRouteObject } from '#app/composables/router'
 import { useRuntimeHook } from '#app/composables/runtime-hook'
 
-import { shouldLoadPayload } from '#app/composables/payload'
+import { loadPayload, shouldLoadPayload } from '#app/composables/payload'
 import { NuxtPage } from '#components'
 import { isTestingAppManifest } from '../matrix'
 
@@ -33,6 +33,12 @@ registerEndpoint('/api/test', defineEventHandler(event => ({
   method: event.method,
   headers: Object.fromEntries(event.headers.entries()),
 })))
+
+// the test environment builds with `ssr: false`, which disables payload extraction
+vi.mock('#build/nuxt.config.mjs', async importOriginal => ({
+  ...await importOriginal<Record<string, unknown>>(),
+  payloadExtraction: true,
+}))
 
 describe('app config', () => {
   it('can be updated', () => {
@@ -383,6 +389,42 @@ describe('loading state', () => {
     expect(isLoading.value).toBeFalsy()
     vi.useRealTimers()
   })
+
+  it('clears a pending hide timeout when setting progress', () => {
+    vi.useFakeTimers()
+    const { clear, finish, isLoading, set } = useLoadingIndicator()
+
+    try {
+      finish()
+      vi.advanceTimersByTime(100)
+      set(30, { force: true })
+      clear()
+      vi.advanceTimersByTime(400)
+
+      expect(isLoading.value).toBe(true)
+    } finally {
+      finish({ force: true })
+      vi.useRealTimers()
+    }
+  })
+
+  it('clears a pending reset timeout when setting progress', () => {
+    vi.useFakeTimers()
+    const { clear, finish, progress, set } = useLoadingIndicator()
+
+    try {
+      finish()
+      vi.advanceTimersByTime(500)
+      set(30, { force: true })
+      clear()
+      vi.advanceTimersByTime(400)
+
+      expect(progress.value).toBe(30)
+    } finally {
+      finish({ force: true })
+      vi.useRealTimers()
+    }
+  })
 })
 
 describe.skipIf(!isTestingAppManifest)('app manifests', () => {
@@ -404,6 +446,9 @@ describe.skipIf(!isTestingAppManifest)('app manifests', () => {
             },
           },
           "wildcard": {
+            "/isr": {
+              "isr": 60,
+            },
             "/pre": {
               "prerender": true,
             },
@@ -476,6 +521,23 @@ describe('compiled route rules', () => {
     expect(redirectRoute.redirect).toBe('/')
     const shouldLoadRedirect = await shouldLoadPayload('/pre/test')
     expect(shouldLoadRedirect).toBe(false)
+  })
+
+  it('should only use `force-cache` for immutable prerendered payloads', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(() => Promise.resolve(new Response('[{"data":1},{}]')))
+    try {
+      await loadPayload('/pre/thing')
+      expect(fetchSpy.mock.calls[0]![1]).toMatchObject({ cache: 'force-cache' })
+
+      // cached (isr/swr/cache) payloads can change within a deploy, so the browser cache must be revalidated
+      await loadPayload('/isr/thing')
+      expect(fetchSpy.mock.calls[1]![1]).toMatchObject({ cache: 'default' })
+
+      await loadPayload('/isr/thing?page=2')
+      expect(fetchSpy.mock.calls[2]![1]).toMatchObject({ cache: 'default' })
+    } finally {
+      fetchSpy.mockRestore()
+    }
   })
 })
 
@@ -788,6 +850,52 @@ describe('routing utilities: `useRoute`', () => {
 
     el.unmount()
     router.removeRoute('parent-test')
+  })
+
+  it('should update a route created in a detached scope across navigation', async () => {
+    // minimal `createSharedComposable` from the reproduction in #18903
+    let sharedRoute: ReturnType<typeof useRoute> | undefined
+    const useSharedRoute = () => (sharedRoute ||= effectScope(true).run(() => useRoute())!)
+
+    let injectedRoute: ReturnType<typeof useRoute>
+    let childScopeRoute: ReturnType<typeof useRoute>
+
+    router.addRoute({
+      name: 'shared-a',
+      path: '/shared-a',
+      component: defineComponent({
+        template: '<div />',
+        setup: () => {
+          injectedRoute = useRoute()
+          childScopeRoute = effectScope().run(() => useRoute())!
+          useSharedRoute()
+        },
+      }),
+    })
+    router.addRoute({
+      name: 'shared-b',
+      path: '/shared-b',
+      component: defineComponent({ template: '<div />' }),
+    })
+
+    const el = await mountSuspended({ setup: () => () => h(NuxtPage) })
+
+    await navigateTo('/shared-a')
+    await waitForPageChange()
+    expect(sharedRoute!.name).toBe('shared-a')
+
+    await navigateTo('/shared-b?q=test')
+    await waitForPageChange()
+    // the detached scope outlives the page, so it follows the current route
+    expect(sharedRoute!.name).toBe('shared-b')
+    expect(sharedRoute!.query).toMatchObject({ q: 'test' })
+    // routes obtained within the page's own scope stay frozen at that page's route
+    expect(injectedRoute!.name).toBe('shared-a')
+    expect(childScopeRoute!.name).toBe('shared-a')
+
+    el.unmount()
+    router.removeRoute('shared-a')
+    router.removeRoute('shared-b')
   })
 })
 
