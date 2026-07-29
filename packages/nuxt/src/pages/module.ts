@@ -2,8 +2,9 @@ import { existsSync, readdirSync, statSync } from 'node:fs'
 import { mkdir, readFile } from 'node:fs/promises'
 import { addBuildPlugin, addComponent, addPlugin, addTemplate, addTypeTemplate, defineNuxtModule, findPath, getLayerDirectories, isIgnored, pageDiagnostics, resolvePath, resolveTypePaths, useNitro } from '@nuxt/kit'
 import { dirname, join, relative, resolve } from 'pathe'
-import { genImport, genInlineTypeImport, genObjectFromRawEntries, genObjectKey, genString } from 'knitwork'
+import { genImport, genInlineTypeImport, genObjectFromRawEntries, genObjectKey, genString, genTypeImport } from 'knitwork'
 import { joinURL } from 'ufo'
+import { resolveModulePath } from 'exsolve'
 import { createRoutesContext, resolveOptions } from 'vue-router/unplugin'
 import type { EditableTreeNode, Options as TypedRouterOptions } from 'vue-router/unplugin'
 import type { Nitro, NitroRouteConfig } from 'nitro/types'
@@ -25,6 +26,11 @@ import type { Nuxt, NuxtPage } from 'nuxt/schema'
 import type { InlinePreset } from 'unimport'
 
 const OPTIONAL_PARAM_RE = /^\/?:.*(?:\?|\(\.\*\)\*)$/
+const RELATIVE_WITH_DOT_RE = /^([^.])/
+
+function relativeWithDot (from: string, to: string) {
+  return relative(from, to).replace(RELATIVE_WITH_DOT_RE, './$1') || '.'
+}
 
 export const pagesImportPresets: InlinePreset[] = [
   { imports: ['definePageMeta'], from: '#app/composables/pages' },
@@ -205,16 +211,21 @@ export default defineNuxtModule({
       }
     })
 
+    const componentTypeHelpersPath = resolveModulePath('vue-component-type-helpers', { from: import.meta.url, try: true })
+
     // layouts can be used without pages (e.g. `<NuxtLayout>`), so always generate their types
     addTypeTemplate({
       filename: 'types/layouts.d.ts',
-      getContents: ({ app }) => {
+      dependsOn: [],
+      getContents: ({ app, nuxt }) => {
+        // a path relative to the generated declaration keeps `buildDir` portable between machines
+        const componentTypeHelpers = componentTypeHelpersPath
+          ? relativeWithDot(join(nuxt.options.buildDir, 'types'), componentTypeHelpersPath)
+          : 'vue-component-type-helpers'
+
         return [
-          'import type { ComputedRef, MaybeRef } from \'vue\'',
-          '',
-          'type ComponentProps<T> = T extends new(...args: any) => { $props: infer P } ? NonNullable<P>',
-          '  : T extends (props: infer P, ...args: any) => any ? P',
-          '  : {}',
+          genTypeImport('vue', ['ComputedRef', 'MaybeRef']),
+          genTypeImport(componentTypeHelpers, ['ComponentProps']),
           '',
           'declare module \'nuxt/app\' {',
           '  interface NuxtLayouts {',
@@ -238,6 +249,7 @@ export default defineNuxtModule({
       addPlugin(resolve(distDir, 'app/plugins/router'))
       addTemplate({
         filename: 'pages.mjs',
+        dependsOn: [],
         getContents: () => [
           'export { useRoute } from \'#app/composables/router\'',
           'export const START_LOCATION = Symbol(\'router:start-location\')',
@@ -246,6 +258,7 @@ export default defineNuxtModule({
       // used by `<NuxtLink>`
       addTemplate({
         filename: 'router.options.mjs',
+        dependsOn: [],
         getContents: () => {
           return [
             'export const hashMode = false',
@@ -255,6 +268,7 @@ export default defineNuxtModule({
       })
       addTypeTemplate({
         filename: 'types/middleware.d.ts',
+        dependsOn: [],
         getContents: () => [
           'declare module \'nitro/types\' {',
           '  interface NitroRouteConfig {',
@@ -377,6 +391,7 @@ export default defineNuxtModule({
         const dts = await readFile(declarationFile, 'utf-8')
         addTemplate({
           filename: 'types/typed-router.d.ts',
+          dependsOn: [],
           getContents: () => dts,
         })
       }
@@ -695,6 +710,8 @@ export default defineNuxtModule({
     // Add routes template
     addTemplate({
       filename: 'routes.mjs',
+      // route metadata is extracted from page sources only when `scanPageMeta` is enabled
+      dependsOn: nuxt.options.experimental.scanPageMeta ? ['pages'] : [],
       getContents ({ app }) {
         if (!app.pages) { return ROUTES_HMR_CODE + 'export default []' }
         const { routes, imports } = normalizeRoutes(app.pages, new Set(), {
@@ -709,6 +726,7 @@ export default defineNuxtModule({
     // Add vue-router import for `<NuxtLayout>` integration
     addTemplate({
       filename: 'pages.mjs',
+      dependsOn: [],
       getContents: () => 'export { START_LOCATION, useRoute } from \'vue-router\'',
     })
 
@@ -719,6 +737,7 @@ export default defineNuxtModule({
     // Add router options template
     addTemplate({
       filename: 'router.options.mjs',
+      dependsOn: [],
       getContents: async ({ nuxt }) => {
         // Scan and register app/router.options files
         const routerOptionsFiles = await resolveRouterOptions(nuxt, builtInRouterOptions)
@@ -751,6 +770,7 @@ export default defineNuxtModule({
 
     addTypeTemplate({
       filename: 'types/middleware.d.ts',
+      dependsOn: [],
       getContents: ({ app }) => {
         const namedMiddleware = app.middleware.filter(mw => !mw.global)
         return [
@@ -767,6 +787,7 @@ export default defineNuxtModule({
 
     addTypeTemplate({
       filename: 'types/nitro-middleware.d.ts',
+      dependsOn: [],
       getContents: ({ app }) => {
         const namedMiddleware = app.middleware.filter(mw => !mw.global)
         return [
@@ -789,6 +810,7 @@ export default defineNuxtModule({
     if (nuxt.options.experimental.viewTransition) {
       addTypeTemplate({
         filename: 'types/view-transitions.d.ts',
+        dependsOn: [],
         getContents: () => {
           return [
             'import type { ViewTransitionPageOptions } from \'../types/config\'',

@@ -13,10 +13,12 @@ links:
 此 composable 在 Nuxt v3.12+ 中可用。
 ::
 
-## 描述
+## Description
 
-一个可组合函数，用于监听页面标题的变化并相应地更新播报器消息。由 [`<NuxtRouteAnnouncer>`](/docs/4.x/api/components/nuxt-route-announcer) 使用，并且可以被控制。  
-它挂钩到 Unhead 的 [`dom:rendered`](https://unhead.unjs.io/docs/typescript/head/api/hooks/dom-rendered) 来读取页面标题并将其设置为播报器消息。
+A composable function used to watch for changes to the page title and update the announcer message accordingly. Used by [`<NuxtRouteAnnouncer>`](/docs/4.x/api/components/nuxt-route-announcer) and can also be controlled manually.  
+It hooks into Unhead’s [`dom:rendered`](https://unhead.unjs.io/docs/typescript/head/api/hooks/dom-rendered) to read the page title and set it as the announcer message.
+
+:read-more{title="Nuxt 无障碍访问" to="/docs/4.x/guide/best-practices/accessibility#route-announcements"}
 
 ## 参数
 
@@ -34,19 +36,19 @@ links:
 - **类型**: `Ref<string>`
 - **描述**: 屏幕阅读器播报紧急级别 `off`、`polite` 或 `assertive`
 
-## 方法
+## Methods
 
 ### `set(message, politeness = "polite")`
 
-设置要播报的消息及其紧急级别。
+Set the message to be announced and its urgency level.
 
 ### `polite(message)`
 
-以 `politeness = "polite"` 设置消息。
+Set the message with `politeness = "polite"`.
 
 ### `assertive(message)`
 
-以 `politeness = "assertive"` 设置消息。
+Set the message with `politeness = "assertive"`.
 
 ## 示例
 

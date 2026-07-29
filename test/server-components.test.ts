@@ -229,6 +229,22 @@ describe('server components/islands', () => {
     expect(html.match(/Hello this is a server page/g)).toHaveLength(1)
   })
 
+  it('/server-page - island response is prefetched by NuxtLink', async () => {
+    const { page, requests } = await renderPage('/')
+    await page.waitForLoadState('networkidle')
+
+    const isServerPageIsland = (req: string) => /^\/__nuxt_island\/page_server-page_/.test(req)
+
+    expect(requests.some(isServerPageIsland)).toBe(true)
+    requests.length = 0
+
+    await page.getByText('to server page').click()
+    await page.waitForFunction(() => !!document.head.querySelector('meta[name="author"][content="Nuxt"]'))
+
+    expect(requests.some(isServerPageIsland)).toBe(false)
+    await page.close()
+  })
+
   it('/server-page-with-nuxtpage/child renders the parent server page with the child route', async () => {
     const html = await $fetch<string>('/server-page-with-nuxtpage/child')
     expect(html).toContain('id="server-page-with-nuxtpage"')
@@ -598,6 +614,33 @@ describe('hash binding', () => {
   it('rejects a request with no hash segment in the URL', async () => {
     const res = await fetch(withQuery('/__nuxt_island/PureComponent.json', {
       props: JSON.stringify({ bool: false, number: 1, str: 's', obj: {} }),
+    }))
+    expect(res.status).toBe(400)
+  })
+
+  it('rejects array props even when the hash matches their indexed form', async () => {
+    const name = 'PureComponent'
+    const hashId = getIslandHash({ name, props: { 0: 3, 1: 0, 2: 3 } })
+    const res = await fetch(withQuery(`/__nuxt_island/${name}_${hashId}.json`, {
+      props: JSON.stringify([3, 0, 3]),
+    }))
+    expect(res.status).toBe(400)
+  })
+
+  it('rejects primitive props', async () => {
+    const name = 'PureComponent'
+    const hashId = getIslandHash({ name, props: {} })
+    const res = await fetch(withQuery(`/__nuxt_island/${name}_${hashId}.json`, {
+      props: 'false',
+    }))
+    expect(res.status).toBe(400)
+  })
+
+  it('rejects null props', async () => {
+    const name = 'PureComponent'
+    const hashId = getIslandHash({ name, props: {} })
+    const res = await fetch(withQuery(`/__nuxt_island/${name}_${hashId}.json`, {
+      props: 'null',
     }))
     expect(res.status).toBe(400)
   })
