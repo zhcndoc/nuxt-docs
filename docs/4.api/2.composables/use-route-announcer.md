@@ -18,9 +18,11 @@ links:
 一个用于监听页面标题变化并相应地更新播报器消息的组合式函数。由 [`<NuxtRouteAnnouncer>`](/docs/4.x/api/components/nuxt-route-announcer) 使用，并且可以被控制。  
 它挂钩到 Unhead 的 [`dom:rendered`](https://unhead.unjs.io/docs/typescript/head/api/hooks/dom-rendered) 来读取页面标题并将其设置为播报器消息。
 
+:read-more{title="Nuxt 无障碍访问" to="/docs/4.x/guide/best-practices/accessibility#route-announcements"}
+
 ## 参数
 
-- `politeness`: 设置屏幕阅读器播报的紧急程度：`off`（禁用播报）、`polite`（等待空闲）、或 `assertive`（立即打断）。 (默认 `polite`)。
+- `politeness`：设置屏幕阅读器播报的紧急程度：`off`（禁用播报）、`polite`（等待空闲）、或 `assertive`（立即打断）。（默认 `polite`）。
 
 ## 属性
 

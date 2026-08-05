@@ -111,7 +111,11 @@ const show = ref(false)
 
 :read-more{title="延迟水合" to="/docs/4.x/directory-structure/app/components#delayed-or-lazy-hydration"}
 
-### 数据获取
+对于几乎不需要或完全不需要客户端交互的内容型网站和营销网站，你可以更进一步，将预渲染、`noScripts` 路由规则、[服务端组件](/docs/4.x/guide/concepts/server-components)和延迟水合结合起来，从而交付几乎为零的 JavaScript。
+
+:read-more{title="以静态内容为主的网站" to="/docs/4.x/guide/recipes/mostly-static-sites"}
+
+### 获取数据
 
 为避免重复获取相同数据（在服务端和客户端各获取一次），Nuxt 提供了 [`useFetch`](/docs/4.x/api/composables/use-fetch) 和 [`useAsyncData`](/docs/4.x/api/composables/use-async-data)。它们会确保如果在服务端进行了 API 调用，数据会在载荷中转发到客户端，而不是再次被获取。
 
@@ -123,7 +127,7 @@ const show = ref(false)
 
 ### 图像
 
-未经优化的图像会对网站性能产生显著负面影响，特别是对 [Largest Contentful Paint (LCP)](https://web.dev/articles/lcp) 分数。
+未经优化的图像会对网站性能产生显著负面影响，特别是对 [最大内容绘制（Largest Contentful Paint，LCP）](https://web.dev/articles/lcp) 分数。
 
 在 Nuxt 中我们可以使用 [Nuxt Image](https://image.nuxt.com/) 模块，它是面向 Nuxt 应用的即插即用图像优化方案。它允许使用内置优化器或你喜欢的图像 CDN 来调整大小和转换图像。
 
@@ -132,12 +136,12 @@ const show = ref(false)
 [`<NuxtImg>`](/docs/4.x/api/components/nuxt-img) 是对原生 `<img>` 标签的替代，具备以下增强功能：
 
 * 使用内置提供器优化本地和远程图像
-* 将 `src` 转换为提供器优化的 URL，使用现代格式如 WebP 或 Avif
+* 将 `src` 转换为提供器优化的 URL，使用现代格式如 WebP 或 AVIF
 * 根据 `width` 和 `height` 自动调整图像大小
 * 在提供 sizes 选项时生成响应式 `sizes`
 * 支持原生 `lazy loading` 以及其他 `<img>` 属性
 
-你网站中的图像通常可以按重要性区分；那些需要在初始加载时优先交付（即 `Largest Contentful Paint`）的图像，以及可以稍后或在需要时加载的图像。为此，我们可以使用如下优化：
+你网站中的图像通常可以按重要性区分；那些需要在初始加载时优先交付（即 `最大内容绘制`）的图像，以及可以稍后或在需要时加载的图像。为此，我们可以使用如下优化：
 
 ```html
 <template>
@@ -173,19 +177,19 @@ const show = ref(false)
 
 :video-accordion{title="观看 Daniel Roe 关于 Nuxt Fonts 背后理念的演讲" videoId="D3F683UViBY"}
 
-Nuxt Fonts 会处理你的所有 CSS，并在遇到 font-family 声明时自动执行以下操作：
+Nuxt Fonts 会处理你的所有 CSS，并在遇到 `font-family` 声明时自动执行以下操作：
 
 1. 解析字体 – 在 public/ 中寻找字体文件，然后检查 Google、Bunny、Fontshare 等网络提供者。
-2. 生成 @font-face 规则 – 注入用于从正确来源加载字体的 CSS 规则。
+2. 生成 `@font-face` 规则 – 注入用于从正确来源加载字体的 CSS 规则。
 3. 代理与缓存字体 – 将 URL 重写为 `/_fonts`，下载并在本地缓存字体。
-4. 创建回退度量 – 调整本地系统字体以匹配网络字体，减少布局偏移（[CLS](https://web.dev/articles/cls)）。
+4. 创建回退度量 – 调整本地系统字体以匹配网络字体，减少布局偏移（[累积布局偏移（CLS）](https://web.dev/articles/cls)）。
 5. 将字体包含在构建中 – 将字体与项目打包，哈希文件名并设置长期缓存头。
 
 它支持多种提供者，设计为可插拔和可扩展，因此无论你的设置如何，都应该能够使用现有提供者或编写你自己的提供者。
 
 ### 脚本
 
-第三方资源如分析工具、视频嵌入、地图和社交媒体集成可以增强网站功能，但也可能显著降低用户体验，并对 [Interaction to Next Paint (INP)](https://web.dev/articles/inp) 和 Largest Contentful Paint (LCP) 分数产生负面影响。
+第三方资源如分析工具、视频嵌入、地图和社交媒体集成可以增强网站功能，但也可能显著降低用户体验，并对 [交互到下一次绘制（Interaction to Next Paint，INP）](https://web.dev/articles/inp) 和最大内容绘制（LCP）分数产生负面影响。
 
 [Nuxt Scripts](https://scripts.nuxt.com/) 让你以更好的性能、隐私、安全性和开发者体验来加载第三方脚本。
 
@@ -214,15 +218,15 @@ onLoaded((gtag) => {
 
 ## 分析工具
 
-要提升性能，我们首先需要了解如何衡量性能，从在本地开发环境测量性能开始，然后对已部署到生产的应用进行审计。
+要提升性能，我们首先需要了解如何衡量性能，从在本地开发环境中测量性能开始，然后对已部署到生产环境的应用进行审计。
 
 ### Nuxi Analyze
 
-[`nuxt`](/docs/4.x/api/commands/analyze) 的 [This](/docs/4.x/api/commands/analyze) 命令允许你分析 Nuxt 应用的生产构建包。它利用 `vite-bundle-visualizer`（类似于 `webpack-bundle-analyzer`）来生成应用构建包的可视化表示，使你更容易识别哪些组件占用了最多空间。
+[`nuxt`](/docs/4.x/api/commands/analyze) 的 [此](/docs/4.x/api/commands/analyze) 命令允许你分析 Nuxt 应用的生产构建包。它利用 `vite-bundle-visualizer`（类似于 `webpack-bundle-analyzer`）来生成应用构建包的可视化表示，使你更容易识别哪些组件占用了最多空间。
 
-当你在可视化中看到一个较大的块时，通常表示存在优化机会——无论是将其拆分为更小的部分、实现懒加载，还是用更高效的替代方案替换，尤其是对于第三方库。
+当你在可视化中看到一个较大的块时，通常表示存在优化机会——无论是将其拆分为更小的部分、实现懒加载，还是用更高效的替代方案进行替换，尤其是对于第三方库。
 
-包含多个元素的大块通常可以通过只导入必要组件而不是整个模块来缩小，而大型独立块则更适合通过懒加载而不是包含在主包中。
+包含多个元素的大块通常可以通过只导入必要的组件，而不是整个模块来缩小；大型独立块则更适合通过懒加载来处理，而不是将其包含在主包中。
 
 ### Nuxt DevTools
 
@@ -230,39 +234,40 @@ onLoaded((gtag) => {
 
 ![Nuxt DevTools 示例](https://user-images.githubusercontent.com/11247099/217670806-fb39aeff-3881-44e5-b9c8-6c757f5925fc.png)
 
-它提供了我们可以用来衡量 Nuxt 应用性能的若干功能：
-1. 时间线（Timeline） – 跟踪渲染、更新和初始化组件所花费的时间，以识别性能瓶颈。  
-2. 资源（Assets） – 显示未经过转换的文件大小（例如图像）。  
-3. 渲染树（Render Tree） – 显示 Vue 组件、脚本和样式之间的连接，以优化动态加载。  
-4. 检查（Inspect） – 列出 Vue 应用中使用的所有文件及其大小和评估时间。
+它提供了若干可用于衡量 Nuxt 应用性能的功能：
+
+1. 时间线（Timeline）– 跟踪渲染、更新和初始化组件所花费的时间，以识别性能瓶颈。  
+2. 资源（Assets）– 显示未经过转换的文件大小（例如图像）。  
+3. 渲染树（Render Tree）– 显示 Vue 组件、脚本和样式之间的连接，以优化动态加载。  
+4. 检查（Inspect）– 列出 Vue 应用中使用的所有文件及其大小和评估时间。
 
 ### Chrome 开发者工具
 
 Chrome 开发者工具提供两个用于衡量性能的有用选项卡：`Performance` 和 `Lighthouse`。
 
-打开 [Performance](https://developer.chrome.com/docs/devtools/performance/overview) 面板时，它会立即显示本地的 **Largest Contentful Paint (LCP)** 和 **Cumulative Layout Shift (CLS)** 分数（良好、需要改进或糟糕）。  
+打开 [Performance](https://developer.chrome.com/docs/devtools/performance/overview) 面板时，它会立即显示本地的 **最大内容绘制（Largest Contentful Paint，LCP）** 和 **累积布局偏移（Cumulative Layout Shift，CLS）** 分数（良好、需要改进或糟糕）。  
 
-如果你与页面交互，它还会捕获 **Interaction to Next Paint (INP)**，基于你的设备和网络情况给出一套完整的 Core Web Vitals 视图。
+如果你与页面进行交互，它还会捕获 **交互到下一次绘制（Interaction to Next Paint，INP）**，并根据你的设备和网络情况提供一套完整的核心网页指标（Core Web Vitals）视图。
 
 ![Chrome DevTools 性能面板](https://developer.chrome.com/static/docs/devtools/performance/image/cpu-throttling_856.png)
 
-[Lighthouse](https://developer.chrome.com/docs/devtools/lighthouse) 对性能、无障碍、SEO、渐进式 Web 应用和最佳实践进行审计。它会对你的页面运行测试并生成报告。使用未通过的审计作为改进网站的指南。
+[Lighthouse](https://developer.chrome.com/docs/devtools/lighthouse) 会对性能、无障碍、SEO、渐进式 Web 应用和最佳实践进行审计。它会对你的页面运行测试并生成报告。将未通过的审计作为改进网站的指南。
 
 ![Lighthouse](https://developer.chrome.com/static/docs/lighthouse/images/lighthouse-overview_720.png)
 
-每个审计都有参考文档，解释为何该审计重要以及如何修复问题。
+每项审计都有参考文档，解释该审计为何重要以及如何修复问题。
 
 ### PageSpeed Insights
 
-[PageSpeed Insights (PSI)](https://developers.google.com/speed/docs/insights/v5/about) 报告页面在移动端和桌面设备上的用户体验，并提供改进该页面的建议。
+[PageSpeed Insights（PSI）](https://developers.google.com/speed/docs/insights/v5/about) 报告页面在移动设备和桌面设备上的用户体验，并提供改进该页面的建议。
 
-它提供页面的实验室数据和现场数据。实验室数据在受控环境中收集，适合调试问题；现场数据用于捕获真实的、真实世界的用户体验。
+它提供页面的实验室数据和现场数据。实验室数据在受控环境中收集，适合调试问题；现场数据用于捕获真实世界中的用户体验。
 
 ### Web Page Test
 
 [WebPageTest](https://www.webpagetest.org/) 是一个网页性能工具，提供有关页面在各种条件下表现的深度诊断信息。
 
-每个测试可以从世界不同位置运行，在真实浏览器上，并可覆盖任意数量的可定制网络条件。
+每项测试都可以从世界各地的不同位置运行，在真实浏览器上执行，并可覆盖任意数量的可定制网络条件。
 
 ## 常见问题
 
