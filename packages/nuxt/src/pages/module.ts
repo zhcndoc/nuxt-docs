@@ -5,17 +5,18 @@ import { dirname, join, relative, resolve } from 'pathe'
 import { genImport, genInlineTypeImport, genObjectFromRawEntries, genObjectKey, genString, genTypeImport } from 'knitwork'
 import { joinURL } from 'ufo'
 import { resolveModulePath } from 'exsolve'
-import { createRoutesContext, resolveOptions } from 'vue-router/unplugin'
 import type { EditableTreeNode, Options as TypedRouterOptions } from 'vue-router/unplugin'
 import type { Nitro, NitroRouteConfig } from 'nitro/types'
 import { defu } from 'defu'
 import { isEqual } from 'ohash'
 import { distDir } from '../dirs.ts'
-import { logger } from '../utils.ts'
+import { linkToAlias, logger } from '../utils.ts'
 import picomatch from 'picomatch'
-import { resolvePagesRoutes as _resolvePagesRoutes, augmentAndResolve, createPagesContext, defaultExtractionKeys, normalizeRoutes, relativizeToParent, resolveRoutePaths, toRou3Patterns } from './utils.ts'
+import { rou3PatternToURLPattern } from 'unrouting'
+import { resolvePagesRoutes as _resolvePagesRoutes, augmentAndResolve, createPagesContext, normalizeRoutes, relativizeToParent, resolvePageMetaExtractionKeys, resolveRoutePaths, shouldExtractSerializablePageMeta, toRou3Patterns } from './utils.ts'
 import type { PagesContext } from './utils.ts'
 import { globRouteRulesFromPages, removePagesRules } from './route-rules.ts'
+import { markPagesCoveredByRouteRule } from './route-coverage.ts'
 import { collectStaticPageRoutes, getAssetPathsForRoute } from './public-assets.ts'
 import { PageMetaPlugin } from './plugins/page-meta.ts'
 import { toVirtualId } from '../core/plugins/virtual.ts'
@@ -382,6 +383,7 @@ export default defineNuxtModule({
         references.push({ path: declarationFile })
       })
 
+      const { createRoutesContext, resolveOptions } = await import('vue-router/unplugin')
       const context = createRoutesContext(resolveOptions(typedRouterOptions))
       await mkdir(dirname(declarationFile), { recursive: true })
 
@@ -563,9 +565,9 @@ export default defineNuxtModule({
             warnedConflicts.add(key)
 
             pageDiagnostics.NUXT_B4015({
-              asset: relative(nuxt.options.rootDir, file),
+              asset: linkToAlias(file, nuxt),
               route,
-              page: page && relative(nuxt.options.rootDir, page),
+              page: page && linkToAlias(page, nuxt),
             })
           }
         }
@@ -573,6 +575,19 @@ export default defineNuxtModule({
     }
 
     nuxt.hook('nitro:build:before', () => warnPublicAssetConflicts())
+
+    // Expose the URLPattern of every page route so pages served without scripts
+    // can scope their speculation rules to same-origin *page* navigations, which
+    // are safe to GET, instead of a blanket rule that could prefetch/prerender
+    // non-idempotent server routes (`~/server/routes/*`). A catch-all page
+    // (`[...slug]`) widens this back to a blanket `*`.
+    nuxt.hook('nitro:build:before', (nitro) => {
+      const patterns = new Set<string>()
+      for (const route of toRou3Patterns(nuxt.apps.default?.pages || [])) {
+        patterns.add(rou3PatternToURLPattern(route).pattern)
+      }
+      ;(nitro.options as { _noScriptsPagePatterns?: string[] })._noScriptsPagePatterns = [...patterns]
+    })
 
     nuxt.hook('nitro:build:before', (nitro) => {
       if (nuxt.options.dev || nuxt.options.router.options.hashMode) { return }
@@ -655,11 +670,7 @@ export default defineNuxtModule({
     })
 
     // Extract macros from pages
-    const extraPageMetaExtractionKeys = nuxt.options?.experimental?.extraPageMetaExtractionKeys || []
-    const extractedKeys = [
-      ...defaultExtractionKeys,
-      ...extraPageMetaExtractionKeys,
-    ]
+    const extractedKeys = [...resolvePageMetaExtractionKeys(nuxt.options.experimental.extraPageMetaExtractionKeys)]
 
     nuxt.hook('modules:done', () => {
       addBuildPlugin(PageMetaPlugin({
@@ -667,6 +678,7 @@ export default defineNuxtModule({
         isPage,
         routesId: toVirtualId(resolve(nuxt.options.buildDir, 'routes.mjs'), nuxt),
         extractedKeys: nuxt.options.experimental.scanPageMeta ? extractedKeys : [],
+        extractSerializable: shouldExtractSerializablePageMeta(nuxt),
       }))
     })
 
@@ -707,6 +719,37 @@ export default defineNuxtModule({
     const serverComponentRuntime = await findPath(join(distDir, 'components/runtime/server-component')) ?? join(distDir, 'components/runtime/server-component')
     const clientComponentRuntime = await findPath(join(distDir, 'components/runtime/client-component')) ?? join(distDir, 'components/runtime/client-component')
 
+    let nitroForRouteCoverage: Nitro | undefined
+    nuxt.hook('nitro:init', (nitro) => {
+      nitroForRouteCoverage = nitro
+    })
+    function markPagesForRouteRules (pages: NuxtPage[]) {
+      const nitro = nitroForRouteCoverage
+      if (!nitro) { return }
+
+      markPagesCoveredByRouteRule(pages, nitro, {
+        isCovered: rules => !!rules.noScripts,
+        mark: (page, covered) => { page._noScripts = covered },
+      })
+
+      // server components render on the server by definition, whatever `ssr` says
+      const conflicting: string[] = []
+      markPagesCoveredByRouteRule(pages, nitro, {
+        isCovered: rules => rules.ssr === false,
+        filter: page => page.mode !== 'server',
+        mark: (page, covered, resolvedPath) => {
+          if (covered && page._noScripts) {
+            conflicting.push(resolvedPath)
+          }
+          page._spaOnly = covered && !page._noScripts
+        },
+      })
+
+      if (conflicting.length) {
+        logger.warn(`\`ssr: false\` and \`noScripts\` both apply to ${conflicting.map(path => `\`${path}\``).join(', ')}, which leaves nothing to render the route: the server emits an empty shell and no client bundle is loaded to fill it. Remove one of the two rules.`)
+      }
+    }
+
     // Add routes template
     addTemplate({
       filename: 'routes.mjs',
@@ -714,6 +757,7 @@ export default defineNuxtModule({
       dependsOn: nuxt.options.experimental.scanPageMeta ? ['pages'] : [],
       getContents ({ app }) {
         if (!app.pages) { return ROUTES_HMR_CODE + 'export default []' }
+        markPagesForRouteRules(app.pages)
         const { routes, imports } = normalizeRoutes(app.pages, new Set(), {
           serverComponentRuntime,
           clientComponentRuntime,
