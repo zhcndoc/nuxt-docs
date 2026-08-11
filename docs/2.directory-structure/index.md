@@ -25,7 +25,7 @@ Nuxt 应用程序的根目录是包含 `nuxt.config.ts` 文件的目录。此文
 该目录还包括特定文件：
 - [`app.config.ts`](/docs/4.x/directory-structure/app/app-config)：应用内的响应式配置
 - [`app.vue`](/docs/4.x/directory-structure/app/app)：Nuxt 应用的根组件
-- [`error.vue`](/docs/4.x/directory-structure/app/error)：Nuxt 应用的错误页面
+- [`error.vue`](/docs/4.x/directory-structure/app/error)：Nuxt 应用的错误页面。
 
 ## 公共目录
 
@@ -40,11 +40,15 @@ Nuxt 应用程序的根目录是包含 `nuxt.config.ts` 文件的目录。此文
 - [`routes/`](/docs/4.x/directory-structure/server#server-routes)：包含应用的服务器路由（例如动态的 `/sitemap.xml`）
 - [`middleware/`](/docs/4.x/directory-structure/server#server-middleware)：在处理服务器路由前运行代码
 - [`plugins/`](/docs/4.x/directory-structure/server#server-plugins)：在 Nuxt 服务器创建时使用插件等
-- [`utils/`](/docs/4.x/directory-structure/server#server-utilities)：在服务器代码中可用的工具函数
+- [`utils/`](/docs/4.x/directory-structure/server#server-utilities)：在服务器代码中可用的工具函数。
 
 ## 共享目录
 
 [`shared/`](/docs/4.x/directory-structure/shared) 目录包含 Nuxt 应用和 Nuxt 服务器共享的代码。这些代码既可用于 Vue 应用，也可用于 Nitro 服务器。
+
+## 测试目录
+
+[`test/`](/docs/4.x/directory-structure/test) 目录是存放应用测试（单元测试、Nuxt 运行时测试和端到端测试）的推荐位置。有关布局和设置详情，请参阅[组织测试](/docs/4.x/getting-started/testing#organizing-your-tests)。
 
 ## 内容目录
 

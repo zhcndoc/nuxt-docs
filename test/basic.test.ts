@@ -11,8 +11,6 @@ import { createRegExp, exactly } from 'magic-regexp'
 import { asyncContext, isDev, isTestingAppManifest, isWebpack, runsOnceInMatrix } from './matrix'
 import { expectNoClientErrors, gotoPath, parseData, parsePayload, renderPage } from './utils'
 
-const itFailsIf = (condition: boolean) => condition ? it.fails : it
-
 await setup({
   rootDir: fileURLToPath(new URL('./fixtures/basic', import.meta.url)),
   dev: isDev,
@@ -113,6 +111,11 @@ describe('route rules', () => {
 
   it('should run middleware defined in routeRules config', async () => {
     const html = await $fetch<string>('/route-rules/middleware')
+    expect(html).toContain('Hello from routeRules!')
+  })
+
+  it('should run appMiddleware from a decoded route rule key on a unicode page', async () => {
+    const html = await $fetch<string>(`/route-rules/${encodeURIComponent('测试')}`)
     expect(html).toContain('Hello from routeRules!')
   })
 
@@ -423,7 +426,7 @@ describe('pages', () => {
     await page.close()
   })
 
-  itFailsIf(isWebpack && isDev)('/client-only-components', async () => {
+  it('/client-only-components', async () => {
     const html = await $fetch<string>('/client-only-components')
     expect(html).toContain('<div>Fallback</div>')
     // ensure components are not rendered server-side
@@ -749,6 +752,15 @@ describe('nuxt composables', () => {
     const cookies = res.headers.get('set-cookie')
     expect(cookies).toMatchInlineSnapshot('"set-in-plugin=%22true%22; Path=/, accessed-with-default-value=default; Path=/, set=set; Path=/, browser-set=set; Path=/, browser-set-to-null=; Max-Age=0; Path=/, browser-set-to-null-with-default=; Max-Age=0; Path=/, browser-object-default=%7B%22foo%22%3A%22bar%22%7D; Path=/, theCookie=show; Path=/"')
   })
+  it('does not write a readonly cookie with a default value, on server or client', async () => {
+    const res = await fetch('/cookies')
+    expect(res.headers.get('set-cookie')).not.toContain('readonly-with-default')
+
+    const { page } = await renderPage('/cookies')
+    expect(await page.evaluate(() => document.cookie)).not.toContain('readonly-with-default')
+    await page.close()
+  })
+
   it('updates cookies when they are changed', async () => {
     const { page } = await renderPage('/cookies')
     async function extractCookie () {
@@ -2125,12 +2137,10 @@ describe.skipIf(isWindows)('useAsyncData', () => {
 })
 
 describe.runIf(isDev)('component testing', () => {
-  itFailsIf(isWebpack && isDev)('should work', async () => {
-    // TODO: fix in nuxt/test-utils
+  it('should work', async () => {
     const comp1 = await $fetchComponent('app/components/Counter.vue', { multiplier: 2 })
     expect(comp1).toContain('12 x 2 = 24')
 
-    // TODO: fix in nuxt/test-utils
     const comp2 = await $fetchComponent('app/components/Counter.vue', { multiplier: 4 })
     expect(comp2).toContain('12 x 4 = 48')
   })
