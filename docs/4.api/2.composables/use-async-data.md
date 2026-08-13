@@ -12,7 +12,7 @@ links:
 
 ::note
 [`useAsyncData`](/docs/4.x/api/composables/use-async-data) 是一个应当直接在 [Nuxt 上下文](/docs/4.x/guide/going-further/nuxt-app#the-nuxt-context) 中调用的可组合函数。它返回响应式的组合式引用，并负责将响应添加到 Nuxt payload 中，以便在从服务端传到客户端时可以在页面水合时**不在客户端重新请求数据**。
-::
+:::
 
 ## 用法
 
@@ -37,7 +37,7 @@ const { data, status, pending, error, refresh, clear } = await useAsyncData(
 `data`、`status`、`pending` 和 `error` 都是 Vue refs。在 `<script setup>` 中使用 `.value` 访问它们的值。`refresh`/`execute` 和 `clear` 是普通函数。
 ::
 
-### Watch Parameters
+### 监视参数
 
 内置的 `watch` 选项允许在检测到任何更改时自动重新运行获取函数。
 
@@ -167,6 +167,7 @@ type AsyncDataOptions<ResT, DataT = ResT> = {
   getCachedData?: (key: string, nuxtApp: NuxtApp, ctx: AsyncDataRequestContext) => DataT | undefined
   timeout?: number
   enabled?: MaybeRefOrGetter<boolean>
+  serialize?: boolean
 }
 
 type AsyncDataRequestContext = {
@@ -204,20 +205,21 @@ type AsyncDataRequestStatus = 'idle' | 'pending' | 'success' | 'error'
 ::
 - `options`（对象）：异步函数调用的配置。所有选项都可以是静态值、`ref` 或计算值。
 
-| 选项                                                                     | 类型                                        | 默认值      | 描述                                                                                                                                                                                                                                                                          |
-|--------------------------------------------------------------------------|---------------------------------------------|------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `server`                                                                 | `boolean`                                   | `true`     | 是否在服务端调用该函数。                                                                                                                                                                                                                                                         |
-| `lazy`                                                                   | `boolean`                                   | `false`    | 如果为 true，则在路由加载后才解析（不会阻塞导航）。                                                                                                                                                                                                                               |
-| `immediate`                                                              | `boolean`                                   | `true`     | 如果为 false，则阻止函数立即被调用。                                                                                                                                                                                                                                             |
-| `default`                                                                | `() => DataT`                               | -          | 在异步解析之前，为 `data` 提供默认值的工厂函数。                                                                                                                                                                                                                                 |
-| `timeout` :badge[v4.2]{color="info" size="xs" class="align-middle"}      | `number`                                    | -          | 在调用超时前等待的毫秒数（默认是 `undefined`，表示没有超时）                                                                                                                                                                                                                     |
-| `transform`                                                              | `(input: DataT) => DataT \| Promise<DataT>` | -          | 在解析后用于转换结果的函数。                                                                                                                                                                                                                                                     |
-| `getCachedData` :badge[v3.8]{color="info" size="xs" class="align-middle"}| `(key, nuxtApp, ctx) => DataT \| undefined` | -          | 用于返回缓存数据的函数。默认值见下文。                                                                                                                                                                                                                                           |
-| `pick`                                                                   | `string[]`                                  | -          | 仅从结果中选择指定的键。                                                                                                                                                                                                                                                         |
-| `watch`                                                                  | `MultiWatchSources`                         | -          | 要监听并自动刷新的响应式源数组。                                                                                                                                                                                                                                               |
-| `deep` :badge[v3.8]{color="info" size="xs" class="align-middle"}         | `boolean`                                   | `false`    | 以深层 ref 对象返回数据。为提升性能，默认值为 `false`（浅层 ref 对象）。                                                                                                                                                                                                       |
-| `dedupe` :badge[v3.9]{color="info" size="xs" class="align-middle"}       | `'cancel' \| 'defer'`                       | `'cancel'` | 同一时间触发多次执行时的策略。                                                                                                                                                                                                                                                    |
-| `enabled` :badge[v4.5]{color="info" size="xs" class="align-middle"}      | `boolean`                                   | `true`     | 用于控制 `handler` 是否允许运行的门槛。为 `false` 时，所有执行都会被阻止（初始获取、`execute`/`refresh` 和 watch 触发），并且将 `true` → `false` 会取消任何进行中的请求，但不会清空 `data`。重新启用不会自动重新获取。 |
+| 选项                                                                      | 类型                                        | 默认值     | 描述                                                                                                                                                                                                                                                                          |
+|---------------------------------------------------------------------------|---------------------------------------------|------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `server`                                                                  | `boolean`                                   | `true`     | 是否在服务器上调用该函数。                                                                                                                                                                                                                                          |
+| `lazy`                                                                    | `boolean`                                   | `false`    | 如果为 true，则在路由加载后解析（不会阻塞导航）。                                                                                                                                                                                                                     |
+| `immediate`                                                               | `boolean`                                   | `true`     | 如果为 false，则阻止立即调用函数。                                                                                                                                                                                                                           |
+| `default`                                                                 | `() => DataT`                               | -          | 在异步解析之前，为 `data` 提供默认值的工厂函数。                                                                                                                                                                                                                           |
+| `timeout` :badge[v4.2]{color="info" size="xs" class="align-middle"}       | `number`                                    | -          | 等待调用超时的毫秒数（默认为 `undefined`，表示无超时）。                                                                                                                                                                        |
+| `transform`                                                               | `(input: DataT) => DataT \| Promise<DataT>` | -          | 在解析后转换结果的函数。                                                                                                                                                                                                                                    |
+| `getCachedData` :badge[v3.8]{color="info" size="xs" class="align-middle"} | `(key, nuxtApp, ctx) => DataT \| undefined` | -          | 返回缓存数据的函数。默认值见下文。                                                                                                                                                                                                                               |
+| `pick`                                                                    | `string[]`                                  | -          | 仅从结果中选取指定的键。                                                                                                                                                                                                                                            |
+| `watch`                                                                   | `MultiWatchSources`                         | -          | 要监听并自动刷新的响应式数据源数组。                                                                                                                                                                                                                                 |
+| `deep` :badge[v3.8]{color="info" size="xs" class="align-middle"}          | `boolean`                                   | `false`    | 在深层 ref 对象中返回数据。默认为 `false`，以提升性能（浅层 ref 对象）。                                                                                                                                                                                 |
+| `dedupe` :badge[v3.9]{color="info" size="xs" class="align-middle"}        | `'cancel' \| 'defer'`                       | `'cancel'` | 同时多次触发执行时所采用的策略。                                                                                                                                                                                                                        |
+| `enabled` :badge[v4.5]{color="info" size="xs" class="align-middle"}       | `boolean`                                   | `true`     | 控制 `handler` 是否可以运行的开关。当为 `false` 时，所有执行都会被阻止（初始获取、`execute`／`refresh` 以及监听触发），并且从 `true` 切换为 `false` 时会取消任何正在进行的请求，但不会清除 `data`。重新启用不会自行重新获取数据。 |
+| `serialize` :badge[v4.6]{color="info" size="xs" class="align-middle"}     | `boolean`                                   | `true`     | 是否将解析后的数据存储到 Nuxt payload（`__NUXT_DATA__`）中。当为 `false` 时，服务器获取的数据不会存入 payload；如果组件渲染了该数据，客户端会在水合后重新获取。结合[惰性水合](/docs/4.x/guide/best-practices/performance#lazy-hydration)使用，可以避免水合不匹配和不必要的客户端数据获取。 |
 
 ::note
 所有选项都可以提供 `computed` 或 `ref` 值。它们会被监听，并在值更新时自动使用新值发起新的请求。
@@ -261,6 +263,7 @@ const getDefaultCachedData = (key, nuxtApp, ctx) => nuxtApp.isHydrating
 - `dedupe`
 - `watch`
 - `enabled`
+- `serialize`
 
 ```ts [app/pages/index.vue]
 // ❌ 这会触发开发警告
@@ -307,4 +310,4 @@ const { data: users2 } = useAsyncData('users', (_nuxtApp, { signal }) => $fetch(
 - `idle`：函数尚未被调用（例如服务端渲染时使用 `{ immediate: false }` 或 `{ server: false }`）
 - `pending`：函数已被调用，且 Promise 正在等待中
 - `success`：函数返回了一个值
-- `error`：函数抛出了一个错误
+- `error`：函数抛出了一个错误。

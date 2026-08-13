@@ -35,6 +35,24 @@ if (!data.value) {
 </script>
 ```
 
+### 错误原因
+
+创建错误时，你可以传递一个 `cause`，以保留你所包装的原始错误：
+
+```ts
+try {
+  await fetchMovie(route.params.slug)
+} catch (cause) {
+  throw createError({
+    status: 500,
+    message: 'Could not load movie',
+    cause,
+  })
+}
+```
+
+在开发环境中，原因链会通过错误的 `cause` 属性暴露给你的[错误页面](/docs/4.x/getting-started/error-handling#error-page)，并序列化为 `{ name, message, stack, cause }`（原始类型的原因会按原样传递；其他值会被省略）。在生产环境中，原因永远不会包含在错误响应或错误页面负载中。
+
 ## 在 API 路由中
 
 在服务器 API 路由中使用 `createError` 来触发错误处理。
