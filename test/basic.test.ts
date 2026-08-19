@@ -1,4 +1,4 @@
-import { readdir } from 'node:fs/promises'
+import { readFile, readdir } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it, vi } from 'vitest'
 import { joinURL } from 'ufo'
@@ -1340,6 +1340,23 @@ describe('errors', () => {
     expect(res).toContain('Hello Nuxt 3!')
   })
 
+  it.skipIf(isDev)('should server-render the static error page', async () => {
+    // @ts-expect-error ssssh! untyped secret property
+    const publicDir = useTestContext().nuxt._nitro.options.output.publicDir
+    const html = await readFile(join(publicDir, '404.html'), 'utf-8')
+
+    expect(html).toContain('This is the error page 😱')
+    expect(html).toContain('<title>Error: 404 - Fixture</title>')
+
+    const { script, attrs } = parseData(html)
+    expect(attrs['data-ssr']).toBe('true')
+    expect(script.error).toMatchObject({ status: 404, statusText: 'Page Not Found' })
+    // the same file is served for every missing path, so it must not claim to
+    // be a prerender of `/404.html`
+    expect(script.path).toBeUndefined()
+    expect(script.error.url).toBeUndefined()
+  })
+
   it('should allow catching errors within error boundaries', async () => {
     const { page } = await renderPage('/error/error-boundary')
     await page.getByText('This is the error rendering').first().waitFor()
@@ -1468,6 +1485,18 @@ describe('middlewares', () => {
     const html = await fetch('/navigate-to-redirect', { redirect: 'manual' })
     expect(html.headers.get('location')).toEqual('/')
     expect(html.status).toEqual(307)
+  })
+
+  it('should preserve percent-encoding in redirect query with navigateTo on server side', async () => {
+    const res = await fetch('/navigate-to-encoded-query', { redirect: 'manual' })
+    expect(res.headers.get('location')).toEqual('/?callback=%2Fother')
+    expect(res.status).toEqual(302)
+  })
+
+  it('should preserve percent-encoded spaces in redirect query with navigateTo on server side', async () => {
+    const res = await fetch('/navigate-to-encoded-space', { redirect: 'manual' })
+    expect(res.headers.get('location')).toEqual('/?q=a%20b')
+    expect(res.status).toEqual(302)
   })
 })
 
