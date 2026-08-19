@@ -13,7 +13,8 @@ import { hash } from 'ohash'
 import nuxtPkg from 'nuxt/package.json' with { type: 'json' }
 import { build, copyPublicAssets, createDevServer, createNitro, prepare, prerender, scanHandlers, writeTypes } from 'nitropack'
 import type { Nitro, NitroConfig, NitroRouteRules } from 'nitropack/types'
-import { addPlugin, addTemplate, addVitePlugin, bundlerDiagnostics, createIsIgnored, ensureDependencyInstalled, findPath, getAddDependencyCommand, getDirectory, getLayerDirectories, logger, resolveAlias, resolveIgnorePatterns, resolveNuxtModule } from '@nuxt/kit'
+import { addPlugin, addTemplate, addVitePlugin, createIsIgnored, ensureDependencyInstalled, findPath, getAddDependencyCommand, getDirectory, getLayerDirectories, logger, resolveAlias, resolveIgnorePatterns, resolveNuxtModule } from '@nuxt/kit'
+import { bundlerDiagnostics } from '@nuxt/kit/internal'
 import escapeRE from 'escape-string-regexp'
 import { defu } from 'defu'
 import { defineEventHandler, dynamicEventHandler, handleCors, setHeader, setResponseStatus } from 'h3'
@@ -30,6 +31,7 @@ import { template as defaultSpaLoadingTemplate } from './templates/spa-loading-i
 // TODO: figure out a good way to share this
 import { createImportProtectionPatterns } from '../../nuxt/src/core/plugins/import-protection.ts'
 import { normalizeRouteRulePath, resolveRouteRules } from '../../nuxt/src/core/utils/route-rules.ts'
+import { unifyDynamicRouteRuleSegments } from './route-rules.ts'
 import { decodeRoutePath } from '../../nuxt/src/core/utils/index.ts'
 import { nitroSchemaTemplate } from './templates.ts'
 // Re-export a type from the augment module rather than a bare `import './augments.ts'`
@@ -55,6 +57,9 @@ const NUXT_BUILD_OUTPUT_MAP: Record<string, keyof NuxtBuildOutputs> = {
 
 export async function bundle (nuxt: Nuxt & { _nitro?: Nitro }): Promise<void> {
   // Resolve config
+  // status codes whose error page is server-rendered at build time
+  const errorPageOption = nuxt.options.experimental.prerenderErrorPages
+  const errorPages = errorPageOption === true ? [404] : errorPageOption || []
   const layerDirs = getLayerDirectories(nuxt)
   const excludePattern = [getLayerNodeModulesExcludePattern(layerDirs.map(dirs => dirs.root))]
 
@@ -252,8 +257,13 @@ export async function bundle (nuxt: Nuxt & { _nitro?: Nitro }): Promise<void> {
         // module; pages served without scripts scope their blanket speculation
         // rules to these (safe-to-GET) same-origin navigations
         const pagePatterns = (nitro.options as { _noScriptsPagePatterns?: string[] })._noScriptsPagePatterns ?? []
+        // SPA fallbacks written out as an empty shell, minus any error page that
+        // is server-rendered at build time
+        const noSSRRoutes = ['/index.html', '/200.html', '/404.html'].filter(route => !errorPages.includes(Number(route.slice(1, -'.html'.length))))
         return [
           `export const NUXT_NO_SSR = ${nuxt.options.ssr === false}`,
+          `export const NUXT_PRERENDER_ERROR_PAGES = ${JSON.stringify(errorPages)}`,
+          `export const NUXT_PRERENDER_NO_SSR_ROUTES = ${JSON.stringify(noSSRRoutes)}`,
           `export const NUXT_EARLY_HINTS = ${nuxt.options.experimental.writeEarlyHints !== false}`,
           `export const NUXT_NO_SCRIPTS = ${nuxt.options.features.noScripts === 'all' || (!!nuxt.options.features.noScripts && !nuxt.options.dev)}`,
           `export const NUXT_NO_SCRIPTS_PROD = ${nuxt.options.features.noScripts === 'production'}`,
@@ -531,6 +541,13 @@ export async function bundle (nuxt: Nuxt & { _nitro?: Nitro }): Promise<void> {
     },
   })
 
+  // runs before payload rules are derived so generated `/_payload.json` keys inherit unified names
+  nuxt.hook('nitro:init', (nitro) => {
+    nitro.hooks.hook('build:before', (nitro) => {
+      unifyDynamicRouteRuleSegments(nitro.options.routeRules)
+    })
+  })
+
   if (nuxt.options.experimental.payloadExtraction) {
     if (nuxt.options.dev) {
       nuxt.hook('nitro:config', (nitroConfig) => {
@@ -787,12 +804,17 @@ export async function bundle (nuxt: Nuxt & { _nitro?: Nitro }): Promise<void> {
   // TODO: extract to shared utility?
   const excludedAlias = [/^@vue\/.*$/, 'vue', /vue-router/, 'vite/client', '#imports', 'vue-demi', /^#app/, '~', '@', '~~', '@@', 'h3', 'h3/package.json']
   // TODO: remove support for baseUrl in nuxt v5
+  const isV5OrHigher = nuxt.options.future.compatibilityVersion >= 5
   // eslint-disable-next-line @typescript-eslint/no-deprecated
-  const basePath = nitroConfig.typescript!.tsConfig!.compilerOptions?.baseUrl ? resolve(nuxt.options.buildDir, nitroConfig.typescript!.tsConfig!.compilerOptions?.baseUrl) : nuxt.options.buildDir
+  const baseUrl = isV5OrHigher ? undefined : nitroConfig.typescript!.tsConfig!.compilerOptions?.baseUrl
+  const basePath = baseUrl ? resolve(nuxt.options.buildDir, baseUrl) : nuxt.options.buildDir
   const aliases = nitroConfig.alias!
   const importPaths = nuxt.options.modulesDir.map(d => pathToFileURL(withTrailingSlash(d)))
   const tsConfig = nitroConfig.typescript!.tsConfig!
   tsConfig.compilerOptions ||= {}
+  if (isV5OrHigher) {
+    Reflect.deleteProperty(tsConfig.compilerOptions, 'baseUrl')
+  }
   tsConfig.compilerOptions.paths ||= {}
   for (const _alias in aliases) {
     const alias = _alias as keyof typeof aliases
@@ -1079,6 +1101,9 @@ export async function bundle (nuxt: Nuxt & { _nitro?: Nitro }): Promise<void> {
     nitro.hooks.hook('prerender:routes', (routes) => {
       for (const route of ['/200.html', '/404.html']) {
         routes.add(route)
+      }
+      for (const status of errorPages) {
+        routes.add(`/${status}.html`)
       }
       if (!nuxt.options.ssr) {
         routes.add('/index.html')

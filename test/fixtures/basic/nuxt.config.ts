@@ -155,6 +155,7 @@ export default withMatrix({
     decorators: true,
     typedPages: true,
     clientFallback: true,
+    prerenderErrorPages: true,
     restoreState: true,
     clientNodeCompat: true,
     componentIslands: {
@@ -197,6 +198,8 @@ export default withMatrix({
       '/route-rules/swr-in-spa': { ssr: true, swr: 60 },
       '/payload-query': { cache: { swr: true, maxAge: 60 } },
       '/swr': { swr: 60 },
+      '/swr-dynamic/:slug/about': { swr: 60 },
+      '/swr-dynamic/:locale/:slug/about': { swr: 60 },
     },
     prerender: {
       routes: [
@@ -204,6 +207,7 @@ export default withMatrix({
         '/random/b',
         '/random/c',
         '/prefetch/server-components',
+        '/404.html',
       ],
     },
   },
