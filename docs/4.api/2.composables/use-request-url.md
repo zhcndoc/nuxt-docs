@@ -17,6 +17,10 @@ links:
 你可以定义 [`cache.varies` 选项](https://nitro.zhcndoc.com/guide/cache#options) 来指定在缓存和提供响应时需要考虑的头，例如用于多租户环境的 `host` 和 `x-forwarded-host`。
 ::
 
+::note
+如果你设置了 [`app.baseURL`](/docs/4.x/api/nuxt-config#baseurl)，服务器端返回的路径会相对于它，因此 `/base/about` 会以 `/about` 的形式提供。在客户端，`useRequestURL` 会读取 `window.location`，其中包含 base URL。
+::
+
 ::code-group
 
 ```vue [app/pages/about.vue]

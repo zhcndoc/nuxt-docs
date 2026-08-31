@@ -172,6 +172,10 @@ export default withMatrix({
         dir: './custom-public',
         baseURL: '/custom',
       },
+      {
+        dir: '~~/custom-public',
+        baseURL: '/aliased',
+      },
     ],
     routeRules: {
       '/route-rules/spa': { ssr: false },
@@ -199,6 +203,7 @@ export default withMatrix({
         '/random/b',
         '/random/c',
         '/prefetch/server-components',
+        '/prerender/catchall/a/b',
         '/404.html',
       ],
     },
