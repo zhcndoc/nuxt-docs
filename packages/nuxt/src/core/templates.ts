@@ -8,6 +8,7 @@ import { hash } from 'ohash'
 import { camelCase } from 'scule'
 import { filename, reverseResolveAlias } from 'pathe/utils'
 import { useNitro } from '@nuxt/kit'
+import type { Nitro } from 'nitropack/types'
 import { resolveModulePath } from 'exsolve'
 
 import { annotatePlugins, checkForCircularDependencies, filterPluginDependencies, hasIslandOptOutPlugins, hasParallelPlugins, hasPluginDependencies, hasPluginHooks, sortPluginsByDependsOn } from './app.ts'
@@ -457,14 +458,16 @@ export const clientConfigTemplate: NuxtTemplate = {
 
 const APP_CONFIG_MERGE_TYPES = `type IsAny<T> = 0 extends 1 & T ? true : false
 
+type IsMergeable<T> = T extends readonly any[] | ((...args: any[]) => any) ? false : T extends Record<string, any> ? true : false
+
 type MergedAppConfig<Resolved extends Record<string, unknown>, Custom extends Record<string, unknown>> = {
   [K in keyof (Resolved & Custom)]: K extends keyof Custom
     ? unknown extends Custom[K]
       ? Resolved[K]
       : IsAny<Custom[K]> extends true
         ? Resolved[K]
-        : Custom[K] extends Record<string, any>
-            ? Resolved[K] extends Record<string, any>
+        : IsMergeable<Custom[K]> extends true
+            ? IsMergeable<Resolved[K]> extends true
               ? MergedAppConfig<Resolved[K], Custom[K]>
               : Exclude<Custom[K], undefined>
             : Exclude<Custom[K], undefined>
@@ -658,7 +661,7 @@ export const nuxtConfigTemplate: NuxtTemplate = {
     }
     const componentIslandsActive = hasActiveComponentIslands(ctx)
     const componentIslands = shouldEnableComponentIslands(ctx.nuxt, ctx.app)
-    const nitro = useNitro()
+    const nitro = useNitro() as Nitro
 
     const hasCachedRoutes = Object.values(nitro.options.routeRules).some(r => r.isr || r.cache)
     const payloadExtraction = !!ctx.nuxt.options.experimental.payloadExtraction && (nitro.options.static || hasCachedRoutes || (nitro.options.prerender.routes && nitro.options.prerender.routes.length > 0) || Object.values(nitro.options.routeRules).some(r => r.prerender))

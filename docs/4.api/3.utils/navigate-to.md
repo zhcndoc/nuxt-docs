@@ -41,7 +41,11 @@ await navigateTo({
 </script>
 ```
 
-### 在路由中间件内
+::note
+调用 `navigateTo` 不会停止执行其余的 `<script setup>` 代码。如果你希望成功导航后提前从 `setup()` 返回，请启用 [`experimental.navigateToEarlyReturn`](/docs/4.x/guide/going-further/experimental-features#navigatetoearlyreturn)。
+::
+
+### 在路由中间件中
 
 ```ts
 export default defineNuxtRouteMiddleware((to, from) => {

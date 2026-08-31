@@ -163,12 +163,17 @@ export default withMatrix({
     },
     inlineRouteRules: true,
     prefetchPreloadTags: true,
+    navigateToEarlyReturn: true,
   },
   nitro: {
     publicAssets: [
       {
-        dir: '../custom-public',
+        dir: './custom-public',
         baseURL: '/custom',
+      },
+      {
+        dir: '~~/custom-public',
+        baseURL: '/aliased',
       },
     ],
     esbuild: {
@@ -207,6 +212,7 @@ export default withMatrix({
         '/random/b',
         '/random/c',
         '/prefetch/server-components',
+        '/prerender/catchall/a/b',
         '/404.html',
       ],
     },
