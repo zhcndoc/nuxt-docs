@@ -1,5 +1,6 @@
 import { createUnplugin } from 'unplugin'
 import type { Unimport } from 'unimport'
+import type { EnvironmentModuleGraph, EnvironmentModuleNode } from 'vite'
 import { normalize } from 'pathe'
 import { tryUseNuxt } from '@nuxt/kit'
 
@@ -14,9 +15,22 @@ interface TransformPluginOptions {
   ctx: Pick<Unimport, 'injectImports'>
   options: Partial<ImportsOptions>
   sourcemap?: boolean
+  /**
+   * Rescan a changed file for the imports it provides, returning a promise only when the file is
+   * one we scan for imports.
+   */
+  refreshImports?: (file: string) => void | Promise<void>
 }
 
-export const TransformPlugin = ({ ctx, options, sourcemap }: TransformPluginOptions) => createUnplugin(() => {
+function invalidateImporters (moduleGraph: EnvironmentModuleGraph, modules: Iterable<EnvironmentModuleNode> | undefined) {
+  for (const mod of modules || []) {
+    for (const importer of mod.importers) {
+      moduleGraph.invalidateModule(importer)
+    }
+  }
+}
+
+export const TransformPlugin = ({ ctx, options, sourcemap, refreshImports }: TransformPluginOptions) => createUnplugin(() => {
   return {
     name: 'nuxt:imports-transform',
     enforce: 'post',
@@ -59,6 +73,35 @@ export const TransformPlugin = ({ ctx, options, sourcemap }: TransformPluginOpti
             : undefined,
         }
       }
+    },
+    vite: {
+      hotUpdate: {
+        order: 'pre',
+        async handler ({ file, modules }) {
+          // The exports a file provides can change with its contents, so it has to be rescanned
+          // before its consumers are transformed again - otherwise they keep the imports it used
+          // to provide, and the module they resolve to no longer has them.
+          const pending = refreshImports?.(normalize(file))
+          if (!pending) { return }
+          await pending
+
+          // The injected imports live in the consumers' transform output, which is only
+          // regenerated if their modules are invalidated as well.
+          invalidateImporters(this.environment.moduleGraph, modules)
+        },
+      },
+      configureServer (server) {
+        // `hotUpdate` does not run on a server without HMR, so its graphs are invalidated from the watcher
+        if (server.config.server.hmr !== false) { return }
+        server.watcher.on('change', async (file) => {
+          const pending = refreshImports?.(normalize(file))
+          if (!pending) { return }
+          await pending
+          for (const environment of Object.values(server.environments)) {
+            invalidateImporters(environment.moduleGraph, environment.moduleGraph.getModulesByFile(normalize(file)))
+          }
+        })
+      },
     },
   }
 })

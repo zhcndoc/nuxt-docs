@@ -1,5 +1,4 @@
 /// <reference path="../../pages/build.d.ts" />
-/// <reference path="../../../../nitro-server/src/augments.ts" />
 
 declare global {
   interface ImportMeta {
@@ -7,6 +6,7 @@ declare global {
       accept (cb?: (mod: any) => void): void
       accept (dep: string, cb: (mod: any) => void): void
       on (event: string, cb: (payload: any) => void): void
+      send (event: string, data?: any): void
       data: any
     }
     readonly webpackHot?: {

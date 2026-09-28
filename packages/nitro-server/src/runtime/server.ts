@@ -1,0 +1,265 @@
+/**
+ * The `nuxt/server` implementations for a nitropack v2 build, registered as
+ * `serverBuild.runtime.server`.
+ *
+ * Every name `nuxt/server` exports is exported here. Most are h3 v1's own helpers, which
+ * take the event rather than reading a web-standard request and response off it, plus the
+ * few Nuxt adds.
+ *
+ * The types come from `nuxt/server` whichever module backs it, so a name missing here is
+ * a runtime error rather than a type error; `test/server.test.ts` guards that.
+ */
+import {
+  createError as createH3Error,
+  deleteCookie,
+  getCookie,
+  getQuery as getH3Query,
+  getRequestHeader as getH3RequestHeader,
+  getRequestHeaders as getH3RequestHeaders,
+  getRequestURL,
+  readBody,
+  setCookie,
+  setResponseHeader,
+  setResponseStatus,
+} from 'h3'
+import type { H3Event } from 'h3'
+import { getRouteRules as getNitroRouteRules, useRuntimeConfig as useNitroRuntimeConfig } from 'nitropack/runtime'
+import type { AppRouteRules, RuntimeConfig } from 'nuxt/schema'
+import type { EventHandler, NuxtErrorLike } from 'nuxt/server'
+
+import {
+  clearSession as clearPortableSession,
+  getRouterParams as getPortableRouterParams,
+  getSession as getPortableSession,
+  getValidatedQuery as getPortableValidatedQuery,
+  handleCors as handlePortableCors,
+  readValidatedBody as readPortableValidatedBody,
+  updateSession as updatePortableSession,
+  useSession as usePortableSession,
+} from 'nuxt/internal/server-default'
+
+import { NUXT_ERROR_SIGNATURE } from '#app/error'
+import { PORTABLE_EVENT, toPortableEvent } from './utils/event'
+import { serverDiagnostics } from './diagnostics'
+
+export {
+  deleteCookie,
+  getCookie,
+  getRequestURL,
+  readBody,
+  setCookie,
+  setResponseStatus,
+}
+
+export {
+  deriveSecret,
+  useAppConfig,
+} from 'nuxt/internal/server-default'
+
+export const clearSession = /* #__PURE__ */ requirePortableEvent('clearSession', clearPortableSession)
+export const getSession = /* #__PURE__ */ requirePortableEvent('getSession', getPortableSession)
+export const getValidatedQuery = /* #__PURE__ */ requirePortableEvent('getValidatedQuery', getPortableValidatedQuery)
+export const handleCors = /* #__PURE__ */ requirePortableEvent('handleCors', handlePortableCors)
+export const readValidatedBody = /* #__PURE__ */ requirePortableEvent('readValidatedBody', readPortableValidatedBody)
+export const updateSession = /* #__PURE__ */ requirePortableEvent('updateSession', updatePortableSession)
+export const useSession = /* #__PURE__ */ requirePortableEvent('useSession', usePortableSession)
+
+function requirePortableEvent<F extends (event: any, ...args: any[]) => any> (helper: string, fn: F): F {
+  return function (this: unknown, event: Record<string, unknown>, ...args: unknown[]) {
+    if (event?.[PORTABLE_EVENT] !== true && event && 'node' in event) {
+      const diagnostic = serverDiagnostics.NUXT_E8012({ helper })
+      throw createError({ status: 500, statusText: 'Server Error', message: `[${diagnostic.code}] ${diagnostic.message} ${diagnostic.fix}` })
+    }
+    return fn.call(this, event, ...args)
+  } as F
+}
+
+export type { AppRouteRules, ServerRoutes } from 'nuxt/schema'
+export type { CorsOptions, EventHandler, NuxtError, NuxtErrorJSON, NuxtErrorLike, RequestEvent, RequestEventContext, NuxtRequestEvent, Session, SessionConfig, SessionData, SessionEvent, SessionManager, SessionPassword, SessionUpdate, ValidateResult } from 'nuxt/server'
+
+/**
+ * @see {@link import('nuxt/server').defineEventHandler}
+ *
+ * The handler is given the event in the portable shape, so that it can read
+ * `event.req`/`event.url`/`event.res` as the surface promises.
+ */
+export function defineEventHandler<Result> (handler: EventHandler<Result>): (event: H3Event) => Result {
+  return event => handler(toPortableEvent(event))
+}
+
+/**
+ * @see {@link import('nuxt/server').createError}
+ *
+ * h3 v1 recognises an error of its own by the marker its constructor carries, so the error
+ * has to be one it made; `status`/`statusText` are the names it knows as
+ * `statusCode`/`statusMessage`.
+ */
+export function createError (input: string | (Error & { status?: number, statusText?: string, data?: unknown }) | { status?: number, statusText?: string, message?: string, data?: unknown, fatal?: boolean, unhandled?: boolean }): NuxtErrorLike {
+  if (typeof input === 'string') {
+    return withSignature(createH3Error(input))
+  }
+  const { status, statusText, ...rest } = input as { status?: number, statusText?: string }
+  return withSignature(createH3Error({
+    ...rest,
+    ...status === undefined ? {} : { statusCode: status },
+    ...statusText === undefined ? {} : { statusMessage: statusText, message: (input as { message?: string }).message ?? statusText },
+  }))
+}
+
+/** Mark an h3 error as Nuxt's, so `isNuxtError()` recognises it either side of the wire. */
+function withSignature (error: Error): NuxtErrorLike {
+  if (!(NUXT_ERROR_SIGNATURE in error)) {
+    Object.defineProperty(error, NUXT_ERROR_SIGNATURE, { value: true, configurable: false, writable: false })
+  }
+  return withPortableStatus(error)
+}
+
+/**
+ * Read the status of an h3 v1 error under the names the portable surface promises.
+ *
+ * h3 v1 carries it as `statusCode`/`statusMessage`, and `NuxtErrorLike` declares
+ * `status`/`statusText`, so without this a handler that branches on `error.status` reads
+ * `undefined` here and a number on a server runtime built against h3 v2.
+ */
+function withPortableStatus (error: Error): NuxtErrorLike {
+  const target = error as Error & { status?: number, statusText?: string, statusCode?: number, statusMessage?: string }
+  if (target.status === undefined && target.statusCode !== undefined) {
+    Object.defineProperty(target, 'status', { get: () => target.statusCode, configurable: true })
+  }
+  if (target.statusText === undefined && target.statusMessage !== undefined) {
+    Object.defineProperty(target, 'statusText', { get: () => target.statusMessage, configurable: true })
+  }
+  return target as NuxtErrorLike
+}
+
+/**
+ * @see {@link import('nuxt/server').isNuxtError}
+ *
+ * h3 v1 carries the status as `statusCode`, and identifies its own errors by a marker on
+ * the constructor rather than by name.
+ */
+export function isNuxtError<DataT = unknown> (error: unknown): error is NuxtErrorLike<DataT> {
+  if (!(error instanceof Error)) {
+    return false
+  }
+  const candidate = error as { status?: unknown, statusCode?: unknown, constructor?: { __h3_error__?: unknown } }
+  if (typeof candidate.status !== 'number' && typeof candidate.statusCode !== 'number') {
+    return false
+  }
+  if (!(NUXT_ERROR_SIGNATURE in error) && candidate.constructor?.__h3_error__ !== true) {
+    return false
+  }
+  // an error nitro threw for itself carries the h3 v1 names only
+  withPortableStatus(error)
+  return true
+}
+
+/** @see {@link import('nuxt/server').getRequestHeader} */
+export function getRequestHeader (event: H3Event, name: string): string | undefined {
+  return getH3RequestHeader(event, name) || undefined
+}
+
+/** @see {@link import('nuxt/server').getRequestHeaders} */
+export function getRequestHeaders (event: H3Event): Record<string, string> {
+  const headers: Record<string, string> = {}
+  for (const [name, value] of Object.entries(getH3RequestHeaders(event))) {
+    if (value !== undefined) {
+      headers[name] = value
+    }
+  }
+  return headers
+}
+
+/**
+ * @see {@link import('nuxt/server').getRequestIP}
+ *
+ * The connection address comes from the node socket.
+ */
+export function getRequestIP (event: H3Event, options: { xForwardedFor?: boolean } = {}): string | undefined {
+  if (options.xForwardedFor) {
+    const forwarded = getH3RequestHeader(event, 'x-forwarded-for')?.split(',')[0]!.trim()
+    if (forwarded) {
+      return forwarded
+    }
+  }
+  return event.context.clientAddress || event.node.req.socket?.remoteAddress || undefined
+}
+
+/**
+ * @see {@link import('nuxt/server').getRouterParams}
+ *
+ * nitropack v2 routes the decoded path, so h3 v1 matches decoded params. They are read back
+ * from the same segments of the request URL, so they are percent-encoded as they appear in it.
+ */
+export function getRouterParams (event: H3Event, options?: { decode?: boolean }): Record<string, string | undefined> {
+  return getPortableRouterParams({ context: { params: getEncodedParams(event) } }, options)
+}
+
+/** @see {@link import('nuxt/server').getRouterParam} */
+export function getRouterParam (event: H3Event, name: string, options?: { decode?: boolean }): string | undefined {
+  return getRouterParams(event, options)[name]
+}
+
+function getEncodedParams (event: H3Event): Record<string, string | undefined> {
+  const params = event.context.params || {}
+  const route = (event.context.matchedRoute as { path?: string } | undefined)?.path
+  if (!route) {
+    return params
+  }
+  const pattern = route.split('/')
+  const decoded = event.path.split('?')[0]!.split('/')
+  const raw = (event.node.req.originalUrl || event.node.req.url || '').split('?')[0]!.split('/')
+  const offset = raw.length - decoded.length
+  if (offset < 0 || (pattern.length !== decoded.length && !pattern.some(segment => segment.startsWith('**')))) {
+    return params
+  }
+  const encoded: Record<string, string | undefined> = { ...params }
+  let unnamed = 0
+  for (let index = 0; index < pattern.length; index++) {
+    const segment = pattern[index]!
+    if (segment.startsWith('**')) {
+      encoded[segment.slice(3) || '_'] = raw.slice(offset + index).join('/')
+      break
+    }
+    if (segment === '*') {
+      encoded[`_${unnamed++}`] = raw[offset + index]
+    } else if (segment.startsWith(':')) {
+      encoded[segment.slice(1)] = raw[offset + index]
+    }
+  }
+  return encoded
+}
+
+/** @see {@link import('nuxt/server').getQuery} */
+export function getQuery<T extends Record<string, unknown> = Record<string, string | string[]>> (event: H3Event): T {
+  return getH3Query(event) as T
+}
+
+/**
+ * @see {@link import('nuxt/server').sendRedirect}
+ *
+ * h3 v1's own `sendRedirect` writes the response and resolves to nothing, where the
+ * portable surface sets the response and returns the body to respond with. The body is
+ * built here rather than taken from h3, so a handler that returns it behaves the same on
+ * every server runtime.
+ */
+export function sendRedirect (event: H3Event, location: string, status = 302): string {
+  setResponseStatus(event, status)
+  setResponseHeader(event, 'location', location)
+  setResponseHeader(event, 'content-type', 'text/html')
+  const encoded = location.replace(REDIRECT_UNSAFE_RE, char => REDIRECT_ESCAPES[char]!)
+  return `<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=${encoded}"></head></html>`
+}
+
+const REDIRECT_ESCAPES: Record<string, string> = { '"': '%22', '\'': '%27', '<': '%3C', '>': '%3E', '&': '%26' }
+const REDIRECT_UNSAFE_RE = /["'<>&]/g
+
+/** @see {@link import('nuxt/server').getRouteRules} */
+export function getRouteRules (event: H3Event): AppRouteRules {
+  return getNitroRouteRules(event) as AppRouteRules
+}
+
+/** @see {@link import('nuxt/server').useRuntimeConfig} */
+export function useRuntimeConfig (event?: H3Event): RuntimeConfig {
+  return useNitroRuntimeConfig(event) as RuntimeConfig
+}

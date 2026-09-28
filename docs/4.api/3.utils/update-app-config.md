@@ -9,7 +9,7 @@ links:
 ---
 
 ::note
-使用深度赋值更新 [`app.config`](/docs/4.x/directory-structure/app/app-config)。现有的（嵌套的）属性将被保留。
+使用深度赋值更新 [`app.config`](/docs/directory-structure/app/app-config)。现有属性（包括嵌套属性）将被保留。
 ::
 
 ## 用法
@@ -25,4 +25,4 @@ updateAppConfig(newAppConfig)
 console.log(appConfig) // { foo: 'baz' }
 ```
 
-:read-more{to="/docs/4.x/directory-structure/app/app-config"}
+:read-more{to="/docs/directory-structure/app/app-config"}

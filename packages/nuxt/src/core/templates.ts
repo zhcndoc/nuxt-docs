@@ -11,12 +11,12 @@ import { tryUseNitro } from '@nuxt/kit'
 import { bundlerDiagnostics, useServerBuild } from '@nuxt/kit/internal'
 import type { Nitro } from 'nitropack/types'
 import { resolveModulePath } from 'exsolve'
-import { compileRouterToString } from 'rou3/compiler'
 
 import { annotatePlugins, checkForCircularDependencies, filterPluginDependencies, hasIslandOptOutPlugins, hasParallelPlugins, hasPluginDependencies, hasPluginHooks, sortPluginsByDependsOn } from './app.ts'
 import { setPluginDependenciesForMode } from './plugins/plugin-metadata.ts'
-import { EXTENSION_RE, decodeRoutePath } from './utils/index.ts'
-import { VALID_MANIFEST_KEYS, createNormalizedRouteRulesRouter } from './utils/route-rules.ts'
+import { EXTENSION_RE } from './utils/index.ts'
+import { VALID_MANIFEST_KEYS, createNormalizedRouteRulesRouter, normalizePathCode, resolveRouteRulesRoutes } from './utils/route-rules.ts'
+import type { RouteRulesRouter } from './utils/route-rules.ts'
 import type { Nuxt, NuxtApp, NuxtOptions, NuxtTemplate } from 'nuxt/schema'
 
 const ufoPath = resolveModulePath('ufo', { try: true, from: import.meta.url }) ?? 'ufo'
@@ -510,6 +510,12 @@ declare module '@nuxt/schema' {
 // This declaration must not import user `app.config` files: their import graph
 // can rely on app auto-imports, which do not exist in the shared, node and
 // server programs (https://github.com/nuxt/nuxt/issues/34140).
+//
+// It augments `SharedAppConfig` rather than `AppConfig` so that it cannot conflict with
+// the app-context declaration of `AppConfig`. A program that loads both (a single-project
+// `tsconfig.json` covering app and node files, for example) would otherwise merge two
+// incompatible declarations of one interface, and `skipLibCheck` makes TypeScript silently
+// keep whichever was loaded first (https://github.com/nuxt/nuxt/issues/35996).
 export const sharedAppConfigDeclarationTemplate: NuxtTemplate = {
   filename: 'types/shared-app.config.d.ts',
   dependsOn: [],
@@ -521,10 +527,10 @@ declare const inlineConfig = ${JSON.stringify(nuxt.options.appConfig, null, 2)}
 ${APP_CONFIG_MERGE_TYPES}
 
 declare module 'nuxt/schema' {
-  interface AppConfig extends MergedAppConfig<typeof inlineConfig, CustomAppConfig> { }
+  interface SharedAppConfig extends MergedAppConfig<typeof inlineConfig, CustomAppConfig> { }
 }
 declare module '@nuxt/schema' {
-  interface AppConfig extends MergedAppConfig<typeof inlineConfig, CustomAppConfig> { }
+  interface SharedAppConfig extends MergedAppConfig<typeof inlineConfig, CustomAppConfig> { }
 }
 `
   },
@@ -535,9 +541,11 @@ export const appConfigTemplate: NuxtTemplate = {
   dependsOn: [],
   write: true,
   getContents ({ app, nuxt }) {
-    return `
+    return `${app.configs.length
+      ? `
 import { defuFn } from 'defu'
-
+`
+      : ''}
 const inlineConfig = ${JSON.stringify(nuxt.options.appConfig, null, 2)}
 
 /** client **/
@@ -555,7 +563,7 @@ if (import.meta.dev && !import.meta.nitro && import.meta.hot) {
 
 ${app.configs.map((id: string, index: number) => `import ${`cfg${index}`} from ${JSON.stringify(id)}`).join('\n')}
 
-export default /*@__PURE__*/ defuFn(${app.configs.map((_id: string, index: number) => `cfg${index}`).concat(['inlineConfig']).join(', ')})
+export default ${app.configs.length ? `/*@__PURE__*/ defuFn(${app.configs.map((_id: string, index: number) => `cfg${index}`).concat(['inlineConfig']).join(', ')})` : 'inlineConfig'}
 `
   },
 }
@@ -607,7 +615,24 @@ if (!("global" in globalThis)) {
 export const dollarFetchTemplate: NuxtTemplate = {
   filename: 'fetch.mjs',
   dependsOn: [],
-  getContents () {
+  getContents ({ nuxt }) {
+    // the runtime a server build executes in is the server builder's to provide; one that
+    // installs `$fetch` on `globalThis` itself declares no `fetch` module to import from
+    const fetchModule = useServerBuild(nuxt).runtime.fetch
+    if (fetchModule) {
+      return [
+        'import { createFetch } from \'ofetch\'',
+        'import { baseURL } from \'#internal/nuxt/paths\'',
+        `import { fetch } from ${JSON.stringify(fetchModule)}`,
+        'if (!globalThis.$fetch) {',
+        '  globalThis.$fetch = createFetch({',
+        '    fetch,',
+        '    baseURL: baseURL()',
+        '  })',
+        '}',
+        'export const $fetch = globalThis.$fetch',
+      ].join('\n')
+    }
     return [
       'import { $fetch as _$fetch } from \'ofetch\'',
       'import { baseURL } from \'#internal/nuxt/paths\'',
@@ -665,9 +690,11 @@ export const nuxtConfigTemplate: NuxtTemplate = {
     const componentIslandsActive = hasActiveComponentIslands(ctx)
     const componentIslands = shouldEnableComponentIslands(ctx.nuxt, ctx.app)
     const nitro = tryUseNitro() as Nitro | undefined
-    const routeRules = nitro ? Object.values(nitro.options.routeRules) : []
-    const hasCachedRoutes = routeRules.some(r => r.isr || r.cache)
-    const payloadExtraction = !!nitro && !!ctx.nuxt.options.experimental.payloadExtraction && (nitro.options.static || hasCachedRoutes || (nitro.options.prerender.routes && nitro.options.prerender.routes.length > 0) || routeRules.some(r => r.prerender))
+    const routeRules = nitro ? Object.values(nitro.options.routeRules) : Object.values(ctx.nuxt.options.routeRules || {})
+    const hasCachedRoutes = routeRules.some(r => r?.isr || r?.cache)
+    const isStatic = nitro ? nitro.options.static : !!ctx.nuxt.options.nitro.static
+    const prerenderRoutes = nitro ? nitro.options.prerender.routes : ctx.nuxt.options.prerender.routes
+    const payloadExtraction = !!ctx.nuxt.options.experimental.payloadExtraction && (isStatic || hasCachedRoutes || !!prerenderRoutes?.length || routeRules.some(r => r?.prerender))
     return [
       ...Object.entries(ctx.nuxt.options.app).map(([k, v]) => `export const ${camelCase('app-' + k)} = ${JSON.stringify(v)}`),
       `export const renderJsonPayloads = ${!!ctx.nuxt.options.experimental.renderJsonPayloads}`,
@@ -677,11 +704,11 @@ export const nuxtConfigTemplate: NuxtTemplate = {
       `export const prefetchPreloadTags = ${!!ctx.nuxt.options.experimental.prefetchPreloadTags}`,
       `export const cookieStore = ${!!ctx.nuxt.options.experimental.cookieStore}`,
       `export const appManifest = ${!!ctx.nuxt.options.experimental.appManifest}`,
+      `export const serverPathFallback = ${!!ctx.nuxt.options.experimental.serverPathFallback}`,
       `export const remoteComponentIslands = ${typeof ctx.nuxt.options.experimental.componentIslands === 'object' && ctx.nuxt.options.experimental.componentIslands.remoteIsland}`,
       `export const selectiveClient = ${typeof ctx.nuxt.options.experimental.componentIslands === 'object' && Boolean(ctx.nuxt.options.experimental.componentIslands.selectiveClient)}`,
       `export const devPagesDir = ${ctx.nuxt.options.dev ? JSON.stringify(ctx.nuxt.options.dir.pages) : 'null'}`,
       `export const devRootDir = ${ctx.nuxt.options.dev ? JSON.stringify(ctx.nuxt.options.rootDir) : 'null'}`,
-      `export const devLogs = ${JSON.stringify(ctx.nuxt.options.features.devLogs)}`,
       `export const nuxtLinkDefaults = ${JSON.stringify(ctx.nuxt.options.experimental.defaults.nuxtLink)}`,
       `export const asyncDataDefaults = ${JSON.stringify(ctx.nuxt.options.experimental.defaults.useAsyncData)}`,
       `export const useStateDefaults = ${JSON.stringify(ctx.nuxt.options.experimental.defaults.useState)}`,
@@ -699,6 +726,7 @@ export const nuxtConfigTemplate: NuxtTemplate = {
       `export const stripNeverHydratedData = ${!!ctx.nuxt.options.experimental.stripNeverHydratedData}`,
       `export const pendingWhenIdle = ${!!ctx.nuxt.options.experimental.pendingWhenIdle}`,
       `export const alwaysRunFetchOnKeyChange = ${!!ctx.nuxt.options.experimental.alwaysRunFetchOnKeyChange}`,
+      `export const routeTypedFetch = ${!!ctx.nuxt.options.experimental.routeTypedFetch}`,
       `export const asyncCallHook = ${!!ctx.nuxt.options.experimental.asyncCallHook}`,
       `export const clientNodePlaceholder = ${!!ctx.nuxt.options.experimental.clientNodePlaceholder}`,
       `export const tracingChannelNuxt = ${!!(ctx.nuxt.options.tracingChannel && typeof ctx.nuxt.options.tracingChannel === 'object' && ctx.nuxt.options.tracingChannel.nuxt)}`,
@@ -765,15 +793,13 @@ export const routeRulesTemplate: NuxtTemplate = {
   // from configuration
   dependsOn: (_change, { nuxt }) => !!nuxt.options.experimental.inlineRouteRules,
   getContents ({ nuxt }) {
-    const nitro = tryUseNitro() as Nitro | undefined
-    // route rules are registered by the server builder, so without a server (or without
-    // any rules) there is nothing to match
-    const routeRules = nitro?.options.routeRules
-    if (!routeRules || !Object.keys(routeRules).length) {
+    const routes = resolveRouteRulesRoutes(nuxt).routes
+      .filter(({ route, data }) => route !== '/__nuxt_error' && VALID_MANIFEST_KEYS.some(key => key in data))
+    if (!routes.length) {
       return `export default () => ({})`
     }
     const cache = cachedMatchers.get(nuxt) ?? cachedMatchers.set(nuxt, {}).get(nuxt)!
-    const cacheKey = hash(routeRules)
+    const cacheKey = hash(routes)
     if (cache[cacheKey]) {
       return cache[cacheKey]
     }
@@ -784,13 +810,14 @@ export const routeRulesTemplate: NuxtTemplate = {
     // matcher and pick at runtime.
     const caseSensitiveRouteRules = !!nuxt.options.router.options.sensitive
     const warned = warnedKeyCollisions.get(nuxt) ?? warnedKeyCollisions.set(nuxt, new Set()).get(nuxt)!
-    const getNormalizedRouter = (fold: boolean) => createNormalizedRouteRulesRouter(routeRules, fold, (existing, route, key) => {
+    // rule keys are matched against router paths, which carry no base URL
+    const getNormalizedRouter = (fold: boolean) => createNormalizedRouteRulesRouter(routes, '', fold, (existing, route, key) => {
       // Only the matcher that will actually be used at runtime should report collisions.
       if (fold === caseSensitiveRouteRules || warned.has(key)) { return }
       warned.add(key)
       bundlerDiagnostics.NUXT_B7022({ existing, route, canFold: fold })
     })
-    const compileOptions: NonNullable<Parameters<typeof compileRouterToString>[2]> = {
+    const compileOptions: NonNullable<Parameters<RouteRulesRouter['compileToString']>[0]> = {
       matchAll: true,
       serialize (routeRules) {
         return `{${Object.entries(routeRules)
@@ -821,8 +848,8 @@ export const routeRulesTemplate: NuxtTemplate = {
         }}`
       },
     }
-    const sensitiveMatcher = compileRouterToString(getNormalizedRouter(false), '', compileOptions)
-    const foldedMatcher = compileRouterToString(getNormalizedRouter(true), '', compileOptions)
+    const sensitiveMatcher = getNormalizedRouter(false).compileToString(compileOptions)
+    const foldedMatcher = getNormalizedRouter(true).compileToString(compileOptions)
     const needsRouterOptions = foldedMatcher !== sensitiveMatcher || caseSensitiveRouteRules
     return cache[cacheKey] = [
       `import { defu } from 'defu'`,
@@ -831,16 +858,7 @@ export const routeRulesTemplate: NuxtTemplate = {
       needsRouterOptions
         ? (foldedMatcher === sensitiveMatcher ? `const foldedMatcher = sensitiveMatcher` : `const foldedMatcher = ${foldedMatcher}`)
         : `const foldedMatcher = ${foldedMatcher}`,
-      // `decodeRoutePath` has no free variables, so it can be inlined by source to keep
-      // the runtime lookup and the build-time key normalisation from drifting apart.
-      `const decodeRoutePath = ${decodeRoutePath.toString()}`,
-      // Decoding must precede case folding, or a percent-encoded non-ASCII character
-      // would never fold.
-      `const normalizePath = (path, fold) => {`,
-      `  if (typeof path !== 'string') { return path }`,
-      `  const decoded = decodeRoutePath(path)`,
-      `  return fold ? decoded.toLowerCase() : decoded`,
-      `}`,
+      normalizePathCode,
       needsRouterOptions
         ? [
             `export default (path) => routerOptions.sensitive`,

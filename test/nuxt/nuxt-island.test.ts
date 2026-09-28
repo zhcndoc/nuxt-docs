@@ -47,6 +47,7 @@ vi.mock('#build/nuxt.config.mjs', () => {
     payloadExtraction: false,
     cookieStore: false,
     appManifest: false,
+    serverPathFallback: false,
     remoteComponentIslands: true,
     selectiveClient: true,
     devPagesDir: null,
@@ -259,6 +260,32 @@ describe('runtime server component', () => {
     } finally {
       wrapper.unmount()
     }
+  })
+
+  it('should not rewrite `data-island-uid` inside escaped island content', async () => {
+    const stubFetch = vi.fn(() => Promise.resolve({
+      id: '123',
+      html: '<div data-island-uid><img alt="hello data-island-uid onerror=alert(1) x"><p>data-island-uid</p></div>',
+      state: {},
+      head: { link: [], style: [] },
+      json () {
+        return this
+      },
+      ok: true,
+    }))
+    vi.stubGlobal('fetch', stubFetch)
+
+    const wrapper = await mountSuspended(NuxtIsland, {
+      props: {
+        name: 'EscapedMarker',
+      },
+    })
+
+    const img = wrapper.find('img')
+    expect(img.attributes('alt')).toBe('hello data-island-uid onerror=alert(1) x')
+    expect(img.attributes()).not.toHaveProperty('onerror')
+    expect(wrapper.find('p').text()).toBe('data-island-uid')
+    expect(wrapper.find('div').attributes('data-island-uid')).toBeTruthy()
   })
 
   it('should ignore a scopeId that is not a Vue scope attribute', async () => {

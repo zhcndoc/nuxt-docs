@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 // it does in production; otherwise the test would see partially-initialised
 // exports and crash before any assertions run.
 import '../src/core/app.ts'
-import { publicPathTemplate } from '../src/core/templates.ts'
+import { appConfigTemplate, dollarFetchTemplate, publicPathTemplate, sharedAppConfigDeclarationTemplate } from '../src/core/templates.ts'
 
 import type { Nuxt, NuxtApp } from 'nuxt/schema'
 
@@ -28,11 +28,40 @@ function makeApp (configs: string[] = []): NuxtApp {
   return { configs } as unknown as NuxtApp
 }
 
-describe('publicPathTemplate', () => {
-  it('imports `useRuntimeConfig` from the bare `nitropack/runtime` specifier in production builds', async () => {
-    const contents = await publicPathTemplate.getContents!({ nuxt: makeNuxt(), app: makeApp(), options: {} })
+describe('appConfigTemplate', () => {
+  it('does not merge at runtime when there are no app config layers', async () => {
+    const contents = await appConfigTemplate.getContents!({ nuxt: makeNuxt(), app: makeApp(), options: {} })
 
-    expect(contents).toMatch(/import \{ useRuntimeConfig \} from ['"]nitropack\/runtime['"]/)
+    expect(contents).not.toContain('defuFn')
+    expect(contents).toContain('export default inlineConfig')
+  })
+
+  it('merges the layers it is given at runtime', async () => {
+    const contents = await appConfigTemplate.getContents!({ nuxt: makeNuxt(), app: makeApp(['/app/app.config.ts']), options: {} })
+
+    expect(contents).toContain(`import { defuFn } from 'defu'`)
+    expect(contents).toContain('export default /*@__PURE__*/ defuFn(cfg0, inlineConfig)')
+  })
+})
+
+describe('sharedAppConfigDeclarationTemplate', () => {
+  it('augments only the shared app config', async () => {
+    const contents = await sharedAppConfigDeclarationTemplate.getContents!({ nuxt: makeNuxt(), app: makeApp(), options: {} })
+
+    for (const schema of ['nuxt/schema', '@nuxt/schema']) {
+      expect(contents).toContain(`declare module '${schema}' {\n  interface SharedAppConfig extends`)
+    }
+    expect(contents).not.toContain('interface AppConfig extends')
+  })
+})
+
+describe('publicPathTemplate', () => {
+  it('falls back to the host nitro major\'s runtime-config specifier when no server build is declared', async () => {
+    const v3 = await publicPathTemplate.getContents!({ nuxt: makeNuxt({ _nitroMajor: 3 }), app: makeApp(), options: {} })
+    expect(v3).toMatch(/import \{ useRuntimeConfig \} from ['"]nitro\/runtime-config['"]/)
+
+    const v2 = await publicPathTemplate.getContents!({ nuxt: makeNuxt({ _nitroMajor: 2 }), app: makeApp(), options: {} })
+    expect(v2).toMatch(/import \{ useRuntimeConfig \} from ['"]nitropack\/runtime['"]/)
   })
 
   it('imports `useRuntimeConfig` from the specifier the server builder provides', async () => {
@@ -50,5 +79,31 @@ describe('publicPathTemplate', () => {
 
     expect(contents).not.toMatch(/useRuntimeConfig/)
     expect(contents).toMatch(/getAppConfig = \(\) => \(/)
+  })
+})
+
+describe('dollarFetchTemplate', () => {
+  it('backs `$fetch` with the `fetch` the server builder provides', async () => {
+    const contents = await dollarFetchTemplate.getContents!({
+      nuxt: makeNuxt({}, { runtime: { fetch: '/runtime/fetch.mjs', runtimeConfig: '/runtime/config.mjs' } }),
+      app: makeApp(),
+      options: {},
+    })
+
+    expect(contents).toMatch(/import \{ fetch \} from "\/runtime\/fetch\.mjs"/)
+    expect(contents).toMatch(/createFetch\(\{\s*fetch,/)
+  })
+
+  it('falls back to `ofetch` when the server runtime declares no `fetch` module', async () => {
+    const contents = await dollarFetchTemplate.getContents!({
+      nuxt: makeNuxt({}, { runtime: { runtimeConfig: 'nitropack/runtime' } }),
+      app: makeApp(),
+      options: {},
+    })
+
+    expect(contents).not.toMatch(/import \{ fetch \}/)
+    expect(contents).not.toMatch(/createFetch/)
+    expect(contents).toMatch(/import \{ \$fetch as _\$fetch \} from ['"]ofetch['"]/)
+    expect(contents).toMatch(/globalThis\.\$fetch = _\$fetch\.create\(\{\s*baseURL: baseURL\(\)/)
   })
 })

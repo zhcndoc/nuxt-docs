@@ -9,12 +9,12 @@ links:
 ---
 
 ::warning
-`useServerSeoMeta` 已弃用。请改为在 `if (import.meta.server)` 块中包装 [`useSeoMeta`](/docs/4.x/api/composables/use-seo-meta)。在 `future.compatibilityVersion: 5` 下，自动导入将被移除。
+`useServerSeoMeta` 已弃用。请改为将 [`useSeoMeta`](/docs/api/composables/use-seo-meta) 包裹在 `if (import.meta.server)` 块中。在 `future.compatibilityVersion: 5` 下将移除自动导入。
 ::
 
-`useServerSeoMeta` 允许你将站点的 SEO 元标签定义为扁平对象，并且像 [`useSeoMeta`](/docs/4.x/api/composables/use-seo-meta) 一样获得完整的 TypeScript 支持，但它只在服务端运行，并且会从客户端 bundle 中被 tree-shake 掉。
+`useServerSeoMeta` 允许你以扁平对象的形式定义站点的 SEO 元标签，并提供完整的 TypeScript 支持，与 [`useSeoMeta`](/docs/api/composables/use-seo-meta) 完全相同，但它仅在服务端运行，并会通过 tree-shaking 从客户端打包文件中移除。
 
-:read-more{to="/docs/4.x/api/composables/use-seo-meta"}
+:read-more{to="/docs/api/composables/use-seo-meta"}
 
 对于新代码，请直接使用仅服务端模式：
 
@@ -28,6 +28,6 @@ if (import.meta.server) {
 </script>
 ```
 
-参数与 [`useSeoMeta`](/docs/4.x/api/composables/use-seo-meta) 完全相同。
+参数与 [`useSeoMeta`](/docs/api/composables/use-seo-meta) 完全相同。
 
-:read-more{to="/docs/4.x/getting-started/seo-meta"}
+:read-more{to="/docs/getting-started/seo-meta"}

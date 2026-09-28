@@ -63,6 +63,18 @@ export default defineResolvers({
     },
   },
   experimental: {
+    routeTypedFetch: {
+      $resolve: async (val, get) => typeof val === 'boolean' ? val : (await get('future.compatibilityVersion')) >= 5,
+    },
+    strictRouteTypes: {
+      // there is nothing for this to constrain while requests are typed from nitro's `InternalApi`
+      async $resolve (val, get) {
+        if (!(await get('experimental.routeTypedFetch'))) {
+          return false
+        }
+        return val === 'isomorphic' || typeof val === 'boolean' ? val : false
+      },
+    },
     runtimeBaseURL: false,
     decorators: false,
     asyncEntry: {
@@ -115,6 +127,22 @@ export default defineResolvers({
         return (await get('future.compatibilityVersion')) >= 5 ? 'client' as const : true
       },
     },
+    /**
+     * Render the error page in the Nuxt renderer itself when a server render fails, rather than
+     * handing the error to the server runtime and re-entering the renderer over an internal request.
+     *
+     * The error page is rendered in process, on the same request event, so the response keeps the
+     * headers and cookies the failed render had already written.
+     *
+     * Defaults to `true` when `future.compatibilityVersion` is `5` or higher.
+     */
+    inlineErrorRendering: {
+      $resolve: async (val, get) => {
+        if (typeof val === 'boolean') { return val }
+        return (await get('future.compatibilityVersion')) >= 5
+      },
+    },
+
     /**
      * Server-render static error pages (such as `404.html`) when prerendering, rather than emitting an empty SPA shell.
      *
@@ -182,6 +210,9 @@ export default defineResolvers({
         }
         return (await get('future.compatibilityVersion')) >= 5
       },
+    },
+    serverPathFallback: {
+      $resolve: val => typeof val === 'boolean' ? val : true,
     },
     appManifest: true,
     checkOutdatedBuildInterval: 1000 * 60 * 60,
@@ -343,6 +374,9 @@ export default defineResolvers({
       $resolve: async (val, get) => {
         return typeof val === 'boolean' ? val : (await get('future.compatibilityVersion')) < 5
       },
+    },
+    nitroViteEnvironment: {
+      $resolve: () => false,
     },
     ssrStreaming: {
       $resolve (val) {

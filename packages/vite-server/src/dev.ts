@@ -2,12 +2,32 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Nuxt } from '@nuxt/schema'
 import { NodeRequest, sendNodeResponse } from 'srvx/node'
 import { staticMiddleware } from 'srvx/static'
-import type { ViteDevServer } from 'vite'
+import { joinURL } from 'ufo'
+import type { Plugin, ViteDevServer } from 'vite'
 
 import { resolveDocument } from './document.ts'
 import { publicDirs } from './output.ts'
 
-export function setupDevServer (nuxt: Nuxt): void {
+/**
+ * Vite runs in middleware mode, so it creates no HTTP server of its own and leaves
+ * `server.httpServer` null. Nuxt does listen, and its middlewares are served from that
+ * listener, so the listener is exposed to Vite for other plugins to attach to.
+ */
+export function DevServerListenerPlugin (nuxt: Nuxt): Plugin {
+  return {
+    name: 'nuxt:vite-server:dev-listener',
+    enforce: 'pre',
+    apply: 'serve',
+    configureServer: {
+      order: 'pre',
+      handler (server) {
+        server.httpServer ||= nuxt._devServerListener ?? null
+      },
+    },
+  }
+}
+
+export function setupDevServer (nuxt: Nuxt, serverEntry?: string): void {
   let viteServer: ViteDevServer | undefined
   nuxt.hook('vite:serverCreated', (server) => {
     viteServer = server as ViteDevServer
@@ -23,6 +43,23 @@ export function setupDevServer (nuxt: Nuxt): void {
     })
   }
 
+  const errorChannel = joinURL(nuxt.options.app.baseURL, nuxt.options.devServer.errorChannel)
+
+  // loaded from the dev module graph, so an edit is picked up by the next render
+  const render = async (request: Request) => {
+    const module = await viteServer!.ssrLoadModule(serverEntry!) as {
+      fetch: (request: Request) => Promise<Response>
+      setDevErrorContext?: (context: { server: ViteDevServer, cwd: string, channel: string }) => void
+    }
+    // set per render, since the module holding it is re-evaluated with the graph
+    module.setDevErrorContext?.({ server: viteServer!, cwd: nuxt.options.rootDir, channel: errorChannel })
+    return module.fetch(request)
+  }
+
+  const respond = (request: Request, url: string) => {
+    return serverEntry && viteServer ? render(request) : shell(url)
+  }
+
   nuxt.server = {
     handler: async (req: IncomingMessage, res: ServerResponse) => {
       if (viteServer && await handledByVite(viteServer, req, res)) {
@@ -34,7 +71,7 @@ export function setupDevServer (nuxt: Nuxt): void {
       const request = new NodeRequest({ req, res })
       const next = (index: number): Response | Promise<Response> => {
         const handler = middleware[index]
-        return handler ? handler(request, () => next(index + 1)) : shell(req.url || '/')
+        return handler ? handler(request, () => next(index + 1)) : respond(request, req.url || '/')
       }
       await sendNodeResponse(res, await next(0))
     },

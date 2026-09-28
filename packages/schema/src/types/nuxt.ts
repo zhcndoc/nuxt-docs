@@ -150,6 +150,16 @@ export interface NuxtBuildOutputs {
  * @internal
  */
 export interface NuxtServerBuildOutput {
+  /**
+   * Absolute path to the root of the project the build belongs to, without a trailing
+   * slash: where a deploy target's own configuration file lives and what the paths in it
+   * are written relative to.
+   *
+   * This is the project root rather than a bundler's notion of a root, which need not be
+   * the same directory: Nuxt points Vite's `root` at `srcDir`, so a target resolving its
+   * configuration from there looks in the wrong place.
+   */
+  root: () => string
   /** Absolute path to the build output directory, without a trailing slash. */
   dir: () => string
   /**
@@ -157,6 +167,27 @@ export interface NuxtServerBuildOutput {
    * without a trailing slash.
    */
   publicDir: () => string
+}
+
+/**
+ * Where the app builder leaves the artifacts a server build consumes, for a server builder
+ * that bundles or serves them from disk rather than through the `nuxt/*` module bodies of
+ * {@link NuxtBuildOutputs}.
+ *
+ * Paths are functions because the app builder may only know them once its configuration is
+ * resolved.
+ *
+ * @internal
+ */
+export interface NuxtServerBuildInput {
+  /** Absolute path to the SSR entry the app builder emits, the input of a server bundle. */
+  serverEntry: () => string
+  /** Absolute path to the directory the SSR build's chunks land in. */
+  serverDir: () => string
+  /** Absolute path to the directory the client build's assets land in. */
+  clientDir: () => string
+  /** Absolute path to the client manifest `vue-bundle-renderer` renders against. */
+  clientManifest: () => string
 }
 
 /**
@@ -178,8 +209,29 @@ export interface NuxtServerBuildCapabilities {
  * @internal
  */
 export interface NuxtServerBuildRuntime {
+  /**
+   * Exports `fetch`, used to back `$fetch` on the server. Omitted by a runtime that installs
+   * its own `$fetch` on `globalThis` rather than exposing a module to import from.
+   */
+  fetch?: string
   /** Exports `useRuntimeConfig`. */
   runtimeConfig: string
+  /**
+   * Exports the implementations backing `nuxt/server`, which the server build resolves that
+   * subpath to. Omitted by a runtime with nothing to add to the web-standard implementations
+   * Nuxt ships, which the subpath resolves to otherwise.
+   *
+   * Every value `nuxt/server` exports must be exported here too: the types come from the
+   * `nuxt` package either way, so a missing export is a runtime error, not a type error.
+   */
+  server?: string
+  /**
+   * Exports `fetch`, a web-standard handler serving the built application, for a deploy
+   * target that runs the build in a worker or on a platform that hands it a `Request`. Only
+   * resolvable once the build producing it has run, and omitted by a runtime whose output is
+   * not importable as a module.
+   */
+  handler?: string
 }
 
 /**
@@ -221,6 +273,14 @@ export interface NuxtServerBuild {
   target?: () => string | undefined
   /** What to call the `target` axis when printing it, such as `preset`. */
   targetLabel?: string
+  /**
+   * Whether the server build is a pass of its own, run by the server builder, rather than
+   * an environment of the app builder's build. A builder that builds separately also hosts
+   * the dev server, and reads the client manifest from disk rather than from the app
+   * builder's own build.
+   */
+  buildsSeparately: boolean
+  input: NuxtServerBuildInput
   output: NuxtServerBuildOutput
   capabilities: NuxtServerBuildCapabilities
   runtime: NuxtServerBuildRuntime
@@ -252,32 +312,21 @@ export interface Nuxt {
   '_asyncLocalStorageModule'?: AsyncLocalStorage<NuxtModule>
 
   /**
-   * Nitro majors recorded for server plugins registered via `addServerPlugin`,
-   * keyed by normalized specifier, resolved file path and alias-resolved path.
-   * Absent entries are nitro v2.
-   * @internal
-   */
-  '_serverPluginVersions'?: Map<string, 2 | 3>
-  /**
-   * Nitro majors recorded for server auto-import sources, scanned directories and
-   * server template ids. Absent entries are nitro v2.
-   * @internal
-   */
-  '_serverImportVersions'?: Map<string, 2 | 3>
-  /**
-   * Server registrations kit skipped because they target a newer nitro major than
-   * the host provides. Recorded for devtools and tests.
-   * @internal
-   */
-  '_skippedNitroRegistrations'?: Array<{ api: string, version: number, host: number | undefined }>
-
-  /**
    * The Node HTTP(S) server the dev server is listening on, captured from the
    * `listen` hook. Builders use it to attach their HMR websocket to the same
    * server (and therefore the same port and certificate) as the app.
    * @internal
    */
   '_devServerListener'?: import('node:http').Server | import('node:https').Server
+  /**
+   * Names of the bundler environments that build the app for the server, beyond `ssr`.
+   * Plugins registered with `addVitePlugin()` apply to these too, so that an environment a
+   * deploy target owns can bundle the app. Registered by the server builder, which is the
+   * only place that knows whether a server environment renders or is a runtime of its own
+   * (as Nitro's is).
+   * @internal
+   */
+  '_appServerEnvironments'?: Set<string>
   /**
    * Module options functions collected from moduleDependencies.
    * @internal

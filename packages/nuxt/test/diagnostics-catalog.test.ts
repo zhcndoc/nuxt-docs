@@ -1,3 +1,7 @@
+import { execFileSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { glob } from 'tinyglobby'
 import { describe, expect, it } from 'vitest'
 
 // Build-time (NUXT_B) catalogs.
@@ -14,6 +18,7 @@ import { manifestDiagnostics } from '../src/app/diagnostics/manifest.ts'
 import { unheadDiagnostics } from '../src/app/diagnostics/head.ts'
 import { stateDiagnostics } from '../src/app/diagnostics/state.ts'
 import { serverDiagnostics } from '../../nitro-server/src/runtime/diagnostics.ts'
+import { rendererDiagnostics } from '../src/runtime/server/renderer/diagnostics.ts'
 
 // Schema continues kit's B5xxx configuration range, so it has to be swept too.
 import { schemaDiagnostics } from '../../schema/src/diagnostics.ts'
@@ -35,7 +40,82 @@ const catalogs = {
   unheadDiagnostics,
   stateDiagnostics,
   serverDiagnostics,
+  rendererDiagnostics,
+
   schemaDiagnostics,
+}
+
+const packagesDir = fileURLToPath(new URL('../..', import.meta.url))
+const repoRoot = fileURLToPath(new URL('../../..', import.meta.url))
+
+/** Codes defined on `origin/main` that 4.x does not define, each with the reason. */
+const MAIN_ONLY: Record<string, string> = {
+  NUXT_B5016: '`experimental.parseErrorData` is still supported on 4.x',
+  NUXT_B5029: 'validates `future.compatibilityVersion` against Nuxt 5',
+  NUXT_B9001: 'Nitro v2 compatibility layer',
+  NUXT_B9002: 'Nitro v2 compatibility layer',
+  NUXT_B9003: 'Nitro v2 compatibility layer',
+  NUXT_B9004: 'Nitro v2 compatibility layer',
+  NUXT_E8008: 'Nitro v2 compatibility layer',
+  NUXT_E8010: 'Nitro v2 compatibility layer',
+  NUXT_E8011: 'Nitro v2 compatibility layer',
+}
+
+const CATALOG_GLOB = '*/src/**/*.ts'
+const CODE_WHY_RE = /\b(NUXT_[A-Z]\d{4}):\s*\{\s*why:\s*([^\n]*)/g
+
+function extractCodes (sources: string[]) {
+  const codes = new Map<string, string>()
+  for (const source of sources) {
+    if (!source.includes('defineDiagnostics(')) {
+      continue
+    }
+    for (const [, code, why] of source.matchAll(CODE_WHY_RE)) {
+      codes.set(code!, why!.trim())
+    }
+  }
+  return codes
+}
+
+const STOP_WORDS = new Set(['the', 'and', 'for', 'with', 'that', 'this', 'was', 'not', 'are', 'but', 'from', 'its', 'has', 'have', 'into', 'when', 'which', 'will', 'been', 'being', 'than', 'then', 'they', 'them', 'their', 'there', 'what', 'your', 'you', 'can', 'use', 'set'])
+const PARAMS_RE = /^\([^)]*\)\s*=>/
+const PLACEHOLDER_RE = /\$\{[^}]*\}/g
+const WORD_RE = /[a-z][a-z0-9]{2,}/g
+
+function words (why: string) {
+  const text = why.replace(PARAMS_RE, ' ').replace(PLACEHOLDER_RE, ' ').toLowerCase()
+  return new Set((text.match(WORD_RE) ?? []).filter(word => !STOP_WORDS.has(word)))
+}
+
+/**
+ * The share of the shorter `why` whose words also appear in the other. A reworded diagnostic
+ * keeps most of its vocabulary; an unrelated one sharing the code does not.
+ */
+function wordOverlap (a: string, b: string) {
+  const left = words(a)
+  const right = words(b)
+  let shared = 0
+  for (const word of left) {
+    if (right.has(word)) {
+      shared++
+    }
+  }
+  return shared / Math.max(1, Math.min(left.size, right.size))
+}
+
+const MIN_WORD_OVERLAP = 1 / 3
+
+function git (...args: string[]) {
+  return execFileSync('git', args, { cwd: repoRoot, encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] })
+}
+
+function hasRef (ref: string) {
+  try {
+    git('rev-parse', '--verify', '--quiet', `${ref}^{commit}`)
+    return true
+  } catch {
+    return false
+  }
 }
 
 describe('diagnostics catalog', () => {
@@ -61,5 +141,71 @@ describe('diagnostics catalog', () => {
     // claiming the same number without anyone noticing in review.
     const codes = Object.keys(catalog)
     expect(codes).toStrictEqual([...codes].sort((a, b) => a.localeCompare(b, 'en', { numeric: true })))
+  })
+
+  it('sweeps every catalog defined in the repo', async () => {
+    const files = await glob(CATALOG_GLOB, { cwd: packagesDir, absolute: true, ignore: ['**/node_modules/**'] })
+
+    const defined = new Set<string>()
+    for (const file of files) {
+      const contents = readFileSync(file, 'utf-8')
+      if (!contents.includes('defineDiagnostics(')) {
+        continue
+      }
+      for (const match of contents.matchAll(/export const (\w+) =[\s\S]{0,120}?defineDiagnostics\(/g)) {
+        defined.add(match[1]!)
+      }
+    }
+
+    expect([...defined].filter(name => !(name in catalogs)).sort()).toStrictEqual([])
+  })
+
+  it('defines every `origin/main` code unless it is listed as main-only', async (ctx) => {
+    const ref = 'origin/main'
+    if (!hasRef(ref)) {
+      ctx.skip(`\`${ref}\` is not available; fetch it (for example \`git fetch origin main\`) to compare catalogs across branches`)
+    }
+
+    const files = await glob(CATALOG_GLOB, { cwd: packagesDir, absolute: true, ignore: ['**/node_modules/**'] })
+    const current = extractCodes(files.map(file => readFileSync(file, 'utf-8')))
+    const other = extractCodes(git('grep', '-l', 'defineDiagnostics(', ref, '--', 'packages/*/src/**.ts').trim().split('\n').filter(Boolean).map(file => git('show', file)))
+
+    expect(other.size).toBeGreaterThan(0)
+    expect([...other.keys()].filter(code => !current.has(code) && !(code in MAIN_ONLY))).toStrictEqual([])
+    expect(Object.keys(MAIN_ONLY).filter(code => !other.has(code) || current.has(code))).toStrictEqual([])
+  })
+
+  it('assigns every code shared with `origin/main` to the same diagnostic', async (ctx) => {
+    const ref = 'origin/main'
+    if (!hasRef(ref)) {
+      ctx.skip(`\`${ref}\` is not available; fetch it (for example \`git fetch origin main\`) to compare catalogs across branches`)
+    }
+
+    const files = await glob(CATALOG_GLOB, { cwd: packagesDir, absolute: true, ignore: ['**/node_modules/**'] })
+    const current = extractCodes(files.map(file => readFileSync(file, 'utf-8')))
+
+    const otherFiles = git('grep', '-l', 'defineDiagnostics(', ref, '--', 'packages/*/src/**.ts')
+      .trim()
+      .split('\n')
+      .filter(Boolean)
+    const other = extractCodes(otherFiles.map(file => git('show', file)))
+
+    expect(current.size).toBeGreaterThan(0)
+    expect(other.size).toBeGreaterThan(0)
+
+    const mismatches = [...other]
+      .filter(([code, why]) => current.has(code) && current.get(code) !== why && wordOverlap(current.get(code)!, why) < MIN_WORD_OVERLAP)
+      .map(([code, why]) => `${code}\n  ${ref}: ${why}\n  HEAD: ${current.get(code)}`)
+
+    expect(mismatches).toStrictEqual([])
+  })
+
+  it('tells a reworded diagnostic apart from a different one sharing its code', () => {
+    const before = '(p: { minLength: number }) => `\\`runtimeConfig.appSecret\\` is unset or shorter than ${p.minLength} characters, so a random development secret is being used.`'
+    const reworded = '\'A generated development secret is being used because `runtimeConfig.appSecret` is unset.\''
+    const unrelated = '(p: { helper: string }) => `\\`${p.helper}\\` from \\`nuxt/server\\` was called with an h3 event.`'
+
+    expect(wordOverlap(before, reworded)).toBeGreaterThanOrEqual(MIN_WORD_OVERLAP)
+    expect(wordOverlap(before, unrelated)).toBeLessThan(MIN_WORD_OVERLAP)
   })
 })

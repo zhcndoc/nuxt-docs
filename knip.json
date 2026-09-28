@@ -5,8 +5,14 @@
   },
   "ignoreExportsUsedInFile": true,
   "tags": ["-knipignore"],
+  "ignore": ["**/.nuxt-*/**", "packages/*/dist/**"],
   "ignoreIssues": {
-    "**/.nuxt/**": ["unlisted", "unresolved"]
+    "**/.nuxt/**": ["unlisted", "unresolved"],
+    "**/.nuxt-*/**": ["unlisted", "unresolved"],
+    "**/.output/**": ["unlisted", "unresolved"],
+    "**/.output-*/**": ["unlisted", "unresolved"],
+    "**/.netlify/**": ["unlisted", "unresolved"],
+    "packages/*/dist/**": ["unlisted", "unresolved"]
   },
   "ignoreDependencies": [
     "bing",
@@ -27,6 +33,7 @@
         "scripts/*",
         "test/*.ts",
         "test/e2e/*.ts",
+        "test/renderer/*.ts",
         "test/no-jiti/*.mjs",
         "test/runtime/app/**/*.ts",
         "test/mocks/app-config.ts"
@@ -34,13 +41,28 @@
     },
     "test/fixtures/*": {
       "entry": [
-        "**/*.{js,ts,tsx,mjs,vue}!"
+        "**/*.{js,ts,tsx,mjs,mts,vue}!"
       ],
       "paths": {
         "~~/*": ["./*"],
         "~/*": ["./*"],
         "#shared/*": ["./shared/*"]
       }
+    },
+    "test/fixtures/basic": {
+      "entry": [
+        "**/*.{js,ts,tsx,mjs,mts,vue}!"
+      ],
+      "paths": {
+        "~~/*": ["./*"],
+        "~/*": ["./*"],
+        "#shared/*": ["./shared/*"]
+      },
+      "ignoreDependencies": [
+        "@babel/plugin-proposal-decorators",
+        "@babel/plugin-syntax-jsx",
+        "nested-dep"
+      ]
     },
     "packages/nitro-server": {
       "entry": [
@@ -56,13 +78,11 @@
     },
     "packages/vite-server": {
       "ignoreDependencies": [
-        "mocked-exports"
+        "mocked-exports",
+        "rou3"
       ]
     },
     "packages/vite": {
-      "entry": [
-        "src/fix-stacktrace.ts"
-      ],
       "ignoreDependencies": [
         "mocked-exports",
         "autoprefixer",
@@ -92,7 +112,6 @@
       "ignoreDependencies": [
         "@dxup/nuxt",
         "@nuxt/devtools",
-        "@nuxt/nitro-server",
         "@nuxt/telemetry",
         "@nuxt/vite-builder",
         "@nuxt/vite-server"
@@ -100,7 +119,8 @@
     },
     "packages/ui-templates": {
       "entry": [
-        "lib/*.ts"
+        "lib/*.{ts,mjs}",
+        "templates/**/shader/start.ts!"
       ],
       "ignoreDependencies": [
         "@vue/shared"
@@ -125,6 +145,7 @@
       "ignoreDependencies": [
         "@nuxt/friendly-errors-webpack-plugin",
         "@nuxt/kit",
+        "@nuxt/schema",
         "@types/webpack-bundle-analyzer",
         "@vue/compiler-sfc",
         "autoprefixer",

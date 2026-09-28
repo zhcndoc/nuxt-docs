@@ -28,7 +28,7 @@ useHead({
 ```
 
 ::warning
-如果数据来自用户或其他不受信任的来源，我们建议你查看 [`useHeadSafe`](/docs/4.x/api/composables/use-head-safe)。
+如果数据来自用户或其他不可信来源，我们建议你了解一下 [`useHeadSafe`](/docs/api/composables/use-head-safe)。
 ::
 
 ::note
@@ -181,4 +181,4 @@ useHead({
 </script>
 ```
 
-:read-more{to="/docs/4.x/getting-started/seo-meta"}
+:read-more{to="/docs/getting-started/seo-meta"}

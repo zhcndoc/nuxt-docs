@@ -18,6 +18,9 @@
       ],
       "h3": [
         "./dist/h3.d.mts"
+      ],
+      "request-types": [
+        "./dist/request-types.d.mts"
       ]
     }
   },
@@ -25,6 +28,7 @@
     ".": "./src/index.ts",
     "./augments": "./src/augments.ts",
     "./h3": "./src/h3.ts",
+    "./request-types": "./src/request-types.ts",
     "./package.json": "./package.json"
   },
   "files": [
@@ -36,10 +40,8 @@
     "test:attw": "node ../../scripts/test-attw.ts"
   },
   "dependencies": {
-    "@nuxt/devalue": "^2.0.2",
     "@nuxt/kit": "workspace:*",
     "@unhead/vue": "catalog:app-runtime",
-    "@vue/shared": "catalog:app-runtime",
     "consola": "catalog:app-runtime",
     "defu": "catalog:app-runtime",
     "destr": "catalog:nitro-runtime",
@@ -47,10 +49,12 @@
     "errx": "catalog:app-runtime",
     "escape-string-regexp": "catalog:build",
     "exsolve": "catalog:build",
+    "flru": "catalog:nitro-runtime",
     "h3": "^1.15.11",
     "impound": "catalog:build",
     "klona": "catalog:app-runtime",
     "mocked-exports": "catalog:build",
+    "my-bad": "catalog:nitro-runtime",
     "nitropack": "^2.13.4",
     "nostics": "catalog:app-runtime",
     "ohash": "catalog:app-runtime",
@@ -99,6 +103,7 @@
       ".": "./dist/index.mjs",
       "./augments": "./dist/augments.mjs",
       "./h3": "./dist/h3.mjs",
+      "./request-types": "./dist/request-types.mjs",
       "./package.json": "./package.json"
     },
     "types": "./dist/index.d.mts"

@@ -9,7 +9,7 @@ links:
 ---
 
 ::note
-路由中间件是存放在你的 Nuxt 应用程序的 [`app/middleware/`](/docs/4.x/directory-structure/app/middleware) 目录中的导航守卫（除非 [另有设置](/docs/4.x/api/nuxt-config#middleware)）。
+路由中间件是存储在 Nuxt 应用 [`app/middleware/`](/docs/directory-structure/app/middleware) 目录中的导航守卫（除非[另行设置](/docs/api/nuxt-config#middleware)）。
 ::
 
 ## 类型
@@ -31,7 +31,7 @@ interface AddRouteMiddlewareOptions {
 
 可以是字符串或类型为 `RouteMiddleware` 的函数。函数以目标路由 `to` 作为第一个参数、当前路由 `from` 作为第二个参数，两个参数都是 Vue 路由对象。
 
-更多关于路由对象可用属性的信息，请参阅 [route objects](/docs/4.x/api/composables/use-route)。
+了解[路由对象](/docs/api/composables/use-route)上可用的属性。
 
 ### `middleware`
 
@@ -59,7 +59,7 @@ export default defineNuxtPlugin(() => {
 })
 ```
 
-当在插件中定义时，它会覆盖位于 `app/middleware/` 目录中具有相同名称的任何现有中间件。
+在插件中定义时，它会覆盖 `app/middleware/` 目录中任何同名的现有中间件。
 
 ### 全局路由中间件
 
@@ -75,7 +75,7 @@ export default defineNuxtPlugin(() => {
   })
   ```
 
-- 设置可选的第三个参数 `{ global: true }` 来指示该路由中间件为全局中间件。
+- 设置可选的第三个参数 `{ global: true }`，以指示该路由中间件为全局中间件。
 
   ```ts [app/plugins/my-plugin.ts]
   export default defineNuxtPlugin(() => {

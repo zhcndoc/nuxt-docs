@@ -9,10 +9,10 @@ links:
     size: xs
 ---
 
-## Description
+## 描述
 
-A composable that returns the page loading state. It is used by [`<NuxtLoadingIndicator>`](/docs/4.x/api/components/nuxt-loading-indicator) and can be controlled.
-It hooks into [`page:loading:start`](/docs/4.x/api/advanced/hooks#app-hooks-runtime) and [`page:loading:end`](/docs/4.x/api/advanced/hooks#app-hooks-runtime) to change its state.
+一个返回页面加载状态的组合式函数。由 [`<NuxtLoadingIndicator>`](/docs/api/components/nuxt-loading-indicator) 使用，并且可以进行控制。
+它会挂接到 [`page:loading:start`](/docs/api/advanced/hooks#app-hooks-runtime) 和 [`page:loading:end`](/docs/api/advanced/hooks#app-hooks-runtime)，以改变其状态。
 
 ## 参数
 
@@ -53,7 +53,7 @@ It hooks into [`page:loading:start`](/docs/4.x/api/advanced/hooks#app-hooks-runt
 
 ### `clear()`
 
-由 `finish()` 使用。清除该 composable 使用的所有定时器和间隔。
+由 `finish()` 使用。清除该组合式函数使用的所有定时器和间隔。
 
 ## 示例
 

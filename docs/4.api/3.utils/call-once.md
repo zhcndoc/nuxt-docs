@@ -13,7 +13,7 @@ links:
 此工具自 [Nuxt v3.9](/blog/v3-9) 起可用。
 ::
 
-## Purpose
+## 目的
 
 `callOnce` 函数用于仅在以下情况之一中执行给定的函数或代码块一次：
 - 在服务端渲染（SSR）期间，但不在水合（hydration）期间执行
@@ -53,14 +53,14 @@ await callOnce(async () => {
 `navigation` 模式自 [Nuxt v3.15](/blog/v3-15) 起可用。
 ::
 
-::tip{to="/docs/4.x/getting-started/state-management#usage-with-pinia"}
-在与 [Pinia 模块](/modules/pinia) 结合使用时，`callOnce` 对调用 store actions 很有用。
+::tip{to="/docs/getting-started/state-management#usage-with-pinia"}
+`callOnce` 与 [Pinia 模块](/modules/pinia) 结合使用时，可用于调用 store 操作。
 ::
 
-:read-more{to="/docs/4.x/getting-started/state-management"}
+:read-more{to="/docs/getting-started/state-management"}
 
 ::warning
-请注意 `callOnce` 不会返回任何内容。如果你想在 SSR 期间进行数据获取，应使用 [`useAsyncData`](/docs/4.x/api/composables/use-async-data) 或 [`useFetch`](/docs/4.x/api/composables/use-fetch)。
+请注意，`callOnce` 不会返回任何内容。如果你想在 SSR 期间获取数据，应使用 [`useAsyncData`](/docs/api/composables/use-async-data) 或 [`useFetch`](/docs/api/composables/use-fetch)。
 ::
 
 ::note

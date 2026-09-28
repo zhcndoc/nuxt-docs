@@ -12,7 +12,7 @@ Nuxt 提供了若干内置功能，帮助你优化网站性能。理解这些功
 
 ### 链接
 
-[`<NuxtLink>`](/docs/4.x/api/components/nuxt-link) 是对 Vue Router 的 `<RouterLink>` 组件和 HTML `<a>` 标签的替换组件。它会智能判断链接是内部链接还是外部链接，并据此使用可用的优化（预取、默认属性等）渲染。
+[`<NuxtLink>`](/docs/api/components/nuxt-link) 是 Vue Router 的 `<RouterLink>` 组件和 HTML `<a>` 标签的即插即用替代品。它可以智能判断链接是内部链接还是外部链接，并根据情况进行渲染，同时应用可用的优化（预取、默认属性等）
 
 ```html
 <template>
@@ -42,7 +42,7 @@ export default defineNuxtConfig({
 })
 ```
 
-:read-more{title="NuxtLink" to="/docs/4.x/api/components/nuxt-link"}
+:read-more{title="NuxtLink" to="/docs/api/components/nuxt-link"}
 
 ### 混合渲染
 
@@ -71,7 +71,7 @@ export default defineNuxtConfig({
 
 Nuxt 服务端将自动注册相应的中间件，并使用 Nitro 缓存层将路由包装为带缓存处理程序的路由。
 
-:read-more{title="混合渲染" to="/docs/4.x/guide/concepts/rendering#hybrid-rendering"}
+:read-more{title="混合渲染" to="/docs/guide/concepts/rendering#hybrid-rendering"}
 
 ### 懒加载组件
 
@@ -93,7 +93,7 @@ const show = ref(false)
 
 通过使用 Lazy 前缀，你可以延迟在合适的时刻加载组件代码，这有助于优化 JavaScript 包的大小。
 
-:read-more{title="懒加载组件" to="/docs/4.x/directory-structure/app/components#dynamic-imports"}
+:read-more{title="懒加载组件" to="/docs/directory-structure/app/components#dynamic-imports"}
 
 ### 延迟水合
 
@@ -109,17 +109,17 @@ const show = ref(false)
 
 为了优化应用，你可能希望将某些组件的水合延迟到它们可见时，或浏览器完成更重要任务之后再进行。
 
-:read-more{title="延迟水合" to="/docs/4.x/directory-structure/app/components#delayed-or-lazy-hydration"}
+:read-more{title="延迟水合" to="/docs/directory-structure/app/components#delayed-or-lazy-hydration"}
 
-对于几乎不需要或完全不需要客户端交互的内容型网站和营销网站，你可以更进一步，将预渲染、`noScripts` 路由规则、[服务端组件](/docs/4.x/guide/concepts/server-components)和延迟水合结合起来，从而交付几乎为零的 JavaScript。
+对于客户端交互很少或没有客户端交互需求的内容网站和营销网站，你还可以进一步结合预渲染、`noScripts` 路由规则、[服务器组件](/docs/guide/concepts/server-components)和延迟水合，实现几乎零 JavaScript 的交付。
 
-:read-more{title="以静态内容为主的网站" to="/docs/4.x/guide/recipes/mostly-static-sites"}
+:read-more{title="以静态内容为主的网站" to="/docs/guide/recipes/mostly-static-sites"}
 
 ### 获取数据
 
-为避免重复获取相同数据（在服务端和客户端各获取一次），Nuxt 提供了 [`useFetch`](/docs/4.x/api/composables/use-fetch) 和 [`useAsyncData`](/docs/4.x/api/composables/use-async-data)。它们会确保如果在服务端进行了 API 调用，数据会在载荷中转发到客户端，而不是再次被获取。
+为避免对相同数据进行两次获取（一次在服务器上，一次在客户端上），Nuxt 提供了 [`useFetch`](/docs/api/composables/use-fetch) 和 [`useAsyncData`](/docs/api/composables/use-async-data)。它们可以确保在服务器上发起 API 调用时，数据会通过 payload 转发给客户端，而不是再次获取。
 
-:read-more{title="数据获取" to="/docs/4.x/getting-started/data-fetching"}
+:read-more{title="数据获取" to="/docs/getting-started/data-fetching"}
 
 ## Nuxt 核心模块
 
@@ -133,7 +133,7 @@ const show = ref(false)
 
 :video-accordion{title="观看 LearnVue 关于 Nuxt Image 的视频" videoId="_UBff2eqGY0"}
 
-[`<NuxtImg>`](/docs/4.x/api/components/nuxt-img) 是对原生 `<img>` 标签的替代，具备以下增强功能：
+[`<NuxtImg>`](/docs/api/components/nuxt-img) 是原生 `<img>` 标签的即插即用替代品，并提供以下增强功能：
 
 * 使用内置提供器优化本地和远程图像
 * 将 `src` 转换为提供器优化的 URL，使用现代格式如 WebP 或 AVIF
@@ -222,7 +222,7 @@ onLoaded((gtag) => {
 
 ### Nuxi Analyze
 
-[`nuxt`](/docs/4.x/api/commands/analyze) 的 [此](/docs/4.x/api/commands/analyze) 命令允许你分析 Nuxt 应用的生产构建包。它利用 `vite-bundle-visualizer`（类似于 `webpack-bundle-analyzer`）来生成应用构建包的可视化表示，使你更容易识别哪些组件占用了最多空间。
+`nuxt` 的 [此命令](/docs/api/commands/analyze)允许你分析 Nuxt 应用的生产构建包。它利用 `vite-bundle-visualizer`（类似于 `webpack-bundle-analyzer`）生成应用构建包的可视化表示，让你更容易识别哪些组件占用的空间最大。
 
 当你在可视化中看到一个较大的块时，通常表示存在优化机会——无论是将其拆分为更小的部分、实现懒加载，还是用更高效的替代方案进行替换，尤其是对于第三方库。
 

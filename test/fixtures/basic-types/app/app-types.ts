@@ -5,17 +5,18 @@ import type { H3Error, H3Event } from 'h3'
 import { getRouteRules as getNitroRouteRules } from 'nitropack/runtime'
 import type { NitroRouteRules } from 'nitropack/types'
 
-import type { TypedFetch, TypedFetchRequest } from 'nuxt/app'
+import type { TypedFetch } from 'nuxt/app'
 import { $fetch } from '#build/fetch'
 import type { AppConfig, AppConfigInput, NuxtConfig as NuxtConfigFromAt, NuxtHooks as NuxtHooksFromAt } from '@nuxt/schema'
 import type { AppConfigInput as AppConfigInputFromNuxt, NuxtConfig as NuxtConfigFromNuxt, NuxtHooks as NuxtHooksFromNuxt } from 'nuxt/schema'
 import { defineNuxtConfig } from 'nuxt/config'
 import { callWithNuxt, isVue3 } from '#app'
-import type { NuxtError, NuxtSSRContext, PageMeta, RequestEvent } from '#app'
+import type { NuxtError, NuxtRequestEvent, NuxtSSRContext, PageMeta } from '#app'
 import type { NavigateToOptions } from '#app/composables/router'
 import { LazyWithTypes, NuxtIsland, NuxtLayout, NuxtLink, NuxtPage, ServerComponent, WithTypes } from '#components'
 import type { IslandComponent, LazyComponent } from '#components'
-import { prefetchComponents, preloadComponents, useRequestEvent, useRouter } from '#imports'
+import { getRouteRules, prefetchComponents, preloadComponents, useRequestEvent, useRouter } from '#imports'
+import type { LayoutKey } from '#build/types/nitro-layouts'
 
 type DefaultAsyncDataErrorValue = undefined
 type DefaultAsyncDataValue = undefined
@@ -70,8 +71,12 @@ describe('API routes', () => {
   it('types the auto-imported $fetch with nitro routes', () => {
     // https://github.com/nuxt/nuxt/pull/35582 regression: `$fetch` was typed as
     // ofetch's plain `$fetch`, returning `Promise<any>` for every request
-    expectTypeOf($fetch).toEqualTypeOf<TypedFetch<unknown, TypedFetchRequest>>()
+    expectTypeOf($fetch).toEqualTypeOf<TypedFetch>()
     expectTypeOf($fetch('/api/other')).toEqualTypeOf<Promise<unknown>>()
+  })
+
+  it('types the response of a handler written against `nuxt/server`', () => {
+    expectTypeOf($fetch('/api/portable')).toEqualTypeOf<Promise<{ greeting: string }>>()
   })
 
   it('types responses of routes registered in `ServerRoutes`', () => {
@@ -143,6 +148,15 @@ describe('API routes', () => {
     expectTypeOf(useAsyncData('api-union-with-pick', () => $fetch('/api/union'), { pick: ['type'] }).data).toEqualTypeOf<Ref<{ type: 'a' } | { type: 'b' } | DefaultAsyncDataValue>>()
     expectTypeOf(useAsyncData('api-other', () => $fetch('/api/other')).data).toEqualTypeOf<Ref<unknown>>()
     expectTypeOf(useAsyncData<TestResponse>('api-generics', () => $fetch('/test')).data).toEqualTypeOf<Ref<TestResponse | DefaultAsyncDataValue>>()
+
+    // https://github.com/nuxt/nuxt/issues/28030
+    function useGenericAsyncData<T extends { id: number }> () {
+      const { data } = useAsyncData<T>('api-generic-param', () => Promise.resolve({ id: 1 } as T))
+      expectTypeOf(data.value?.id).toEqualTypeOf<number | undefined>()
+      const { data: fetched } = useFetch<T>('/api/hello')
+      expectTypeOf(fetched.value?.id).toEqualTypeOf<number | undefined>()
+    }
+    useGenericAsyncData()
 
     expectTypeOf(useAsyncData('api-error-generics', () => $fetch('/error')).error).toEqualTypeOf<Ref<NuxtError<unknown> | DefaultAsyncDataErrorValue>>()
     expectTypeOf(useAsyncData<any, string>('api-error-generics', () => $fetch('/error')).error).toEqualTypeOf<Ref<NuxtError<string> | DefaultAsyncDataErrorValue>>()
@@ -253,10 +267,8 @@ describe('API routes', () => {
 describe('nitro compatible APIs', () => {
   it('getRouteRules', async () => {
     const a = await getRouteRules('/test')
-    const b = await getRouteRules({} as H3Event)
     const c = getNitroRouteRules({} as H3Event)
 
-    expectTypeOf(b).toEqualTypeOf(c)
     expectTypeOf(c).toEqualTypeOf<NitroRouteRules>()
     expectTypeOf(a).toEqualTypeOf<Record<string, any>>()
   })
@@ -621,11 +633,11 @@ describe('components', () => {
     expectTypeOf(ServerComponent.slots).toEqualTypeOf<SlotsType<{ fallback: { error: unknown } }> | undefined>()
   })
 
-  it('types preloadComponents/prefetchComponents against global component names', () => {
-    expectTypeOf(preloadComponents).parameter(0).toEqualTypeOf<'GlobalComponent' | 'LazyGlobalComponent' | Array<'GlobalComponent' | 'LazyGlobalComponent'>>()
-    expectTypeOf(prefetchComponents).parameter(0).toEqualTypeOf<'GlobalComponent' | 'LazyGlobalComponent' | Array<'GlobalComponent' | 'LazyGlobalComponent'>>()
-    // @ts-expect-error not a global component
-    void preloadComponents('WithTypes')
+  it('suggests global component names to preloadComponents/prefetchComponents', () => {
+    type GlobalComponentName = 'GlobalComponent' | 'LazyGlobalComponent' | (string & {})
+    expectTypeOf(preloadComponents).parameter(0).toEqualTypeOf<GlobalComponentName | Array<GlobalComponentName>>()
+    expectTypeOf(prefetchComponents).parameter(0).toEqualTypeOf<GlobalComponentName | Array<GlobalComponentName>>()
+    void preloadComponents('RegisteredInAPlugin')
   })
 
   it('types NuxtIsland name against island component names', () => {
@@ -1045,6 +1057,18 @@ describe('request event typing', () => {
   it('resolves the event to the one contributed by `@nuxt/nitro-server`', () => {
     expectTypeOf(useRequestEvent()).toEqualTypeOf<H3Event | undefined>()
     expectTypeOf<NuxtSSRContext['event']>().toEqualTypeOf<H3Event>()
-    expectTypeOf<RequestEvent>().toEqualTypeOf<H3Event>()
+    expectTypeOf<NuxtRequestEvent>().toEqualTypeOf<H3Event>()
+  })
+})
+
+describe('route rules typing', () => {
+  it('resolves the rules contributed by `@nuxt/nitro-server`', () => {
+    const rules = getRouteRules(useRequestEvent()!)
+    expectTypeOf(rules.redirect).toEqualTypeOf<string | undefined>()
+    expectTypeOf(rules.prerender).toEqualTypeOf<boolean | undefined>()
+    expectTypeOf(rules.appMiddleware).toEqualTypeOf<Record<string, boolean> | undefined>()
+    expectTypeOf(rules.payload).toEqualTypeOf<boolean | undefined>()
+    expectTypeOf(rules.appLayout).toEqualTypeOf<LayoutKey | false | undefined>()
+    expectTypeOf(rules.headers).toEqualTypeOf<Record<string, string> | undefined>()
   })
 })

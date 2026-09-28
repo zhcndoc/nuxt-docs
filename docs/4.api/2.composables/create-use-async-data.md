@@ -9,7 +9,7 @@ links:
     size: xs
 ---
 
-`createUseAsyncData` 会创建一个带有预定义选项的自定义 [`useAsyncData`](/docs/4.x/api/composables/use-async-data) 可组合项。生成的可组合项具有完整的类型，并且与 `useAsyncData` 的工作方式完全一致，只是把你的默认值“烘焙”进去了。
+`createUseAsyncData` 会创建一个带有预定义选项的自定义 [`useAsyncData`](/docs/api/composables/use-async-data) 可组合项。生成的可组合项具有完整的类型，并且与 `useAsyncData` 的工作方式完全相同，只是预先设置了默认值。
 
 ::note
 `createUseAsyncData` 是一个编译宏。它必须作为 `composables/` 目录下（或任何被 Nuxt 编译器扫描的目录）中的**导出**声明来使用。Nuxt 会在构建时自动注入去重键（de-duplication keys）。
@@ -34,7 +34,7 @@ const { data: mountains } = await useCachedData(
 </script>
 ```
 
-生成的可组合项具有与 [`useAsyncData`](/docs/4.x/api/composables/use-async-data) 相同的签名和返回类型，并且所有选项都可供调用者使用或覆盖。
+生成的可组合项与 [`useAsyncData`](/docs/api/composables/use-async-data) 具有相同的签名和返回类型，调用者可以使用或覆盖所有选项。
 
 ## 类型
 
@@ -50,9 +50,9 @@ function createUseAsyncData (
 
 ## 选项
 
-`createUseAsyncData` 接受与 [`useAsyncData`](/docs/4.x/api/composables/use-async-data#parameters) 相同的所有选项，包括 `server`、`lazy`、`immediate`、`default`、`transform`、`pick`、`getCachedData`、`deep`、`dedupe`、`timeout` 和 `watch`。
+`createUseAsyncData` 接受与 [`useAsyncData`](/docs/api/composables/use-async-data#parameters) 相同的所有选项，包括 `server`、`lazy`、`immediate`、`default`、`transform`、`pick`、`getCachedData`、`deep`、`dedupe`、`timeout` 和 `watch`。
 
-完整的选项列表请参见 [`useAsyncData` 文档](/docs/4.x/api/composables/use-async-data#parameters)。
+请参阅 [`useAsyncData` 文档](/docs/api/composables/use-async-data#parameters)中的完整选项列表。
 
 ## 默认模式 vs 覆盖模式
 
@@ -86,6 +86,6 @@ export const useStrictData = createUseAsyncData(callerOptions => ({
 }))
 ```
 
-:read-more{to="/docs/4.x/guide/recipes/custom-usefetch"}
+:read-more{to="/docs/guide/recipes/custom-usefetch"}
 
-:read-more{to="/docs/4.x/api/composables/use-async-data"}
+:read-more{to="/docs/api/composables/use-async-data"}

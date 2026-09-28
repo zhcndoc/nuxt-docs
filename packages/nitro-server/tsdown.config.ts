@@ -2,9 +2,9 @@ import { defineConfig } from 'tsdown'
 
 export default defineConfig([
   {
-    dts: { oxc: true },
+    dts: { generator: 'oxc' },
     exports: { devExports: true },
-    entry: ['src/index.ts', 'src/h3.ts', 'src/augments.ts'],
+    entry: ['src/index.ts', 'src/h3.ts', 'src/augments.ts', 'src/request-types.ts'],
     deps: {
       onlyBundle: [],
       neverBundle: ['@nuxt/schema', '#app/types'],
@@ -29,9 +29,7 @@ export default defineConfig([
         '#internal/nuxt/app-config',
         '#internal/nuxt/entry-ids.mjs',
         '#internal/nuxt/nitro-config.mjs',
-        '#internal/unhead.config.mjs',
-        '#internal/unhead-options.mjs',
-        '#spa-template',
+        '#internal/nuxt/error-channel',
       ],
     },
   },

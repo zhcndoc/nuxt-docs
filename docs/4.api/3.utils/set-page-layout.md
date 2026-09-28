@@ -9,7 +9,7 @@ links:
 ---
 
 ::important
-`setPageLayout` 允许你动态更改页面的布局。它依赖于访问 Nuxt 上下文，因此只能在[Nuxt 上下文](/docs/4.x/guide/going-further/nuxt-app#the-nuxt-context)内调用。
+`setPageLayout` 允许你动态更改页面的布局。它依赖于对 Nuxt context 的访问，因此只能在 [Nuxt context](/docs/guide/going-further/nuxt-app#the-nuxt-context) 中调用。
 ::
 
 ```ts [app/middleware/custom-layout.ts]
@@ -56,5 +56,5 @@ const props = defineProps<{
 ```
 
 ::note
-如果你选择在服务器端动态设置布局，你必须在 Vue 渲染布局之前（即在插件或路由中间件中）执行此操作，以避免水合（hydration）不匹配。
+如果你选择在服务器端动态设置布局，你必须在 Vue 渲染布局之前（即在插件或路由中间件中）执行此操作，以避免水合不匹配。
 ::

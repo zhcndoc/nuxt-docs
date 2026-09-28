@@ -11,7 +11,7 @@ links:
 
 ## 描述
 
-`useLayout` 会返回一个计算属性 ref，用于获取当前路由已解析出的布局，其解析链与 [`<NuxtLayout>`](/docs/4.x/api/components/nuxt-layout) 相同：先使用页面的 `layout` 元信息，然后使用通过 [路由规则](/docs/4.x/guide/concepts/rendering#hybrid-rendering) 设置的 `appLayout`，最后是 `'default'`。
+`useLayout` 返回一个计算型 ref，其中包含当前路由解析后的布局，使用与 [`<NuxtLayout>`](/docs/api/components/nuxt-layout) 相同的链：首先是页面的 `layout` 元数据，然后是通过[路由规则](/docs/guide/concepts/rendering#hybrid-rendering)设置的 `appLayout`，最后是 `'default'`。
 
 在已渲染的 `<NuxtLayout>` 内部，它会反映外层布局；在其外部（例如在 `app.vue` 中），它会返回当前路由将会解析出的布局。
 

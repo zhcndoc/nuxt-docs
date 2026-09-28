@@ -25,8 +25,8 @@ describe.skipIf(process.env.SKIP_BUNDLE_SIZE === 'true' || process.env.ECOSYSTEM
     const [clientStats, clientStatsInlined] = await Promise.all((['.output', '.output-inline'])
       .map(outputDir => analyzeSizes(['**/*.js'], join(rootDir, outputDir, 'public'), rootDir)))
 
-    expect.soft(roundToKilobytes(clientStats!.totalBytes)).toMatchInlineSnapshot(`"125k"`)
-    expect.soft(roundToKilobytes(clientStatsInlined!.totalBytes)).toMatchInlineSnapshot(`"125k"`)
+    expect.soft(roundToKilobytes(clientStats!.totalBytes)).toMatchInlineSnapshot(`"123k"`)
+    expect.soft(roundToKilobytes(clientStatsInlined!.totalBytes)).toMatchInlineSnapshot(`"123k"`)
 
     const files = new Set([...clientStats!.files, ...clientStatsInlined!.files].map(f => f.replace(/\..*\.js/, '.js')))
 
@@ -40,7 +40,7 @@ describe.skipIf(process.env.SKIP_BUNDLE_SIZE === 'true' || process.env.ECOSYSTEM
   it('does not ship payload revival machinery in a spa build', async () => {
     const clientStats = await analyzeSizes(['**/*.js'], join(spaRootDir, '.output/public'), spaRootDir)
 
-    expect.soft(roundToKilobytes(clientStats!.totalBytes)).toMatchInlineSnapshot(`"118k"`)
+    expect.soft(roundToKilobytes(clientStats!.totalBytes)).toMatchInlineSnapshot(`"117k"`)
 
     const contents = await Promise.all(
       (await glob(['**/*.js'], { cwd: join(spaRootDir, '.output/public') }))
@@ -77,10 +77,10 @@ describe.skipIf(process.env.SKIP_BUNDLE_SIZE === 'true' || process.env.ECOSYSTEM
     const serverDir = join(rootDir, '.output/server')
 
     const serverStats = await analyzeSizes(['**/*.mjs', '!node_modules'], serverDir, rootDir)
-    expect.soft(roundToKilobytes(serverStats.totalBytes)).toMatchInlineSnapshot(`"117k"`)
+    expect.soft(roundToKilobytes(serverStats.totalBytes)).toMatchInlineSnapshot(`"121k"`)
 
     const modules = await analyzeSizes(['node_modules/**/*'], serverDir, rootDir)
-    expect.soft(roundToKilobytes(modules.totalBytes)).toMatchInlineSnapshot(`"1603k"`)
+    expect.soft(roundToKilobytes(modules.totalBytes)).toMatchInlineSnapshot(`"1627k"`)
 
     const packages = modules.files
       .filter(m => m.endsWith('package.json'))
@@ -116,10 +116,10 @@ describe.skipIf(process.env.SKIP_BUNDLE_SIZE === 'true' || process.env.ECOSYSTEM
     const serverDir = join(rootDir, '.output-inline/server')
 
     const serverStats = await analyzeSizes(['**/*.mjs', '!node_modules'], serverDir, rootDir)
-    expect.soft(roundToKilobytes(serverStats.totalBytes)).toMatchInlineSnapshot(`"282k"`)
+    expect.soft(roundToKilobytes(serverStats.totalBytes)).toMatchInlineSnapshot(`"294k"`)
 
     const modules = await analyzeSizes(['node_modules/**/*'], serverDir, rootDir)
-    expect.soft(roundToKilobytes(modules.totalBytes)).toMatchInlineSnapshot(`"249k"`)
+    expect.soft(roundToKilobytes(modules.totalBytes)).toMatchInlineSnapshot(`"257k"`)
 
     const packages = modules.files
       .filter(m => m.endsWith('package.json'))
@@ -139,10 +139,10 @@ describe.skipIf(process.env.SKIP_BUNDLE_SIZE === 'true' || process.env.ECOSYSTEM
     const serverDir = join(pagesRootDir, '.output/server')
 
     const serverStats = await analyzeSizes(['**/*.mjs', '!node_modules'], serverDir, pagesRootDir)
-    expect.soft(roundToKilobytes(serverStats.totalBytes)).toMatchInlineSnapshot(`"149k"`)
+    expect.soft(roundToKilobytes(serverStats.totalBytes)).toMatchInlineSnapshot(`"156k"`)
 
     const modules = await analyzeSizes(['node_modules/**/*'], serverDir, pagesRootDir)
-    expect.soft(roundToKilobytes(modules.totalBytes)).toMatchInlineSnapshot(`"1744k"`)
+    expect.soft(roundToKilobytes(modules.totalBytes)).toMatchInlineSnapshot(`"1748k"`)
 
     const packages = modules.files
       .filter(m => m.endsWith('package.json'))
@@ -224,6 +224,31 @@ describe.skipIf(process.env.SKIP_BUNDLE_SIZE === 'true' || process.env.ECOSYSTEM
     // a page whose canonical path is `noScripts` but which has a scripted alias
     // keeps its component so the alias can still render client-side
     expect(bundle).toContain('aliased-page')
+  })
+})
+
+describe.skipIf(process.env.SKIP_BUNDLE_SIZE === 'true' || process.env.ECOSYSTEM_CI)('server path fallback', () => {
+  const rootDir = fileURLToPath(new URL('./fixtures/server-path-fallback', import.meta.url))
+  const disabledRootDir = fileURLToPath(new URL('./fixtures/server-path-fallback-disabled', import.meta.url))
+  let enabled: string
+  let disabled: string
+
+  beforeAll(async () => {
+    await Promise.all([
+      exec('pnpm', ['nuxt', 'build', rootDir]),
+      exec('pnpm', ['nuxt', 'build', disabledRootDir]),
+    ])
+    enabled = await readClientBundle(join(rootDir, '.output/public'))
+    disabled = await readClientBundle(join(disabledRootDir, '.output/public'))
+  }, 240 * 1000)
+
+  it('ships the fallback when enabled', () => {
+    // the `noScripts` document load, plus this one
+    expect(enabled.match(/location\.assign/g)).toHaveLength(2)
+  })
+
+  it('ships nothing when disabled', () => {
+    expect(disabled.match(/location\.assign/g)).toHaveLength(1)
   })
 })
 
@@ -324,4 +349,10 @@ function allForms (value: string) {
 
 function roundToKilobytes (bytes: number) {
   return (bytes / 1024).toFixed(bytes > (100 * 1024) ? 0 : 1) + 'k'
+}
+
+async function readClientBundle (dir: string) {
+  const files = await glob(['**/*.js'], { cwd: dir })
+  const contents = await Promise.all(files.map(file => fsp.readFile(join(dir, file), 'utf8')))
+  return contents.join('\n')
 }

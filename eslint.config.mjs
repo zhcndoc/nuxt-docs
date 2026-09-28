@@ -8,6 +8,7 @@ import { importX } from 'eslint-plugin-import-x'
 import parser from '@typescript-eslint/parser'
 import markdown from '@eslint/markdown'
 import { runtimeDependencies } from 'nuxt/meta'
+import { generatedTemplateCopies } from './packages/ui-templates/lib/paths.mjs'
 
 export default createConfigForNuxt({
   features: {
@@ -25,14 +26,11 @@ export default createConfigForNuxt({
       ignores: [
         '.goff/**',
         'packages/schema/schema/**',
-        'packages/nuxt/src/app/components/welcome.vue',
-        'packages/nuxt/src/app/components/error-*.vue',
-        'packages/nuxt/src/core/runtime/nitro/templates/error-*',
-        'packages/nitro-server/src/runtime/templates/error-*',
-        'packages/nitro-server/src/templates/spa-loading-icon.ts',
-        'packages/vite-server/src/templates/spa-loading-icon.ts',
-        'packages/schema/src/templates/loading.ts',
+        ...Object.keys(generatedTemplateCopies),
         'packages/kit/test/types-fixture/**',
+        // deliberately does not compile
+        'test/fixtures/dev-error-sourcemap/app/components/Broken.vue',
+        'test/fixtures/vite-server-dev-error/app/components/Broken.vue',
       ],
     },
     {
@@ -216,7 +214,7 @@ export default createConfigForNuxt({
     },
     {
       files: ['packages/*/src/**'],
-      ignores: ['packages/nuxt/src/app/**', '**/runtime/**/*'],
+      ignores: ['packages/nuxt/src/app/**', 'packages/nuxt/src/server/**', '**/runtime/**/*'],
       name: 'local/import-extensions',
       plugins: {
         'import-x': importX,

@@ -8,11 +8,11 @@ links:
     size: xs
 ---
 
-在 [Nuxt 上下文](/docs/4.x/guide/going-further/nuxt-app#the-nuxt-context) 中，你可以使用 `showError` 来显示一个错误。
+在 [Nuxt 上下文](/docs/guide/going-further/nuxt-app#the-nuxt-context)中，你可以使用 `showError` 显示错误。
 
 **参数：**
 
-- `error`: `string | Error | Partial<{ cause, data, message, name, stack, status, statusText }>`
+- `error`：`string | Error | Partial<{ cause, data, message, name, stack, status, statusText }>`
 
 ```ts
 showError('😱 Oh no, an error has been thrown.')
@@ -22,10 +22,10 @@ showError({
 })
 ```
 
-该错误通过使用 [`useError()`](/docs/4.x/api/composables/use-error) 在状态中设置，以便在组件之间创建一个响应式且对 SSR 友好的共享错误状态。
+使用 [`useError()`](/docs/api/composables/use-error) 将错误设置到状态中，以在组件间创建响应式且支持 SSR 的共享错误状态。
 
 ::tip
 `showError` 会调用 `app:error` 钩子。
 ::
 
-:read-more{to="/docs/4.x/getting-started/error-handling"}
+:read-more{to="/docs/getting-started/error-handling"}

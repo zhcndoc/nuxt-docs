@@ -1,5 +1,34 @@
-import type { NuxtTemplate, TSReference } from 'nuxt/schema'
+import type { NuxtTemplate, NuxtTypeTemplate, TSReference } from 'nuxt/schema'
 import { isAbsolute, join, relative } from 'pathe'
+
+/**
+ * Hands the response types nitro scanned into its own `InternalApi` to Nuxt's typed `$fetch`.
+ *
+ * Emitted rather than declared in this package's own augments, because with
+ * `experimental.routeTypedFetch` requests are typed from the generated route set instead, and a
+ * route described both ways on one interface is an error.
+ */
+export const nitroInternalApiTemplate: NuxtTypeTemplate = {
+  filename: 'types/nitro-internal-api.d.ts',
+  dependsOn: [],
+  getContents ({ nuxt }) {
+    if (nuxt.options.experimental.routeTypedFetch) {
+      return 'export {}\n'
+    }
+    return /* typescript */`
+import type { InternalApi } from 'nitropack/types'
+
+declare module '@nuxt/schema' {
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  interface ServerRoutes extends InternalApi {}
+}
+declare module 'nuxt/schema' {
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  interface ServerRoutes extends InternalApi {}
+}
+`
+  },
+}
 
 export const nitroSchemaTemplate: NuxtTemplate = {
   filename: 'types/nitro-nuxt.d.ts',
@@ -18,17 +47,14 @@ export const nitroSchemaTemplate: NuxtTemplate = {
     return /* typescript */`
 ${lines.join('\n')}
 
-import type { RuntimeConfig } from 'nuxt/schema'
+import type { RouteRuleConfigExtensions, RuntimeConfig, RuntimeConfigApp } from 'nuxt/schema'
 import type { H3Event } from 'h3'
-import type { LogObject } from 'consola'
-import type { NuxtIslandContext, NuxtIslandResponse, NuxtRenderChunkContext, NuxtRenderCloseContext, NuxtRenderHTMLContext, NuxtRenderRouteContext } from '#app/types'
+import type { DevServerLog, NuxtIslandContext, NuxtIslandResponse, NuxtRenderChunkContext, NuxtRenderCloseContext, NuxtRenderHTMLContext, NuxtRenderRouteContext } from '#app/types'
 
 declare module 'nitropack' {
-  interface NitroRuntimeConfigApp {
-    buildAssetsDir: string
-    cdnURL: string
-  }
   interface NitroRuntimeConfig extends RuntimeConfig {}
+  interface NitroRuntimeConfigApp extends RuntimeConfigApp {}
+  interface NitroRouteConfig extends RouteRuleConfigExtensions {}
   interface NitroRouteConfig {
     ssr?: boolean
     streaming?: boolean
@@ -46,7 +72,7 @@ declare module 'nitropack' {
     appLayout?: string | false
   }
   interface NitroRuntimeHooks {
-    'dev:ssr-logs': (ctx: { logs: LogObject[], path: string }) => void | Promise<void>
+    'dev:ssr-logs': (ctx: { logs: DevServerLog[], path: string }) => void | Promise<void>
     'render:html': (htmlContext: NuxtRenderHTMLContext, context: { event: H3Event, streaming?: boolean }) => void | Promise<void>
     'render:html:chunk': (chunkContext: NuxtRenderChunkContext, context: { event: H3Event }) => void | Promise<void>
     'render:html:close': (closeContext: NuxtRenderCloseContext, context: { event: H3Event }) => void | Promise<void>
@@ -55,11 +81,9 @@ declare module 'nitropack' {
   }
 }
 declare module 'nitropack/types' {
-  interface NitroRuntimeConfigApp {
-    buildAssetsDir: string
-    cdnURL: string
-  }
   interface NitroRuntimeConfig extends RuntimeConfig {}
+  interface NitroRuntimeConfigApp extends RuntimeConfigApp {}
+  interface NitroRouteConfig extends RouteRuleConfigExtensions {}
   interface NitroRouteConfig {
     ssr?: boolean
     streaming?: boolean
@@ -77,7 +101,7 @@ declare module 'nitropack/types' {
     appLayout?: string | false
   }
   interface NitroRuntimeHooks {
-    'dev:ssr-logs': (ctx: { logs: LogObject[], path: string }) => void | Promise<void>
+    'dev:ssr-logs': (ctx: { logs: DevServerLog[], path: string }) => void | Promise<void>
     'render:html': (htmlContext: NuxtRenderHTMLContext, context: { event: H3Event, streaming?: boolean }) => void | Promise<void>
     'render:html:chunk': (chunkContext: NuxtRenderChunkContext, context: { event: H3Event }) => void | Promise<void>
     'render:html:close': (closeContext: NuxtRenderCloseContext, context: { event: H3Event }) => void | Promise<void>

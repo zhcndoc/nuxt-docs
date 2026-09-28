@@ -9,7 +9,7 @@ links:
     size: xs
 ---
 
-`createUseFetch` 会创建一个带有预定义选项的自定义 [`useFetch`](/docs/4.x/api/composables/use-fetch) 组合式函数。生成的组合式函数会被完整地类型推断，并且与 `useFetch` 的工作方式完全相同，只是把你的默认值“烘焙”进去了。
+`createUseFetch` 会创建一个带有预定义选项的自定义 [`useFetch`](/docs/api/composables/use-fetch) 组合式函数。生成的组合式函数具有完整的类型定义，使用方式与 `useFetch` 完全相同，但会预先应用你设置的默认值。
 
 ::note
 `createUseFetch` 是一个编译宏。它必须在 `composables/` 目录中以**导出的声明**形式使用（或任何被 Nuxt 编译器扫描的目录）。Nuxt 会在构建时自动注入去重 key。
@@ -29,7 +29,7 @@ const { data: modules } = await useAPI('/modules')
 </script>
 ```
 
-生成的 `useAPI` 组合式函数具有与 [`useFetch`](/docs/4.x/api/composables/use-fetch) 相同的签名和返回类型；并且调用方可以使用或覆盖所有选项。
+生成的 `useAPI` 组合式函数具有与 [`useFetch`](/docs/api/composables/use-fetch) 相同的签名和返回类型，调用方可以使用或覆盖所有选项。
 
 ## 类型
 
@@ -45,15 +45,15 @@ function createUseFetch (
 
 ## 选项
 
-`createUseFetch` 接受与 [`useFetch`](/docs/4.x/api/composables/use-fetch#parameters) 相同的所有选项，包括 `baseURL`、`headers`、`query`、`onRequest`、`onResponse`、`server`、`lazy`、`transform`、`getCachedData` 等。
+`createUseFetch` 接受与 [`useFetch`](/docs/api/composables/use-fetch#parameters) 相同的所有选项，包括 `baseURL`、`headers`、`query`、`onRequest`、`onResponse`、`server`、`lazy`、`transform`、`getCachedData` 等。
 
-请在 [`useFetch 文档`](/docs/4.x/api/composables/use-fetch#parameters) 中查看完整的选项列表。
+请参阅 [`useFetch` 文档](/docs/api/composables/use-fetch#parameters)中的完整选项列表。
 
 ## 默认模式 vs 覆盖模式
 
 ### 默认模式（普通对象）
 
-当你传入一个普通对象时，工厂选项会作为**默认值**。调用方可以覆盖任何选项：
+传入普通对象时，工厂选项会作为**默认值**。调用方可以覆盖任何选项：
 
 ```ts [app/composables/useAPI.ts]
 export const useAPI = createUseFetch({
@@ -72,7 +72,7 @@ const { data } = await useAPI('/modules', { baseURL: 'https://other-api.com' })
 
 ### 覆盖模式（函数）
 
-当你传入一个函数时，工厂选项会**覆盖**调用方的选项。该函数会把调用方的选项作为参数传入，因此你可以读取它们来计算你的覆盖项：
+传入函数时，工厂选项会**覆盖**调用方的选项。调用方的选项会作为参数传入该函数，因此你可以读取这些选项来计算要覆盖的值：
 
 ```ts [app/composables/useAPI.ts]
 // 无论调用方传入什么，baseURL 都会被强制使用
@@ -81,11 +81,11 @@ export const useAPI = createUseFetch(callerOptions => ({
 }))
 ```
 
-这对于强制执行诸如认证头或某个特定 base URL 等设置非常有用，并且不应由调用方修改。
+这对于强制使用认证头或特定 base URL 等设置非常有用，因为这些设置不应由调用方修改。
 
 ## 与自定义 `$fetch` 结合
 
-你可以向 `createUseFetch` 传入一个自定义的 `$fetch` 实例：
+你可以向 `createUseFetch` 传入自定义 `$fetch` 实例：
 
 ```ts [app/composables/useAPI.ts]
 export const useAPI = createUseFetch(callerOptions => ({
@@ -95,9 +95,9 @@ export const useAPI = createUseFetch(callerOptions => ({
 ```
 
 ::important
-这里需要使用**函数签名**（覆盖模式），以便在组合式函数调用处的 setup 上下文中调用 [`useNuxtApp()`](/docs/4.x/api/composables/use-nuxt-app)，而不是在模块作用域中调用（模块作用域下没有可用的 Nuxt 实例）。
+此处必须使用**函数签名**（覆盖模式），这样 [`useNuxtApp()`](/docs/api/composables/use-nuxt-app) 才会在设置上下文（即调用组合式函数的位置）中调用，而不是在没有 Nuxt 实例可用的模块作用域中调用。
 ::
 
-:read-more{to="/docs/4.x/guide/recipes/custom-usefetch"}
+:read-more{to="/docs/guide/recipes/custom-usefetch"}
 
-:read-more{to="/docs/4.x/api/composables/use-fetch"}
+:read-more{to="/docs/api/composables/use-fetch"}

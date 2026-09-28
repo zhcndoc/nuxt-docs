@@ -15,7 +15,7 @@ links:
 
 ## 描述
 
-一个用于向屏幕阅读器宣布动态内容变化的组合式函数。与会自动宣布路由变化的 [`useRouteAnnouncer`](/docs/4.x/api/composables/use-route-announcer) 不同，`useAnnouncer` 让你可以手动控制要宣布的内容以及宣布时机。
+一个用于向屏幕阅读器播报动态内容变化的组合式函数。与会自动播报路由变化的 [`useRouteAnnouncer`](/docs/api/composables/use-route-announcer) 不同，`useAnnouncer` 让你能够手动控制播报的内容和时机。
 
 适用于页面内更新，如表单验证、异步操作、吐司通知和实时内容变化。
 
@@ -121,9 +121,9 @@ watch(results, (newResults) => {
 ```
 
 ::callout
-你需要在应用中添加 [`<NuxtAnnouncer>`](/docs/4.x/api/components/nuxt-announcer) 组件，才能让公告渲染到 DOM 中。
+你需要在应用中添加 [`<NuxtAnnouncer>`](/docs/api/components/nuxt-announcer) 组件，才能将公告渲染到 DOM 中。
 ::
 
 ::callout
-如需自动宣布路由/页面变化，请使用 [`useRouteAnnouncer`](/docs/4.x/api/composables/use-route-announcer) 搭配 [`<NuxtRouteAnnouncer>`](/docs/4.x/api/components/nuxt-route-announcer) 组件。
+如需自动播报路由／页面变化，请改用 [`<NuxtRouteAnnouncer>`](/docs/api/components/nuxt-route-announcer) 组件搭配 [`useRouteAnnouncer`](/docs/api/composables/use-route-announcer)。
 ::

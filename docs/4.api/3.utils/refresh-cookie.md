@@ -34,8 +34,8 @@ const loggedIn = computed(() => !!tokenCookie.value)
 </script>
 ```
 
-::note{to="/docs/4.x/guide/going-further/experimental-features#cookiestore"}
-自 [Nuxt v3.12.0](https://github.com/nuxt/nuxt/releases/tag/v3.12.0) 起，实验性的 `cookieStore` 选项默认启用。当浏览器中的 cookie 发生变化时，它会自动刷新 `useCookie` 的值。
+::note{to="/docs/guide/going-further/experimental-features#cookiestore"}
+自 [Nuxt v3.12.0](https://github.com/nuxt/nuxt/releases/tag/v3.12.0) 起，实验性的 `cookieStore` 选项默认启用。当浏览器中的 Cookie 发生变化时，它会自动刷新 `useCookie` 的值。
 ::
 
 ## 类型

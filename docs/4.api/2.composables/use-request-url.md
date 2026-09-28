@@ -12,7 +12,7 @@ links:
 `useRequestURL` 是一个辅助函数，返回一个在服务器端和客户端均可使用的 [URL 对象](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL)。
 
 ::important
-在使用带有缓存策略的 [Hybrid Rendering](/docs/4.x/guide/concepts/rendering#hybrid-rendering) 时，通过 [Nitro 缓存层](https://nitro.zhcndoc.com/guide/cache) 处理缓存响应时会丢弃所有传入的请求头（这意味着 `useRequestURL` 在 `host` 上会返回 `localhost`）。
+使用带有缓存策略的[混合渲染](/docs/guide/concepts/rendering#hybrid-rendering)时，通过 [Nitro 缓存层](https://nitro.build/guide/cache)处理缓存响应时，所有传入的请求头都会被丢弃（这意味着 `useRequestURL` 将为 `host` 返回 `localhost`）。
 
 你可以定义 [`cache.varies` 选项](https://nitro.zhcndoc.com/guide/cache#options) 来指定在缓存和提供响应时要考虑的头，例如用于多租户环境的 `host` 和 `x-forwarded-host`。
 ::
@@ -30,7 +30,7 @@ const url = useRequestURL()
 </template>
 ```
 
-```html [Result in development]
+```html [开发环境中的结果]
 <p>URL 为： http://localhost:3000/about</p>
 <p>路径为： /about</p>
 ```

@@ -9,17 +9,20 @@ import { getRequestDependencies } from 'vue-bundle-renderer/runtime'
 import { getQuery as getURLQuery } from 'ufo'
 import { filterIslandProps, getIslandHash } from '#app/island-hash'
 import { findUnsafeIslandPropKey } from '#app/island-props'
-import { MAX_ISLAND_BODY_BYTES, exceedsMaxBytes, exceedsMaxDepth } from '../utils/island-props'
+import { MAX_ISLAND_BODY_BYTES, MAX_ISLAND_DRAIN_BYTES, exceedsMaxBytes, exceedsMaxDepth } from '../utils/island-props'
 import type { NuxtIslandContext, NuxtIslandResponse } from '#app/types'
 import { traceAsync } from '#app/internal/tracing'
 import { runtimeCompiler, tracingChannelNuxt } from '#internal/nuxt.config.mjs'
 import { serverDiagnostics } from '../diagnostics'
 import { islandCache, islandPropCache, prerenderRenderingURLs } from '../utils/cache'
-import { createSSRContext } from '../utils/renderer/app'
-import { getSSRRenderer } from '../utils/renderer/build-files'
-import { renderInlineStyles } from '../utils/renderer/inline-styles'
-import { getClientIslandResponse, getServerComponentHTML, getSlotIslandResponse } from '../utils/renderer/islands'
-import { isStyleOfModule } from '../utils/renderer/dev-css'
+import { createSSRContext } from 'nuxt/internal/renderer/app'
+import { renderInlineStyles } from 'nuxt/internal/renderer/inline-styles'
+import { getClientIslandResponse, getServerComponentHTML, getSlotIslandResponse } from 'nuxt/internal/renderer/islands'
+import { isStyleOfModule } from 'nuxt/internal/renderer/dev-css'
+import { toRequestEvent } from '../utils/event'
+import { applyIslandPrerenderHints } from '../utils/prerender'
+
+import { rendererInstance } from '../utils/renderer/options'
 
 const ISLAND_SUFFIX_RE = /\.json(?:\?.*)?$/
 
@@ -45,6 +48,17 @@ const handler: EventHandler = defineEventHandler(async (event) => {
     return toResponse(event, await renderIsland(event))
   }
 
+  try {
+    return await prerenderIslandRequest(event)
+  } catch (error) {
+    applyIslandPrerenderHints(event)
+    throw error
+  }
+})
+
+export default handler
+
+async function prerenderIslandRequest (event: H3Event) {
   const islandPath = (event.path || '').replace(/\?.*$/, '')
   const stack = prerenderRenderingURLs!.getStore()
   if (stack?.includes(islandPath)) {
@@ -73,11 +87,12 @@ const handler: EventHandler = defineEventHandler(async (event) => {
   }
 
   return toResponse(event, await prerenderIsland(event, islandPath))
-})
-
-export default handler
+}
 
 function toResponse (event: H3Event, result: IslandRenderResult) {
+  if (import.meta.prerender) {
+    applyIslandPrerenderHints(event)
+  }
   return 'raw' in result ? returnIslandResponse(event, result.raw) : result
 }
 
@@ -115,14 +130,14 @@ async function renderIsland (event: H3Event): Promise<IslandRenderResult> {
   const islandContext = await getIslandContext(event)
 
   const ssrContext = {
-    ...createSSRContext(event),
+    ...createSSRContext(rendererInstance.options, toRequestEvent(event)),
     islandContext,
     noSSR: false,
     url: islandContext.url,
   }
 
   // Render app
-  const renderer = await getSSRRenderer()
+  const renderer = await rendererInstance.getSSRRenderer()
 
   const renderResult = await (tracingChannelNuxt
     ? traceAsync('nuxt.island', { event, ssrContext, islandContext }, () => renderer.renderToString(ssrContext))
@@ -220,11 +235,28 @@ function returnIslandResponse (event: H3Event, response: Partial<RenderResponse>
 const ISLAND_PATH_PREFIX = '/__nuxt_island/'
 const VALID_COMPONENT_NAME_RE = /^[a-z][\w.-]*$/i
 
+async function drainBody (event: H3Event) {
+  const stream = getRequestWebStream(event)
+  if (!stream) { return }
+  const reader = stream.getReader()
+  try {
+    for (;;) {
+      const { done } = await reader.read()
+      if (done) { break }
+    }
+  } finally {
+    reader.releaseLock()
+  }
+}
+
 // Read a non-GET island body, refusing oversized or deeply nested input before the JSON
 // parse and hash run on it.
 async function readGuardedIslandBody (event: H3Event): Promise<NuxtIslandContext> {
   const contentLength = Number(getRequestHeader(event, 'content-length'))
   if (contentLength > MAX_ISLAND_BODY_BYTES) {
+    if (contentLength <= MAX_ISLAND_DRAIN_BYTES) {
+      await drainBody(event)
+    }
     throw createError({ statusCode: 413, statusMessage: 'Island request body too large' })
   }
 

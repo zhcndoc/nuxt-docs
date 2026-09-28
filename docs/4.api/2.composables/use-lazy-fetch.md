@@ -8,11 +8,11 @@ links:
     size: xs
 ---
 
-`useLazyFetch` 是对 [`useFetch`](/docs/4.x/api/composables/use-fetch) 的封装，通过将 `lazy` 选项设置为 `true`，在处理器解析前就触发导航。
+`useLazyFetch` 提供了一个 [`useFetch`](/docs/api/composables/use-fetch) 封装，通过将 `lazy` 选项设置为 `true`，在处理程序解析完成前触发导航。
 
 ## 用法
 
-默认情况下， [`useFetch`](/docs/4.x/api/composables/use-fetch) 会阻塞导航，直到异步处理器解析完成。`useLazyFetch` 允许导航立即进行，数据则在后台获取。
+默认情况下，[`useFetch`](/docs/api/composables/use-fetch) 会阻止导航，直到其异步处理程序解析完成。`useLazyFetch` 允许导航立即继续，同时在后台获取数据。
 
 ```vue [app/pages/index.vue]
 <script setup lang="ts">
@@ -35,7 +35,7 @@ const { status, data: posts } = await useLazyFetch('/api/posts')
 ```
 
 ::note
-`useLazyFetch` 具有与 [`useFetch`](/docs/4.x/api/composables/use-fetch) 相同的函数签名。
+`useLazyFetch` 与 [`useFetch`](/docs/api/composables/use-fetch) 具有相同的签名。
 ::
 
 ::warning
@@ -56,21 +56,21 @@ export function useLazyFetch<ResT, ErrorT = NuxtError<unknown>, DataT = ResT> (
 ```
 
 ::note
-`useLazyFetch` 等价于设置了 `lazy: true` 选项的 `useFetch`。完整类型定义详见 [`useFetch`](/docs/4.x/api/composables/use-fetch)。
+`useLazyFetch` 等同于设置了 `lazy: true` 选项的 `useFetch`。完整的类型定义请参阅 [`useFetch`](/docs/api/composables/use-fetch)。
 ::
 
 ## 参数
 
-`useLazyFetch` 接受与 [`useFetch`](/docs/4.x/api/composables/use-fetch) 相同的参数：
+`useLazyFetch` 接受与 [`useFetch`](/docs/api/composables/use-fetch) 相同的参数：
 
-- `URL` (`string | Request | Ref<string | Request> | () => string | Request`)：要请求的 URL 或请求对象。
-- `options` (对象)：与 [`useFetch` 选项](/docs/4.x/api/composables/use-fetch#parameters) 相同，`lazy` 选项会自动设置为 `true`。
+- `URL` (`string | Request | Ref<string | Request> | () => string | Request`)：要获取的 URL 或请求。
+- `options`（对象）：与 [`useFetch` 选项](/docs/api/composables/use-fetch#parameters)相同，其中 `lazy` 会自动设置为 `true`。
 
-:read-more{to="/docs/4.x/api/composables/use-fetch#parameters"}
+:read-more{to="/docs/api/composables/use-fetch#parameters"}
 
 ## 返回值
 
-返回与 [`useFetch`](/docs/4.x/api/composables/use-fetch) 相同的 `AsyncData` 对象：
+返回与 [`useFetch`](/docs/api/composables/use-fetch) 相同的 `AsyncData` 对象：
 
 | 名称      | 类型                                                | 说明                                                                                                      |
 |-----------|-----------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
@@ -78,11 +78,11 @@ export function useLazyFetch<ResT, ErrorT = NuxtError<unknown>, DataT = ResT> (
 | `refresh` | `(opts?: AsyncDataExecuteOptions) => Promise<void>` | 手动刷新数据的函数。                                                                           |
 | `execute` | `(opts?: AsyncDataExecuteOptions) => Promise<void>` | `refresh` 的别名。                                                                                             |
 | `error`   | `Ref<ErrorT \| undefined>`                          | 数据获取失败时的错误对象。                                                                        |
-| `status`   | `Ref<'idle' \| 'pending' \| 'success' \| 'error'>`  | 数据请求的状态。可用于区分 `idle`、`pending`、`success` 和 `error`。                     |
-| `pending` | `Ref<boolean>`                                      | 请求进行中时为 `true`。参见 [`useFetch`](/docs/4.x/api/composables/use-fetch#return-values)。        |
-| `clear`   | `() => void`                                        | 将 `data` 重置为 `undefined`、将 `error` 重置为 `undefined`、将 `status` 设为 `idle`，并取消任何待处理的请求。 |
+| `status`  | `Ref<'idle' \| 'pending' \| 'success' \| 'error'>`  | 数据请求的状态。使用它来区分 `idle`、`pending`、`success` 和 `error`。                     |
+| `pending` | `Ref<boolean>`                                      | 请求进行中时为 `true`。请参阅 [`useFetch`](/docs/api/composables/use-fetch#return-values)。        |
+| `clear`   | `() => void`                                        | 将 `data` 重置为 `undefined`，将 `error` 重置为 `undefined`，将 `status` 设置为 `idle`，并取消所有待处理的请求。 |
 
-:read-more{to="/docs/4.x/api/composables/use-fetch#return-values"}
+:read-more{to="/docs/api/composables/use-fetch#return-values"}
 
 ## 示例
 
@@ -114,4 +114,4 @@ watch(posts, (newPosts) => {
 </template>
 ```
 
-:read-more{to="/docs/4.x/getting-started/data-fetching"}
+:read-more{to="/docs/getting-started/data-fetching"}

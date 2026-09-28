@@ -11,16 +11,16 @@ links:
 Nuxt 使用 [ofetch](https://github.com/unjs/ofetch) 在全局暴露 `$fetch` 助手，以便在你的 Vue 应用或 API 路由中发起 HTTP 请求。
 
 ::tip{icon="i-lucide-rocket"}
-在服务端渲染期间，调用 `$fetch` 去获取你的内部 [API 路由](/docs/4.x/directory-structure/server) 会直接调用相应的函数（模拟该请求），**节省一次额外的 API 调用**。
+在服务器端渲染期间，调用 `$fetch` 获取内部的 [API 路由](/docs/directory-structure/server)时，会直接调用相应的函数（模拟请求），**节省一次额外的 API 调用**。
 ::
 
 ::note{color="blue" icon="i-lucide-info"}
-在组件中直接使用 `$fetch` 而不将其包裹在 [`useAsyncData`](/docs/4.x/api/composables/use-async-data) 中，会导致数据被重复获取：在服务端首次获取一次，然后在客户端在 hydration 期间再次获取一次，因为 `$fetch` 不会将服务器端的状态传递到客户端。因此该请求会在两端都执行，客户端必须重新获取数据。
+在组件中使用 `$fetch`，但不将其与 [`useAsyncData`](/docs/api/composables/use-async-data) 一起使用，会导致数据被获取两次：最初在服务器上获取一次，然后在客户端水合期间再获取一次，因为 `$fetch` 不会将状态从服务器传递到客户端。因此，客户端必须重新获取数据，导致两端都会执行获取操作。
 ::
 
 ## 用法
 
-我们建议使用 [`useFetch`](/docs/4.x/api/composables/use-fetch) 或者 使用 [`useAsyncData`](/docs/4.x/api/composables/use-async-data) + `$fetch`，以避免在获取组件数据时发生重复获取。
+我们建议使用 [`useFetch`](/docs/api/composables/use-fetch) 或 [`useAsyncData`](/docs/api/composables/use-async-data) + `$fetch`，以避免在获取组件数据时重复获取数据。
 
 ```vue [app/app.vue]
 <script setup lang="ts">
@@ -35,7 +35,7 @@ const { data } = await useFetch('/api/item')
 </script>
 ```
 
-:read-more{to="/docs/4.x/getting-started/data-fetching"}
+:read-more{to="/docs/getting-started/data-fetching"}
 
 你可以在任何仅在客户端执行的方法中使用 `$fetch`。
 
@@ -97,4 +97,4 @@ const { data } = await useAsyncData(() => requestFetch('/api/cookies'))
 </script>
 ```
 
-但是，当在服务器上使用相对 URL 调用 `useFetch` 时，Nuxt 会使用 [`useRequestFetch`](/docs/4.x/api/composables/use-request-fetch) 来代理头部和 cookies（但不会转发那些不应被转发的头部，例如 `host`）。
+然而，在服务器上使用相对 URL 调用 `useFetch` 时，Nuxt 会使用 [`useRequestFetch`](/docs/api/composables/use-request-fetch) 代理头部和 cookies（`host` 等不应转发的头部除外）。

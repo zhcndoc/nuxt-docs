@@ -1,5 +1,6 @@
 import { fileURLToPath } from 'node:url'
-import { readFile } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
+import { readFile, rm } from 'node:fs/promises'
 import { join } from 'pathe'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { buildNuxt, loadNuxt } from '@nuxt/kit'
@@ -110,11 +111,29 @@ describe.skipIf(!runsOnceInMatrix)('pure vite static SPA build', () => {
   })
 })
 
-describe.skipIf(!runsOnceInMatrix)('server environment', () => {
-  const buildDir = join(rootDir, 'node_modules/.cache/nuxt/.nuxt-ssr')
+describe.skipIf(!runsOnceInMatrix)('overridden client build options', () => {
+  const buildDir = join(rootDir, 'node_modules/.cache/nuxt/.nuxt-client-overrides')
+  const outputDir = join(rootDir, 'node_modules/.cache/nuxt/.output-client-overrides')
+  const configuredDir = join(rootDir, 'node_modules/.cache/nuxt/.client-outdir-override')
 
   beforeAll(async () => {
-    const nuxt = await loadNuxt({ cwd: rootDir, ready: true, overrides: { ssr: true, buildDir } })
+    await rm(configuredDir, { recursive: true, force: true })
+    const nuxt = await loadNuxt({
+      cwd: rootDir,
+      ready: true,
+      overrides: {
+        buildDir,
+        nitro: { output: { dir: outputDir } },
+        vite: {
+          $client: {
+            build: {
+              outDir: configuredDir,
+              rolldownOptions: { input: join(rootDir, 'app/app.vue') },
+            },
+          },
+        },
+      },
+    })
     try {
       await buildNuxt(nuxt)
     } finally {
@@ -122,12 +141,15 @@ describe.skipIf(!runsOnceInMatrix)('server environment', () => {
     }
   }, 240 * 1000)
 
-  it('builds the server environment for a plugin or custom server to run', async () => {
-    const entry = await readFile(join(buildDir, 'dist/server/server.mjs'), 'utf-8')
-    expect(entry).toContain('vue/server-renderer')
+  it('writes the client build to the public directory of the output', async () => {
+    expect(await readFile(join(outputDir, 'public/index.html'), 'utf-8')).toContain('<div id="__nuxt">')
+    expect(existsSync(configuredDir)).toBe(false)
   })
 
-  it('still emits a client document', async () => {
-    expect(await readFile(join(buildDir, 'dist/client/index.html'), 'utf-8')).toContain('<div id="__nuxt">')
+  it('keeps the document and the app entry as build inputs', async () => {
+    const html = await readFile(join(outputDir, 'public/index.html'), 'utf-8')
+
+    expect(html).toMatch(/<script type="module"[^>]* src="\.\/_nuxt\/[^"]+\.js">/)
+    expect(html).toContain('"#entry"')
   })
 })

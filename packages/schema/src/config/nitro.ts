@@ -34,10 +34,7 @@ export default defineResolvers({
               ? runtimeConfig.app.baseURL.slice(1)
               : runtimeConfig.app.baseURL,
           },
-          nitro: {
-            envPrefix: 'NUXT_',
-            ...runtimeConfig.nitro,
-          },
+          nitro: Object.assign({ envPrefix: 'NUXT_' }, runtimeConfig.nitro),
         }
       },
     },
@@ -45,6 +42,14 @@ export default defineResolvers({
       $resolve: async (val: unknown, get: ResolverGetter) => {
         return {
           ...await get('routeRules'),
+          ...(val && typeof val === 'object' ? val : {}),
+        }
+      },
+    },
+    prerender: {
+      $resolve: async (val, get) => {
+        return {
+          ...await get('prerender'),
           ...(val && typeof val === 'object' ? val : {}),
         }
       },
@@ -65,8 +70,10 @@ export default defineResolvers({
     },
   },
   routeRules: {},
+  prerender: {},
   serverHandlers: [],
   devServerHandlers: [],
+  _serverPlugins: [],
   tracingChannel: {
     // Nuxt emits the `nuxt.*` diagnostics channels itself. The Nitro-level
     // channels (`srvx.request`, `h3.request`, `unstorage.*`) are only emitted

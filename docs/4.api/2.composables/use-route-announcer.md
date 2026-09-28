@@ -15,10 +15,9 @@ links:
 
 ## 描述
 
-一个用于监听页面标题变化并相应地更新播报器消息的组合式函数。由 [`<NuxtRouteAnnouncer>`](/docs/4.x/api/components/nuxt-route-announcer) 使用，并且可以被控制。  
-它挂钩到 Unhead 的 [`dom:rendered`](https://unhead.unjs.io/docs/typescript/head/api/hooks/dom-rendered) 来读取页面标题并将其设置为播报器消息。
+一个 composable，用于观察页面标题的变化，并相应地更新播报器消息。它由 [`<NuxtRouteAnnouncer>`](/docs/api/components/nuxt-route-announcer) 使用，并且可进行控制。它会接入 Unhead 的 `dom:rendered` 钩子，读取页面标题并将其设置为播报器消息。
 
-:read-more{title="Nuxt 无障碍访问" to="/docs/4.x/guide/best-practices/accessibility#route-announcements"}
+:read-more{title="Nuxt accessibility" to="/docs/guide/best-practices/accessibility#route-announcements"}
 
 ## 参数
 
@@ -61,5 +60,5 @@ const { message, politeness, set, polite, assertive } = useRouteAnnouncer({
 ```
 
 ::callout
-对于宣布页面内动态内容变化（表单验证、提示消息、加载状态），请改用 [`useAnnouncer`](/docs/4.x/api/composables/use-announcer)。
+对于播报页面内动态内容的变化（表单验证、toast、加载状态），请改用 [`useAnnouncer`](/docs/api/composables/use-announcer)。
 ::

@@ -20,7 +20,7 @@ links:
 ::
 
 ::tip
-[`useFetch`](/docs/4.x/api/composables/use-fetch) 可组合函数在底层使用 `useRequestFetch` 来自动转发请求上下文和头信息。
+[`useFetch`](/docs/api/composables/use-fetch) 组合式函数在底层使用 `useRequestFetch`，以自动转发请求上下文和头信息。
 ::
 
 ::code-group
@@ -49,5 +49,5 @@ export default defineEventHandler((event) => {
 ::
 
 ::tip
-在浏览器中进行客户端导航时，`useRequestFetch` 的行为与常规的 [`$fetch`](/docs/4.x/api/utils/dollarfetch) 相同。
+在浏览器中进行客户端导航时，`useRequestFetch` 的行为与常规的 [`$fetch`](/docs/api/utils/dollarfetch) 完全相同。
 ::
