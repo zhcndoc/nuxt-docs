@@ -13,42 +13,42 @@ links:
 此 composable 在 Nuxt v3.12+ 中可用。
 ::
 
-## Description
+## 描述
 
-A composable function used to watch for changes to the page title and update the announcer message accordingly. Used by [`<NuxtRouteAnnouncer>`](/docs/4.x/api/components/nuxt-route-announcer) and can also be controlled manually.  
-It hooks into Unhead’s [`dom:rendered`](https://unhead.unjs.io/docs/typescript/head/api/hooks/dom-rendered) to read the page title and set it as the announcer message.
+一个会观察页面标题变化并相应更新播报消息的 composable。由 [`<NuxtRouteAnnouncer>`](/docs/api/components/nuxt-route-announcer) 使用，也可进行控制。
+它会挂接到 Unhead 的 `dom:rendered` 钩子，以读取页面标题并将其设为播报消息。
 
-:read-more{title="Nuxt 无障碍访问" to="/docs/4.x/guide/best-practices/accessibility#route-announcements"}
+:read-more{title="Nuxt accessibility" to="/docs/guide/best-practices/accessibility#route-announcements"}
 
 ## 参数
 
-- `politeness`: 设置屏幕阅读器播报的紧急程度：`off`（禁用播报）、`polite`（等待空闲）、或 `assertive`（立即打断）。 (默认 `polite`)。
+- `politeness`：设置屏幕阅读器播报的紧急程度：`off`（禁用播报）、`polite`（等待空闲），或 `assertive`（立即打断）。（默认 `polite`）。
 
 ## 属性
 
 ### `message`
 
-- **类型**: `Ref<string>`
-- **描述**: 要播报的消息
+- **类型**：`Ref<string>`
+- **描述**：要播报的消息
 
 ### `politeness`
 
-- **类型**: `Ref<string>`
-- **描述**: 屏幕阅读器播报紧急级别 `off`、`polite` 或 `assertive`
+- **类型**：`Ref<string>`
+- **描述**：屏幕阅读器播报紧急级别 `off`、`polite` 或 `assertive`
 
-## Methods
+## 方法
 
 ### `set(message, politeness = "polite")`
 
-Set the message to be announced and its urgency level.
+设置要播报的消息及其紧急级别。
 
 ### `polite(message)`
 
-Set the message with `politeness = "polite"`.
+设置消息，并将 `politeness` 设为 `"polite"`。
 
 ### `assertive(message)`
 
-Set the message with `politeness = "assertive"`.
+设置消息，并将 `politeness` 设为 `"assertive"`。
 
 ## 示例
 
@@ -61,5 +61,5 @@ const { message, politeness, set, polite, assertive } = useRouteAnnouncer({
 ```
 
 ::callout
-对于宣布页面内动态内容变化（表单验证、提示消息、加载状态），请改用 [`useAnnouncer`](/docs/4.x/api/composables/use-announcer)。
+如需播报页面内动态内容的变化（表单验证、提示消息、加载状态），请改用 [`useAnnouncer`](/docs/api/composables/use-announcer)。
 ::

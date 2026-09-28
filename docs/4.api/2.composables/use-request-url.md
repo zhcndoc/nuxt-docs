@@ -12,13 +12,13 @@ links:
 `useRequestURL` 是一个辅助函数，返回一个在服务器端和客户端均可使用的 [URL 对象](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL)。
 
 ::important
-在使用带有缓存策略的 [混合渲染](/docs/4.x/guide/concepts/rendering#hybrid-rendering) 时，通过 [Nitro 缓存层](https://nitro.zhcndoc.com/guide/cache) 处理缓存响应时会丢弃所有传入的请求头（这意味着 `useRequestURL` 在 `host` 上会返回 `localhost`）。
+在使用[混合渲染](/docs/guide/concepts/rendering#hybrid-rendering)并采用缓存策略时，通过 [Nitro 缓存层](https://nitro.build/guide/cache)处理缓存响应时，所有传入的请求标头都会被丢弃（这意味着 `useRequestURL` 会为 `host` 返回 `localhost`）。
 
 你可以定义 [`cache.varies` 选项](https://nitro.zhcndoc.com/guide/cache#options) 来指定在缓存和提供响应时需要考虑的头，例如用于多租户环境的 `host` 和 `x-forwarded-host`。
 ::
 
 ::note
-如果你设置了 [`app.baseURL`](/docs/4.x/api/nuxt-config#baseurl)，服务器端返回的路径会相对于它，因此 `/base/about` 会以 `/about` 的形式提供。在客户端，`useRequestURL` 会读取 `window.location`，其中包含 base URL。
+如果你设置了 [`app.baseURL`](/docs/api/nuxt-config#baseurl)，服务器返回的路径将相对于它，因此 `/base/about` 会以 `/about` 的形式提供。在客户端，`useRequestURL` 会读取 `window.location`，其中包含 base URL。
 ::
 
 ::code-group

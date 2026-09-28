@@ -51,7 +51,7 @@ try {
 }
 ```
 
-在开发环境中，原因链会通过错误的 `cause` 属性暴露给你的[错误页面](/docs/4.x/getting-started/error-handling#error-page)，并序列化为 `{ name, message, stack, cause }`（原始类型的 cause 会按原样传递；其他值会被省略）。在生产环境中，错误响应和错误页面负载中都不会包含 cause。
+在开发环境中，错误原因链会通过错误对象的 `cause` 属性暴露给你的[错误页面](/docs/getting-started/error-handling#error-page)，并序列化为 `{ name, message, stack, cause }`（原始类型的原因会按原样传递；其他值则会被省略）。在生产环境中，原因永远不会包含在错误响应或错误页面负载中。
 
 ## 在 API 路由中
 
@@ -70,4 +70,4 @@ export default eventHandler(() => {
 
 在 API 路由中，建议通过传入一个带有简短 `statusText` 的对象来使用 `createError`，因为它可以在客户端访问。否则，在 API 路由中传递给 `createError` 的 `message` 不会传播到客户端。或者，你也可以使用 `data` 属性将数据传回客户端。在使用 `useFetch` 处理错误时，自定义数据可在 `error.value.data.data` 中获取。无论如何，都应尽量避免将动态用户输入放入消息中，以防止潜在的安全问题。
 
-:read-more{to="/docs/4.x/getting-started/error-handling"}
+:read-more{to="/docs/getting-started/error-handling"}

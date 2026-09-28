@@ -20,4 +20,4 @@ export function clearNuxtData (keys?: string | string[] | ((key: string) => bool
 
 ## 参数
 
-* `keys`：一个用于在 [`useAsyncData`](/docs/4.x/api/composables/use-async-data) 中的键或键数组，用来删除它们的缓存数据。如果未提供任何键，将使**所有数据**失效。
+* `keys`：用于 [`useAsyncData`](/docs/api/composables/use-async-data) 的一个或一组键，用于删除对应的缓存数据。如果未提供键，**所有数据**都将失效。

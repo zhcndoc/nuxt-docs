@@ -13,7 +13,7 @@ links:
 
 预览模式允许你在不向用户公开更改的情况下查看这些更改在网站上的显示效果。
 
-你可以使用内置的 `usePreviewMode` 组合式函数来访问和控制 Nuxt 中的预览状态。如果该组合式函数检测到预览模式，它会自动强制任何必要的更新，以便 [`useAsyncData`](/docs/4.x/api/composables/use-async-data) 和 [`useFetch`](/docs/4.x/api/composables/use-fetch) 重新渲染预览内容。
+你可以使用内置的 `usePreviewMode` 组合式函数访问和控制 Nuxt 中的预览状态。如果该组合式函数检测到预览模式，就会自动强制 [`useAsyncData`](/docs/api/composables/use-async-data) 和 [`useFetch`](/docs/api/composables/use-fetch) 进行必要的更新，以重新渲染预览内容。
 
 ```ts
 const { enabled, state } = usePreviewMode()
@@ -38,7 +38,7 @@ export function useMyPreviewMode () {
 
 ### 修改默认状态
 
-`usePreviewMode` 会尝试将 URL 中的 `token` 参数的值存储到状态中。你可以修改此状态，并且它将在所有 [`usePreviewMode`](/docs/4.x/api/composables/use-preview-mode) 调用中可用。
+`usePreviewMode` 会尝试将 URL 中 `token` 参数的值存储在状态中。你可以修改此状态，该状态将适用于所有 [`usePreviewMode`](/docs/api/composables/use-preview-mode) 调用。
 
 ```ts
 const data1 = ref('data1')
@@ -112,5 +112,5 @@ npx nuxt preview
 然后你可以通过在要查看的页面末尾添加查询参数 `preview` 来查看你的预览页面，例如 `http://localhost:3000/?preview=true`。
 
 ::note
-`usePreviewMode` 应当在本地通过 `nuxt generate` 然后 `nuxt preview` 进行测试，而不是通过 `nuxt dev`。（[preview 命令](/docs/4.x/api/commands/preview) 与预览模式无关。）
+应在本地使用 `nuxt generate`，然后使用 `nuxt preview` 测试 `usePreviewMode`，而不是使用 `nuxt dev`。（[preview 命令](/docs/api/commands/preview)与预览模式无关。）
 ::

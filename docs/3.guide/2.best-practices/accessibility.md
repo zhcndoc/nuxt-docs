@@ -14,7 +14,7 @@ Nuxt 的不同之处在于导航。一旦你的应用完成 hydration，它就�
 
 ## 路由公告
 
-屏幕阅读器会自行宣布整页加载，但它们无法知道发生了客户端侧导航。[`<NuxtRouteAnnouncer>`](/docs/4.x/api/components/nuxt-route-announcer) 通过渲染一个隐藏的实时区域，并在每次导航后将新页面标题写入其中来解决这个问题：
+屏幕阅读器会自行播报完整的页面加载，但它们无法得知发生了客户端导航。[`<NuxtRouteAnnouncer>`](/docs/api/components/nuxt-route-announcer) 通过渲染一个隐藏的实时区域，并在每次导航后将新页面标题写入其中来解决这一问题：
 
 ```vue [app.vue]
 <template>
@@ -25,7 +25,7 @@ Nuxt 的不同之处在于导航。一旦你的应用完成 hydration，它就�
 
 公告器会读取 Unhead 渲染的标题，因此它的作用大小取决于你的标题质量。如果两个路由共享相同的 `<title>`，用户在它们之间切换时将听不到任何提示。
 
-当你需要公告其他内容，或者需要改变公告的紧急程度时，请改用 [`useRouteAnnouncer`](/docs/4.x/api/composables/use-route-announcer)：
+当你需要播报其他内容，或更改播报的紧急程度时，请使用 [`useRouteAnnouncer`](/docs/api/composables/use-route-announcer)：
 
 ```vue [app/pages/search.vue]
 <script setup lang="ts">
@@ -38,9 +38,9 @@ watch(results, (results) => {
 </script>
 ```
 
-:read-more{title="NuxtRouteAnnouncer" to="/docs/4.x/api/components/nuxt-route-announcer"}
+:read-more{title="NuxtRouteAnnouncer" to="/docs/api/components/nuxt-route-announcer"}
 
-对于页面内的更新而非导航，例如表单校验或提示通知，请改用 [`<NuxtAnnouncer>`](/docs/4.x/api/components/nuxt-announcer) 和 [`useAnnouncer`](/docs/4.x/api/composables/use-announcer)。
+对于非导航导致的页面内更新，例如表单验证或 toast，请改用 [`<NuxtAnnouncer>`](/docs/api/components/nuxt-announcer) 和 [`useAnnouncer`](/docs/api/composables/use-announcer)。
 
 ## 页面标题
 
@@ -62,13 +62,13 @@ useHead({
 </script>
 ```
 
-如果你的标题来自路由元数据而不是页面本身，你可以在布局中通过 [`useRoute`](/docs/4.x/api/composables/use-route) 读取 [`definePageMeta`](/docs/4.x/directory-structure/app/pages#page-metadata) 的值。
+如果你的标题来自路由元数据，而不是页面本身，你可以在布局中通过 [`useRoute`](/docs/api/composables/use-route) 读取 [`definePageMeta`](/docs/directory-structure/app/pages#page-metadata) 的值。
 
-:read-more{title="SEO 和元数据" to="/docs/4.x/getting-started/seo-meta#dynamic-title"}
+:read-more{title="SEO and Meta" to="/docs/getting-started/seo-meta#dynamic-title"}
 
 ## 链接
 
-在应用内导航时使用 [`<NuxtLink>`](/docs/4.x/api/components/nuxt-link)。它会渲染一个真实的 `<a href="...">`，这意味着它可以获得焦点、会出现在 Tab 顺序中，并且支持中键点击和“在新标签页中打开”，而这些功能如果使用带有调用 `navigateTo` 的 `@click` 处理器的 `<div>`，你都必须自己重新实现。
+在应用内导航时，请使用 [`<NuxtLink>`](/docs/api/components/nuxt-link)。它会渲染一个真正的 `<a href="...">`，这意味着它可以获得焦点、出现在 Tab 顺序中，并支持鼠标中键点击和“在新标签页中打开”；如果使用带有 `@click` 处理程序并调用 `navigateTo` 的 `<div>`，你就必须重新实现所有这些功能。
 
 ```vue
 <template>
@@ -76,7 +76,7 @@ useHead({
 </template>
 ```
 
-在菜单或面包屑导航中，当前路由对应的链接已经会暴露 `aria-current="page"`，因此辅助技术可以知道你当前所在的位置。如果另一种标记更能描述这种关系，例如多页表单中的某一步，请设置 [`ariaCurrentValue`](/docs/4.x/api/components/nuxt-link#routerlink)：
+在菜单或面包屑导航中，与当前路由匹配的链接已经带有 `aria-current="page"`，因此辅助技术可以识别你当前所在的位置。如果其他标记能更好地描述这种关系，例如多页表单中的步骤，请设置 [`ariaCurrentValue`](/docs/api/components/nuxt-link#routerlink)：
 
 ```vue
 <template>
@@ -87,9 +87,9 @@ useHead({
 </template>
 ```
 
-指向 `public/` 目录中文件的链接，或指向同一源上的另一个应用的链接，都不是 Vue Router 所了解的路由。将它们标记为 [`external`](/docs/4.x/api/components/nuxt-link#handling-static-file-and-cross-app-links)，这样浏览器就会执行真正的导航，而不是因无法匹配路由而失败。
+指向 `public/` 目录中的文件或同源其他应用的链接，并不是 Vue Router 所识别的路由。请将它们标记为 [`external`](/docs/api/components/nuxt-link#handling-static-file-and-cross-app-links)，以便浏览器执行真正的导航，而不是因为无法匹配路由而失败。
 
-:read-more{title="NuxtLink" to="/docs/4.x/api/components/nuxt-link"}
+:read-more{title="NuxtLink" to="/docs/api/components/nuxt-link"}
 
 ## 焦点管理
 
@@ -144,9 +144,9 @@ export default defineNuxtPlugin(() => {
 
 ## 滚动行为
 
-Nuxt 在新路由时会滚动到顶部，在用户返回时恢复之前的位置，并滚动到 hash 目标。如果你需要不同的行为，例如平滑滚动或不同的偏移量，请配置 [`scrollBehaviorType`](/docs/4.x/guide/recipes/custom-routing#scroll-behavior-for-hash-links) 或在 [`router.options.ts`](/docs/4.x/guide/recipes/custom-routing#router-options) 中编写你自己的 `scrollBehavior`。请记住，平滑滚动应尊重用户的 `prefers-reduced-motion` 设置。
+Nuxt 会在进入新路由时滚动到顶部，在用户返回时恢复之前的位置，并滚动到哈希目标。如果你需要不同的行为，例如平滑滚动或不同的偏移量，请配置 [`scrollBehaviorType`](/docs/guide/recipes/custom-routing#scroll-behavior-for-hash-links)，或在 [`router.options.ts`](/docs/guide/recipes/custom-routing#router-options) 中编写自己的 `scrollBehavior`。请注意，平滑滚动应遵循用户的 `prefers-reduced-motion` 设置。
 
-:read-more{title="自定义路由" to="/docs/4.x/guide/recipes/custom-routing"}
+:read-more{title="Custom routing" to="/docs/guide/recipes/custom-routing"}
 
 ## 有用资源
 

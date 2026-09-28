@@ -10,18 +10,18 @@ links:
 ---
 
 ::note
-`useNuxtData` 让你访问使用显式提供的 key 的 [`useAsyncData`](/docs/4.x/api/composables/use-async-data)、[`useLazyAsyncData`](/docs/4.x/api/composables/use-lazy-async-data)、[`useFetch`](/docs/4.x/api/composables/use-fetch) 和 [`useLazyFetch`](/docs/4.x/api/composables/use-lazy-fetch) 的当前缓存值。
+`useNuxtData` 让你可以通过明确提供的键，访问 [`useAsyncData`](/docs/api/composables/use-async-data)、[`useLazyAsyncData`](/docs/api/composables/use-lazy-async-data)、[`useFetch`](/docs/api/composables/use-fetch) 和 [`useLazyFetch`](/docs/api/composables/use-lazy-fetch) 当前缓存的值。
 ::
 
-## Usage
+## 用法
 
-The `useNuxtData` composable is used to access the current cached value of data fetching composables such as `useAsyncData`, `useLazyAsyncData`, `useFetch`, and `useLazyFetch`. By providing the key used during data fetching, you can retrieve cached data and use it on demand.
+`useNuxtData` 组合式函数用于访问数据获取组合式函数（例如 `useAsyncData`、`useLazyAsyncData`、`useFetch` 和 `useLazyFetch`）当前缓存的值。通过提供数据获取时使用的键，你可以检索缓存数据，并按需使用。
 
-This is particularly useful for optimizing performance by reusing already fetched data, or for implementing features such as optimistic updates or cascading data updates.
+这对于通过重用已获取的数据来优化性能，或实现乐观更新、级联数据更新等功能尤其有用。
 
-To use `useNuxtData`, make sure the data fetching composable (`useFetch`, `useAsyncData`, etc.) has been called with an explicitly provided key.
+要使用 `useNuxtData`，请确保数据获取组合式函数（`useFetch`、`useAsyncData` 等）调用时使用了明确提供的键。
 
-:video-accordion{title="Watch a video about useNuxtData from LearnVue" videoId="e-_u6swXRWk"}
+:video-accordion{title="观看 LearnVue 关于 useNuxtData 的视频" videoId="e-_u6swXRWk"}
 
 ## 类型
 
@@ -35,11 +35,11 @@ export function useNuxtData<DataT = any> (key: string): { data: Ref<DataT | unde
 
 ## 返回值
 
-- `data`: 关联到所提供键的缓存数据的响应式引用。如果不存在缓存数据，则该值将为 `undefined`。当缓存数据发生变化时，此 `Ref` 会自动更新，从而让组件中的响应式表现无缝衔接。
+- `data`：关联到所提供键的缓存数据的响应式引用。如果不存在缓存数据，则该值将为 `undefined`。当缓存数据发生变化时，此 `Ref` 会自动更新，从而让组件中的响应式表现无缝衔接。
 
-## Example
+## 示例
 
-The following example shows how to use cached data as a placeholder while fetching the latest data from the server.
+以下示例展示了如何在从服务器获取最新数据时，将缓存数据用作占位内容。
 
 ```vue [app/pages/posts.vue]
 <script setup lang="ts">

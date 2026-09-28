@@ -13,57 +13,57 @@ Nuxt 应用程序的根目录是包含 `nuxt.config.ts` 文件的目录。此文
 ## 应用目录
 
 `app/` 目录是 Nuxt 应用程序的主目录。它包含以下子目录：
-- [`assets/`](/docs/4.x/directory-structure/app/assets)：网站的资源，构建工具（Vite 或 webpack）将处理这些资源
-- [`components/`](/docs/4.x/directory-structure/app/components)：应用程序的 Vue 组件
-- [`composables/`](/docs/4.x/directory-structure/app/composables)：添加 Vue 组合函数
-- [`layouts/`](/docs/4.x/directory-structure/app/layouts)：Vue 组件，用于包裹页面并避免页面之间的重复渲染
-- [`middleware/`](/docs/4.x/directory-structure/app/middleware)：在导航至特定路由前运行代码
-- [`pages/`](/docs/4.x/directory-structure/app/pages)：基于文件的路由，用于在 Web 应用程序中创建路由
-- [`plugins/`](/docs/4.x/directory-structure/app/plugins)：在 Nuxt 应用创建时使用 Vue 插件及更多
-- [`utils/`](/docs/4.x/directory-structure/app/utils)：添加可以在组件、组合函数和页面中使用的工具函数
+- [`assets/`](/docs/directory-structure/app/assets)：由构建工具（Vite 或 webpack）处理的网站资源
+- [`components/`](/docs/directory-structure/app/components)：应用程序的 Vue 组件
+- [`composables/`](/docs/directory-structure/app/composables)：添加 Vue 组合式函数
+- [`layouts/`](/docs/directory-structure/app/layouts)：包裹页面并避免在页面间重新渲染的 Vue 组件
+- [`middleware/`](/docs/directory-structure/app/middleware)：在导航到特定路由之前运行代码
+- [`pages/`](/docs/directory-structure/app/pages)：基于文件的路由，用于在 Web 应用程序中创建路由
+- [`plugins/`](/docs/directory-structure/app/plugins)：在创建 Nuxt 应用程序时使用 Vue 插件等
+- [`utils/`](/docs/directory-structure/app/utils)：添加可在组件、组合式函数和页面中使用的应用程序函数。
 
-该目录还包括特定文件：
-- [`app.config.ts`](/docs/4.x/directory-structure/app/app-config)：应用内的响应式配置
-- [`app.vue`](/docs/4.x/directory-structure/app/app)：Nuxt 应用的根组件
-- [`error.vue`](/docs/4.x/directory-structure/app/error)：Nuxt 应用的错误页面。
+此目录还包含一些特定文件：
+- [`app.config.ts`](/docs/directory-structure/app/app-config)：应用程序中的响应式配置
+- [`app.vue`](/docs/directory-structure/app/app)：Nuxt 应用程序的根组件
+- [`error.vue`](/docs/directory-structure/app/error)：Nuxt 应用程序的错误页面
 
 ## 公共目录
 
-[`public/`](/docs/4.x/directory-structure/public) 目录包含 Nuxt 应用的公共文件。该目录中的文件会作为根路径直接提供，不会被构建过程修改。
+[`public/`](/docs/directory-structure/public) 目录包含 Nuxt 应用程序的公共文件。此目录中的文件会在根路径下提供，且不会被构建流程修改。
 
 适用于必须保持文件名不变（例如 `robots.txt`）或内容不常变化（例如 `favicon.ico`）的文件。
 
 ## 服务器目录
 
-[`server/`](/docs/4.x/directory-structure/server) 目录包含 Nuxt 应用的服务端代码。它包括以下子目录：
-- [`api/`](/docs/4.x/directory-structure/server#server-routes)：包含应用的 API 路由
-- [`routes/`](/docs/4.x/directory-structure/server#server-routes)：包含应用的服务器路由（例如动态的 `/sitemap.xml`）
-- [`middleware/`](/docs/4.x/directory-structure/server#server-middleware)：在处理服务器路由前运行代码
-- [`plugins/`](/docs/4.x/directory-structure/server#server-plugins)：在 Nuxt 服务器创建时使用插件等
-- [`utils/`](/docs/4.x/directory-structure/server#server-utilities)：在服务器代码中可用的工具函数。
+[`server/`](/docs/directory-structure/server) 目录包含 Nuxt 应用程序的服务器端代码。它包含以下子目录：
+- [`api/`](/docs/directory-structure/server#server-routes)：包含应用程序的 API 路由。
+- [`routes/`](/docs/directory-structure/server#server-routes)：包含应用程序的服务器路由（例如动态 `/sitemap.xml`）。
+- [`middleware/`](/docs/directory-structure/server#server-middleware)：在处理服务器路由之前运行代码
+- [`plugins/`](/docs/directory-structure/server#server-plugins)：在创建 Nuxt 服务器时使用插件等
+- [`utils/`](/docs/directory-structure/server#server-utilities)：添加可在服务器代码中使用的应用程序函数。
 
 ## 共享目录
 
-[`shared/`](/docs/4.x/directory-structure/shared) 目录包含 Nuxt 应用和 Nuxt 服务器共享的代码。这些代码既可用于 Vue 应用，也可用于 Nitro 服务器。
+[`shared/`](/docs/directory-structure/shared) 目录包含 Nuxt 应用程序和 Nuxt 服务器的共享代码。这些代码可在 Vue 应用和 Nitro 服务器中使用。
 
 ## 测试目录
 
-[`test/`](/docs/4.x/directory-structure/test) 目录是存放应用测试（单元测试、Nuxt 运行时测试和端到端测试）的推荐位置。有关布局和设置详情，请参阅[组织测试](/docs/4.x/getting-started/testing#organizing-your-tests)。
+[`test/`](/docs/directory-structure/test) 目录是存放应用程序测试（单元测试、Nuxt 运行时测试和端到端测试）的推荐位置。有关布局和设置的详细信息，请参阅[组织测试](/docs/getting-started/testing#organizing-your-tests)。
 
 ## 内容目录
 
-[`content/`](/docs/4.x/directory-structure/content) 目录由 [Nuxt Content](https://content.nuxt.com) 模块启用，用于通过 Markdown 文件创建基于文件的内容管理系统（CMS）。
+[`content/`](/docs/directory-structure/content) 目录由 [Nuxt Content](https://content.nuxt.com) 模块启用。它用于使用 Markdown 文件为应用程序创建基于文件的 CMS。
 
 ## 模块目录
 
-[`modules/`](/docs/4.x/directory-structure/modules) 目录包含 Nuxt 应用的本地模块。模块用于扩展 Nuxt 应用的功能。
+[`modules/`](/docs/directory-structure/modules) 目录包含 Nuxt 应用程序的本地模块。模块用于扩展 Nuxt 应用程序的功能。
 
 ## Layers 目录
 
-[`layers/`](/docs/4.x/directory-structure/layers) 目录允许你组织和共享可重用的代码、组件、组合函数和配置。此目录中的层会自动在你的项目中注册。
+[`layers/`](/docs/directory-structure/layers) 目录可用于组织和共享可复用的代码、组件、组合式函数和配置。此目录中的 Layers 会在项目中自动注册。
 
 ## Nuxt 文件
 
-- [`nuxt.config.ts`](/docs/4.x/directory-structure/nuxt-config) 是 Nuxt 应用的主配置文件。
-- [`.nuxtrc`](/docs/4.x/directory-structure/nuxtrc) 文件是另一种配置 Nuxt 应用的语法（适用于全局配置）。
-- [`.nuxtignore`](/docs/4.x/directory-structure/nuxtignore) 文件用于在构建阶段忽略根目录中的文件。
+- [`nuxt.config.ts`](/docs/directory-structure/nuxt-config) 文件是 Nuxt 应用程序的主配置文件。
+- [`.nuxtrc`](/docs/directory-structure/nuxtrc) 文件是配置 Nuxt 应用程序的另一种语法（适用于全局配置）。
+- [`.nuxtignore`](/docs/directory-structure/nuxtignore) 文件用于在构建阶段忽略根目录中的文件。

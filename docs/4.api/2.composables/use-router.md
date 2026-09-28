@@ -49,16 +49,16 @@ router.resolve({ name: 'home' })
 ```
 
 ::note
-`router.addRoute()` 是将路由详情添加到路由数组中，这在构建 [Nuxt 插件](/docs/4.x/directory-structure/app/plugins) 时非常有用；而 `router.push()` 则是立即触发新的导航，适用于页面、Vue 组件和组合函数中。
+`router.addRoute()` 会将路由详情添加到路由数组中，在构建 [Nuxt 插件](/docs/directory-structure/app/plugins) 时很有用；而 `router.push()` 则会立即触发新的导航，适用于页面、Vue 组件和组合函数。
 ::
 
 ## 基于 History API 的操作
 
-- [`back()`](https://router.vuejs.org/api/interfaces/router#back-): 如果可能，浏览历史记录返回，等同于 `router.go(-1)`。
-- [`forward()`](https://router.vuejs.org/api/interfaces/router#forward-): 如果可能，浏览历史记录前进，等同于 `router.go(1)`。
-- [`go()`](https://router.vuejs.org/api/interfaces/router#go-): 在历史记录中前进或后退，不受 `router.back()` 和 `router.forward()` 中的层级限制。
-- [`push()`](https://router.vuejs.org/api/interfaces/router#push-): 通过向历史栈推入一条新记录来编程式导航到新 URL。**推荐使用 [`navigateTo`](/docs/4.x/api/utils/navigate-to) 代替。**
-- [`replace()`](https://router.vuejs.org/api/interfaces/router#replace-): 通过替换当前历史栈中的记录来编程式导航到新 URL。**推荐使用 [`navigateTo`](/docs/4.x/api/utils/navigate-to) 代替。**
+- [`back()`](https://router.vuejs.org/api/interfaces/router#back-): 如果可以，则返回上一条历史记录，效果与 `router.go(-1)` 相同。
+- [`forward()`](https://router.vuejs.org/api/interfaces/router#forward-): 如果可以，则前进到下一条历史记录，效果与 `router.go(1)` 相同。
+- [`go()`](https://router.vuejs.org/api/interfaces/router#go-): 在历史记录中前进或后退，不受 `router.back()` 和 `router.forward()` 所施加的层级限制。
+- [`push()`](https://router.vuejs.org/api/interfaces/router#push-): 通过向历史记录栈中推入一条记录，以编程方式导航到新的 URL。**建议改用 [`navigateTo`](/docs/api/utils/navigate-to)。**
+- [`replace()`](https://router.vuejs.org/api/interfaces/router#replace-): 通过替换路由历史记录栈中的当前记录，以编程方式导航到新的 URL。**建议改用 [`navigateTo`](/docs/api/utils/navigate-to)。**
 
 ```ts [示例]
 const router = useRouter()
@@ -80,7 +80,7 @@ router.replace({ hash: '#bio' })
 
 但是，Nuxt 还有一个 **路由中间件（route middleware）** 的概念，它简化了导航守卫的实现并提供更好的开发体验。
 
-:read-more{to="/docs/4.x/directory-structure/app/middleware"}
+:read-more{to="/docs/directory-structure/app/middleware"}
 
 ## Promise 和错误处理
 
@@ -91,4 +91,4 @@ router.replace({ hash: '#bio' })
 
 ## 通用路由实例
 
-如果你没有 `app/pages/` 文件夹，那么 [`useRouter`](/docs/4.x/api/composables/use-router) 将返回一个具有类似辅助方法的通用路由实例，但请注意，并非所有功能都被支持，或者行为可能不完全与 `vue-router` 一致。
+如果你没有 `app/pages/` 文件夹，那么 [`useRouter`](/docs/api/composables/use-router) 会返回一个带有类似辅助方法的通用路由实例，但请注意，并非所有功能都受支持，或者其行为可能与 `vue-router` 不完全相同。

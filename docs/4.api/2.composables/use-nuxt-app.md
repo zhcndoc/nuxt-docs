@@ -8,7 +8,7 @@ links:
     size: xs
 ---
 
-`useNuxtApp` 是一个内置的 composable，用于访问 Nuxt 的共享运行时上下文，也称为 [Nuxt 上下文](/docs/4.x/guide/going-further/nuxt-app#the-nuxt-context)，该上下文在客户端和服务端均可用（但在 Nitro 路由中不可用）。它帮助你访问 Vue 应用实例、运行时钩子、运行时配置变量和内部状态，例如 `ssrContext` 和 `payload`。
+`useNuxtApp` 是一个内置 composable，提供了一种访问 Nuxt 共享运行时上下文的方式，也称为 [Nuxt 上下文](/docs/guide/going-further/nuxt-app#the-nuxt-context)，该上下文在客户端和服务器端均可用（但在 Nitro 路由中不可用）。它可以帮助你访问 Vue 应用实例、运行时钩子、运行时配置变量和内部状态，例如 `ssrContext` 和 `payload`。
 
 ```vue [app/app.vue]
 <script setup lang="ts">
@@ -16,11 +16,11 @@ const nuxtApp = useNuxtApp()
 </script>
 ```
 
-如果在你的作用域中运行时上下文不可用，调用 `useNuxtApp` 将抛出异常。对于不需要 `nuxtApp` 的 composable，或者仅想在不抛出异常的情况下检查上下文是否可用时，可以使用 [`tryUseNuxtApp`](/docs/4.x/api/composables/use-nuxt-app#tryusenuxtapp)。
+如果当前作用域中没有运行时上下文，调用 `useNuxtApp` 时会抛出异常。对于不需要 `nuxtApp` 的 composable，或者只想检查上下文是否可用而不触发异常时，可以改用 [`tryUseNuxtApp`](/docs/api/composables/use-nuxt-app#tryusenuxtapp)。
 
 <!--
-注意
-默认情况下，Nuxt 的共享运行时上下文以 [`buildId`](/docs/4.x/api/nuxt-config#buildid) 选项为命名空间。它支持多个运行时上下文。
+note
+By default, the shared runtime context of Nuxt is namespaced under the [`buildId`](/docs/api/nuxt-config#buildid) option. It allows the support of multiple runtime contexts.
 
 ## 参数
 
@@ -30,7 +30,7 @@ const nuxtApp = useNuxtApp()
 
 ### `provide (name, value)`
 
-`nuxtApp` 是一个运行时上下文，你可以通过 [Nuxt 插件](/docs/4.x/directory-structure/app/plugins) 来扩展它。使用 `provide` 函数可以创建 Nuxt 插件，使值和辅助方法在所有 composable 和组件中通过 Nuxt 应用可用。
+`nuxtApp` 是一个运行时上下文，你可以使用 [Nuxt 插件](/docs/directory-structure/app/plugins) 对其进行扩展。使用 `provide` 函数创建 Nuxt 插件，以便在 Nuxt 应用中的所有 composable 和组件中使用这些值和辅助方法。
 
 `provide` 函数接受 `name` 和 `value` 两个参数。
 
@@ -46,11 +46,11 @@ console.log(nuxtApp.$hello('name'))
 
 ### `hook(name, cb)`
 
-`nuxtApp` 中可用的钩子允许你自定义 Nuxt 应用的运行时各个方面。你可以在 Vue.js composable 和 [Nuxt 插件](/docs/4.x/directory-structure/app/plugins) 中使用运行时钩子来挂载到渲染生命周期。
+`nuxtApp` 中可用的钩子允许你自定义 Nuxt 应用的运行时特性。你可以在 Vue.js composable 和 [Nuxt 插件](/docs/directory-structure/app/plugins)中使用运行时钩子，接入渲染生命周期。
 
 `hook` 函数用于在渲染生命周期的特定点添加自定义逻辑。`hook` 函数多用于创建 Nuxt 插件。
 
-可查看 Nuxt 调用的可用运行时钩子：[Runtime Hooks](/docs/4.x/api/advanced/hooks#app-hooks-runtime)。
+请参阅[运行时钩子](/docs/api/advanced/hooks#app-hooks-runtime)，了解 Nuxt 调用的可用运行时钩子。
 
 ```ts [app/plugins/test.ts]
 export default defineNuxtPlugin((nuxtApp) => {
@@ -80,12 +80,12 @@ await nuxtApp.callHook('my-plugin:init')
 
 ### `vueApp`
 
-`vueApp` 是全局 Vue.js 的 [应用实例](https://vue.zhcndoc.com/api/application#application-api)，你可以通过 `nuxtApp` 访问它。
+`vueApp` 是全局 Vue.js 的[应用实例](https://vue.zhcndoc.com/api/application#application-api)，你可以通过 `nuxtApp` 访问它。
 
 一些有用的方法：
-- [`component()`](https://vue.zhcndoc.com/api/application#app-component) - 如果同时传入名称字符串和组件定义，则注册一个全局组件；如果只传入名称，则检索已注册的组件。
-- [`directive()`](https://vue.zhcndoc.com/api/application#app-directive) - 如果同时传入名称字符串和指令定义，则注册一个全局自定义指令；如果只传入名称，则检索已注册的指令[(示例)](/docs/4.x/directory-structure/app/plugins#vue-directives)。
-- [`use()`](https://vue.zhcndoc.com/api/application#app-use) - 安装一个 **[Vue.js 插件](https://vue.zhcndoc.com/guide/reusability/plugins)** [(示例)](/docs/4.x/directory-structure/app/plugins#vue-plugins)。
+- [`component()`](https://vuejs.org/api/application#app-component) - 同时传入名称字符串和组件定义时，会注册一个全局组件；仅传入名称时，则会获取已注册的组件。
+- [`directive()`](https://vuejs.org/api/application#app-directive) - 同时传入名称字符串和指令定义时，会注册一个全局自定义指令；仅传入名称时，则会获取已注册的指令[(示例)](/docs/directory-structure/app/plugins#vue-directives)。
+- [`use()`](https://vuejs.org/api/application#app-use) - 安装一个**[Vue.js 插件](https://vuejs.org/guide/reusability/plugins)**[(示例)](/docs/directory-structure/app/plugins#vue-plugins)。
 
 :read-more{icon="i-simple-icons-vuedotjs" to="https://vue.zhcndoc.com/api/application.html#application-api"}
 
@@ -102,8 +102,8 @@ Nuxt 通过 `ssrContext` 暴露以下属性：
 
 `payload` 将数据和状态变量从服务端传递到客户端。下面的键在从服务端传递到客户端后会在客户端可用：
 
-- `serverRendered` (boolean) - 表示响应是否为服务器端渲染。
-- `data` (object) - 当你使用 [`useFetch`](/docs/4.x/api/composables/use-fetch) 或 [`useAsyncData`](/docs/4.x/api/composables/use-async-data) 从 API 端点获取数据时，生成的 payload 可从 `payload.data` 访问。这些数据会被缓存，有助于在相同请求多次发生时避免重复获取相同数据。
+- `serverRendered` (boolean) - 表示响应是否由服务端渲染。
+- `data` (object) - 使用 [`useFetch`](/docs/api/composables/use-fetch) 或 [`useAsyncData`](/docs/api/composables/use-async-data) 从 API 端点获取数据时，生成的 payload 可以通过 `payload.data` 访问。这些数据会被缓存，有助于避免在发出相同请求时重复获取数据。
 
   ::code-group
   ```vue [app/app.vue]
@@ -118,11 +118,11 @@ Nuxt 通过 `ssrContext` 暴露以下属性：
   ```
   ::
 
-  在上述示例中，使用 [`useAsyncData`](/docs/4.x/api/composables/use-async-data) 获取 `count` 的值后，如果你访问 `payload.data`，你会看到记录为 `{ count: 1 }`。
+  在上面的示例中使用 [`useAsyncData`](/docs/api/composables/use-async-data) 获取 `count` 的值后，如果访问 `payload.data`，就会看到其中记录了 `{ count: 1 }`。
 
-  当从 [`ssrcontext`](/docs/4.x/api/composables/use-nuxt-app#ssrcontext) 访问相同的 `payload.data` 时，你也可以在服务器端访问到相同的值。
+  访问 [`ssrcontext`](/docs/api/composables/use-nuxt-app#ssrcontext) 中的相同 `payload.data` 时，你也可以在服务器端访问相同的值。
 
-- `state` (object) - 当你在 Nuxt 中使用 [`useState`](/docs/4.x/api/composables/use-state) composable 设置共享状态时，这些状态数据可通过 `payload.state.[name-of-your-state]` 访问。
+- `state` (object) - 在 Nuxt 中使用 [`useState`](/docs/api/composables/use-state) composable 设置共享状态时，可以通过 `payload.state.[name-of-your-state]` 访问此状态数据。
 
   ```ts [app/plugins/my-plugin.ts]
   export const useColor = () => useState<string>('color', () => 'pink')
@@ -209,7 +209,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 const result = nuxtApp.runWithContext(() => functionWithContext())
 ```
 
-- `functionWithContext`: 任何需要当前 Nuxt 应用上下文的函数。此上下文将被正确自动应用。
+- `functionWithContext`：任何需要当前 Nuxt 应用上下文的函数。此上下文将被正确自动应用。
 
 `runWithContext` 将返回 `functionWithContext` 的返回值。
 
@@ -253,9 +253,9 @@ getCurrentInstance() // 仍然可用！
 
 Nuxt 在内部使用 [unjs/unctx](https://github.com/unjs/unctx) 来为插件和中间件支持与 Vue 类似的 composable。这使得像 `navigateTo()` 这样的 composable 无需直接传递 `nuxtApp` 也能工作 —— 为整个 Nuxt 框架带来了 Composition API 的开发体验和性能优势。
 
-Nuxt composable 的设计与 Vue Composition API 相同，因此需要类似的解决方案来自动完成此转换。参见 [unjs/unctx#2](https://github.com/unjs/unctx/issues/2)（提案）、[unjs/unctx#4](https://github.com/unjs/unctx/pull/4)（transform 实现）以及 [nuxt/framework#3884](https://github.com/nuxt/framework/pull/3884)（集成到 Nuxt）。
+Nuxt composable 的设计与 Vue Composition API 相同，因此需要类似的解决方案来自动完成此转换。参见 [unjs/unctx#2](https://github.com/unjs/unctx/issues/2)（提案）、[unjs/unctx#4](https://github.com/unjs/unctx/pull/4)（转换实现）以及 [nuxt/framework#3884](https://github.com/nuxt/framework/pull/3884)（集成到 Nuxt）。
 
-目前 Vue 仅对 `<script setup>` 在异步/等待用法上支持异步上下文恢复。在 Nuxt 中，对 `defineNuxtPlugin()` 和 `defineNuxtRouteMiddleware()` 的 transform 支持已被添加，这意味着当你使用它们时，Nuxt 会自动对它们进行带上下文恢复的转换。
+目前 Vue 仅对 `<script setup>` 在异步/等待用法上支持异步上下文恢复。在 Nuxt 中，对 `defineNuxtPlugin()` 和 `defineNuxtRouteMiddleware()` 的转换支持已被添加，这意味着当你使用它们时，Nuxt 会自动对它们进行带上下文恢复的转换。
 
 #### 遗留问题
 
@@ -269,7 +269,7 @@ Nuxt composable 的设计与 Vue Composition API 相同，因此需要类似的�
 原生异步上下文支持目前在 Bun 和 Node 上可用。
 ::
 
-:read-more{to="/docs/4.x/guide/going-further/experimental-features#asynccontext"}
+:read-more{to="/docs/guide/going-further/experimental-features#asynccontext"}
 
 ## tryUseNuxtApp :badge[v3.10]{color="info" size="xs" class="align-middle"}
 

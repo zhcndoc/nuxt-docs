@@ -9,7 +9,7 @@ links:
 ---
 
 ::important
-`setPageLayout` 允许你动态更改页面的布局。它依赖于访问 Nuxt 上下文，因此只能在[Nuxt 上下文](/docs/4.x/guide/going-further/nuxt-app#the-nuxt-context)内调用。
+`setPageLayout` 允许你动态更改页面的布局。它依赖于对 Nuxt 上下文的访问，因此只能在 [Nuxt 上下文](/docs/guide/going-further/nuxt-app#the-nuxt-context)中调用。
 ::
 
 ```ts [app/middleware/custom-layout.ts]

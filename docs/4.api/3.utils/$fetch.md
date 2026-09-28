@@ -11,16 +11,16 @@ links:
 Nuxt 使用 [ofetch](https://github.com/unjs/ofetch) 在全局暴露 `$fetch` 助手，以便在你的 Vue 应用或 API 路由中发起 HTTP 请求。
 
 ::tip{icon="i-lucide-rocket"}
-在服务端渲染期间，调用 `$fetch` 去获取你的内部 [API 路由](/docs/4.x/directory-structure/server) 会直接调用相应的函数（模拟该请求），**节省一次额外的 API 调用**。
+在服务端渲染期间，调用 `$fetch` 来获取内部 [API 路由](/docs/directory-structure/server)的内容时，会直接调用相应的函数（模拟请求），**省去额外的 API 调用**。
 ::
 
 ::note{color="blue" icon="i-lucide-info"}
-在组件中直接使用 `$fetch` 而不将其包裹在 [`useAsyncData`](/docs/4.x/api/composables/use-async-data) 中，会导致数据被重复获取：在服务端首次获取一次，然后在客户端在 hydration 期间再次获取一次，因为 `$fetch` 不会将服务器端的状态传递到客户端。因此该请求会在两端都执行，客户端必须重新获取数据。
+在组件中使用 `$fetch` 而不通过 [`useAsyncData`](/docs/api/composables/use-async-data) 封装，会导致数据被获取两次：最初在服务端获取一次，然后在客户端水合期间再次获取，因为 `$fetch` 不会将状态从服务端传递到客户端。因此，客户端必须重新获取数据，导致两端都会执行 fetch。
 ::
 
 ## 用法
 
-我们建议使用 [`useFetch`](/docs/4.x/api/composables/use-fetch) 或者 使用 [`useAsyncData`](/docs/4.x/api/composables/use-async-data) + `$fetch`，以避免在获取组件数据时发生重复获取。
+我们建议使用 [`useFetch`](/docs/api/composables/use-fetch) 或 [`useAsyncData`](/docs/api/composables/use-async-data) + `$fetch`，以避免获取组件数据时重复获取数据。
 
 ```vue [app/app.vue]
 <script setup lang="ts">
@@ -35,7 +35,7 @@ const { data } = await useFetch('/api/item')
 </script>
 ```
 
-:read-more{to="/docs/4.x/getting-started/data-fetching"}
+:read-more{to="/docs/getting-started/data-fetching"}
 
 你可以在任何仅在客户端执行的方法中使用 `$fetch`。
 
@@ -64,7 +64,15 @@ async function contactForm () {
 如果你在开发环境中使用 `$fetch` 调用带有自签名证书的（外部）HTTPS URL，你需要在环境中设置 `NODE_TLS_REJECT_UNAUTHORIZED=0`。
 ::
 
-### 传递头部和 Cookie
+## 类型化请求
+
+`$fetch` 会根据你的服务器所提供的路由进行类型化，因此响应类型由处理该请求的处理程序决定，而处理程序所验证的请求体、查询参数或标头也会在调用时受到约束。在运行时构建的路径、绝对 URL 或 `Request` 对象会解析为 `unknown`；指定响应类型（`$fetch<Todo[]>(url)`）会覆盖 Nuxt 推断出的类型。
+
+::read-more{to="/docs/getting-started/data-fetching#typed-routes"}
+进一步了解类型化路由，包括如何声明 Nuxt 无法识别的路由，以及如何拒绝没有路由响应的路径。
+::
+
+### 传递标头和 Cookie
 
 当我们在浏览器中调用 `$fetch` 时，像 `cookie` 这样的用户头部会被直接发送到 API。
 
@@ -97,4 +105,4 @@ const { data } = await useAsyncData(() => requestFetch('/api/cookies'))
 </script>
 ```
 
-但是，当在服务器上使用相对 URL 调用 `useFetch` 时，Nuxt 会使用 [`useRequestFetch`](/docs/4.x/api/composables/use-request-fetch) 来代理头部和 cookies（但不会转发那些不应被转发的头部，例如 `host`）。
+然而，在服务器上使用相对 URL 调用 `useFetch` 时，Nuxt 会使用 [`useRequestFetch`](/docs/api/composables/use-request-fetch) 来代理头部和 cookies（不包括不应转发的头部，例如 `host`）。

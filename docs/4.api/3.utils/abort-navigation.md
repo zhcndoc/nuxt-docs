@@ -9,7 +9,7 @@ links:
 ---
 
 ::warning
-`abortNavigation` 仅可在[路由中间件处理程序](/docs/4.x/directory-structure/app/middleware)内使用。
+`abortNavigation` 只能在[路由中间件处理程序](/docs/directory-structure/app/middleware)中使用。
 ::
 
 ## 类型

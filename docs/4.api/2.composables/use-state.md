@@ -15,7 +15,7 @@ links:
 const count = useState('counter', () => Math.round(Math.random() * 100))
 ```
 
-:read-more{to="/docs/4.x/getting-started/state-management"}
+:read-more{to="/docs/getting-started/state-management"}
 
 ::important
 因为 `useState` 内的数据会被序列化为 JSON，因此重要的是它不应包含任何无法被序列化的内容，例如类、函数或符号（classes、functions 或 symbols）。
@@ -43,9 +43,9 @@ export function useState<T> (init?: () => T | Ref<T>): Ref<T>
 export function useState<T> (key: string, init?: () => T | Ref<T>): Ref<T>
 ```
 
-- `key`：一个唯一键，确保跨请求的数据获取能被正确去重。如果你不提供键，则会为该次 `useState` 实例生成一个基于文件和行号的唯一键。
-- `init`：在状态未初始化时提供初始值的函数。该函数也可以返回一个 `Ref`。
-- `T`：（仅限 TypeScript）指定状态的类型
+- `key`：一个唯一键，确保数据获取在多个请求之间能够正确去重。如果你未提供键，则会为你生成一个与 [`useState`](/docs/api/composables/use-state) 实例所在文件和行号唯一对应的键。
+- `init`：当状态尚未初始化时，用于提供初始值的函数。此函数也可以返回一个 `Ref`。
+- `T`：（仅 TypeScript）指定状态的类型
 
 ## 故障排除
 
@@ -53,6 +53,6 @@ export function useState<T> (key: string, init?: () => T | Ref<T>): Ref<T>
 
 当你尝试用 `useState` 存储不可序列化的负载（例如类的实例）时，会出现此错误。
 
-如果你想用 `useState` 存储 Nuxt 未支持的类实例，可以使用 [`definePayloadPlugin`](/docs/4.x/api/composables/use-nuxt-app#custom-reducerreviver) 为你的类添加自定义序列化器和反序列化器。
+如果你想使用 `useState` 存储 Nuxt 不支持的类实例，可以使用 [`definePayloadPlugin`](/docs/api/composables/use-nuxt-app#custom-reducerreviver) 为你的类添加自定义序列化器和反序列化器。
 
-:read-more{to="/docs/4.x/api/composables/use-nuxt-app#payload"}
+:read-more{to="/docs/api/composables/use-nuxt-app#payload"}

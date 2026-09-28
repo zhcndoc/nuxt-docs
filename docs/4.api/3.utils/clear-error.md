@@ -24,6 +24,6 @@ clearError()
 clearError({ redirect: '/homepage' })
 ```
 
-错误通过 [`useError()`](/docs/4.x/api/composables/use-error) 设置到状态中。`clearError` 组合函数将重置该状态，并使用提供的选项调用 `app:error:cleared` 钩子。
+错误通过 [`useError()`](/docs/api/composables/use-error) 设置在状态中。`clearError` 组合式函数会重置此状态，并使用提供的选项调用 `app:error:cleared` hook。
 
-:read-more{to="/docs/4.x/getting-started/error-handling"}
+:read-more{to="/docs/getting-started/error-handling"}

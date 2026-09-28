@@ -13,7 +13,7 @@ Nuxt 提供用于一流服务器端渲染支持的 composables 和实用工具�
 `setResponseStatus` 用于设置响应的状态（以及可选的状态文本）。
 
 ::important
-`setResponseStatus` 只能在 [Nuxt 上下文](/docs/4.x/guide/going-further/nuxt-app#the-nuxt-context) 中调用。
+`setResponseStatus` 只能在 [Nuxt context](/docs/guide/going-further/nuxt-app#the-nuxt-context) 中调用。
 ::
 
 ```ts
@@ -33,4 +33,4 @@ if (event) {
 在浏览器中，`setResponseStatus` 不会产生任何效果。
 ::
 
-:read-more{to="/docs/4.x/getting-started/error-handling"}
+:read-more{to="/docs/getting-started/error-handling"}

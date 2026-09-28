@@ -16,7 +16,7 @@ export default defineNuxtPlugin((nuxtApp) => {
 })
 ```
 
-:read-more{to="/docs/4.x/directory-structure/app/plugins#creating-plugins"}
+:read-more{to="/docs/directory-structure/app/plugins#creating-plugins"}
 
 ## 类型
 
@@ -41,9 +41,9 @@ interface ObjectPlugin<T> {
 
 ## 参数
 
-**插件**：插件可以通过两种方式定义：
-1. **函数插件**：一个接收 [`NuxtApp`](/docs/4.x/guide/going-further/internals#the-nuxtapp-interface) 实例的函数，并且可以返回一个包含 [`provide`](/docs/4.x/directory-structure/app/plugins#providing-helpers) 属性的对象的 Promise，如果你希望在 [`NuxtApp`](/docs/4.x/guide/going-further/internals#the-nuxtapp-interface) 实例上提供一个辅助工具。
-2. **对象插件**：一个可以包含多个属性以配置插件行为的对象，例如 `name`、`enforce`、`dependsOn`、`order`、`parallel`、`setup`、`hooks` 和 `env`。
+**plugin**：插件可以通过两种方式定义：
+1. **函数插件**：接收 [`NuxtApp`](/docs/guide/going-further/internals#the-nuxtapp-interface) 实例的函数，可以返回一个 Promise，其中可能包含一个对象；如果您希望在 [`NuxtApp`](/docs/guide/going-further/internals#the-nuxtapp-interface) 实例上提供辅助函数，该对象可以具有 [`provide`](/docs/directory-structure/app/plugins#providing-helpers) 属性。
+2. **对象插件**：可包含多个属性以配置插件行为的对象，例如 `name`、`enforce`、`dependsOn`、`order`、`parallel`、`setup`、`hooks` 和 `env`。
 
 | Property    | Type                                   | Required | Description                                                                                                                                                         |
 |-------------|----------------------------------------|----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|

@@ -10,7 +10,7 @@ links:
 
 ## 用法
 
-`navigateTo` 在服务端和客户端均可用。它可以在 [Nuxt 上下文](/docs/4.x/guide/going-further/nuxt-app#the-nuxt-context) 中使用，或直接使用以执行页面导航。
+`navigateTo` 在服务器端和客户端均可用。它可以在 [Nuxt 上下文](/docs/guide/going-further/nuxt-app#the-nuxt-context)中使用，也可以直接使用，以执行页面导航。
 
 ::warning
 在调用 `navigateTo` 时，请确保始终对其结果使用 `await` 或 `return`。
@@ -42,7 +42,7 @@ await navigateTo({
 ```
 
 ::note
-Calling `navigateTo` does not stop execution of the rest of your `<script setup>` code. If you want a successful navigation to return early from `setup()`, enable [`experimental.navigateToEarlyReturn`](/docs/4.x/guide/going-further/experimental-features#navigatetoearlyreturn).
+调用 `navigateTo` 不会停止执行 `<script setup>` 代码的其余部分。如果你希望成功导航后提前从 `setup()` 返回，请启用 [`experimental.navigateToEarlyReturn`](/docs/guide/going-further/experimental-features#navigatetoearlyreturn)。
 ::
 
 ### 在路由中间件中
@@ -72,7 +72,7 @@ export default defineNuxtRouteMiddleware((to, from) => {
 
 在这种情况下，`navigateTo` 会被执行但不会被返回，这可能导致意外行为。
 
-:read-more{to="/docs/4.x/directory-structure/app/middleware"}
+:read-more{to="/docs/directory-structure/app/middleware"}
 
 ### 导航到外部 URL
 

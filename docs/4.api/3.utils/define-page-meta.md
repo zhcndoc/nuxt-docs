@@ -8,7 +8,7 @@ links:
     size: xs
 ---
 
-`definePageMeta` 是一个编译器宏，可用于为位于 [`app/pages/`](/docs/4.x/directory-structure/app/pages) 目录（除非另有[配置](/docs/4.x/api/nuxt-config#pages)）中的 **页面** 组件设置元数据。通过这种方式，你可以为 Nuxt 应用的每个静态或动态路由设置自定义元数据。
+`definePageMeta` 是一个编译器宏，你可以使用它为位于 [`app/pages/`](/docs/directory-structure/app/pages) 目录中的**页面**组件设置元数据（除非[另有设置](/docs/api/nuxt-config#pages)）。这样，你就可以为 Nuxt 应用程序中的每个静态或动态路由设置自定义元数据。
 
 ```vue [app/pages/some-page.vue]
 <script setup lang="ts">
@@ -18,7 +18,7 @@ definePageMeta({
 </script>
 ```
 
-:read-more{to="/docs/4.x/directory-structure/app/pages#page-metadata"}
+:read-more{to="/docs/directory-structure/app/pages#page-metadata"}
 
 ## 类型
 
@@ -57,13 +57,13 @@ interface PageMeta {
 
   - **类型**: `string`
 
-    你可以为该页面的路由定义一个名称。默认情况下，名称是基于 [`app/pages/` 目录](/docs/4.x/directory-structure/app/pages) 内的路径生成的。
+    你可以为此页面的路由定义一个名称。默认情况下，名称根据 [`app/pages/` 目录](/docs/directory-structure/app/pages)中的路径生成。
 
   **`path`**
 
   - **类型**: `string`
 
-    如果你的模式比文件名能表达的更复杂，可以定义一个[自定义正则表达式](/docs/4.x/api/utils/define-page-meta#using-a-custom-regular-expression)。
+    如果文件名无法表达更复杂的模式，你可以定义一个[自定义正则表达式](/docs/api/utils/define-page-meta#using-a-custom-regular-expression)。
 
   **`props`**
   
@@ -81,7 +81,7 @@ interface PageMeta {
 
   - **类型**: `string[]`
 
-    页面所属的路由分组，基于文件夹结构自动填充。适用于处于[路由组](/docs/4.x/guide/directory-structure/app/pages#route-groups)内的页面。
+    根据文件夹结构，该页面所属的路由组。位于[路由组](/docs/guide/directory-structure/app/pages#route-groups)中的页面会自动填充此属性。
 
   **`keepalive`**
 
@@ -113,7 +113,7 @@ interface PageMeta {
 
   - **类型**: `MiddlewareKey` | [`NavigationGuard`](https://router.vuejs.org/api/interfaces/navigationguard) | `Array<MiddlewareKey | NavigationGuard>`
 
-    在 `definePageMeta` 中直接定义匿名或命名的中间件。了解更多关于[路由中间件](/docs/4.x/directory-structure/app/middleware)。
+    直接在 `definePageMeta` 中定义匿名或命名中间件。详细了解[路由中间件](/docs/directory-structure/app/middleware)。
 
   **`pageTransition`**
 
@@ -125,15 +125,15 @@ interface PageMeta {
 
   - **类型**: `boolean | 'always' | ViewTransitionPageOptions`
 
-    **实验性功能，仅在你的 nuxt.config 文件中[启用](/docs/4.x/getting-started/transitions#view-transitions-api-experimental) 时可用**</br>
-    启用/禁用当前页面的视图过渡（View Transitions）。
-    如果设置为 true，Nuxt 会在用户的浏览器匹配 `prefers-reduced-motion: reduce` 时不应用过渡（推荐）。如果设置为 `always`，Nuxt 将始终应用过渡。
+    **实验性功能，仅在[你的 nuxt.config 文件中启用后](/docs/getting-started/transitions#view-transitions-api-experimental)可用**</br>
+    为当前页面启用或禁用 View Transitions。
+    如果设置为 `true`，当用户的浏览器匹配 `prefers-reduced-motion: reduce` 时，Nuxt 不会应用过渡（推荐）。如果设置为 `always`，Nuxt 将始终应用过渡。
 
-    你也可以传入一个 `ViewTransitionPageOptions` 对象以配置[视图过渡类型](/docs/4.x/getting-started/transitions#view-transition-types):
-    - `enabled`: `boolean | 'always'` - 启用/禁用过渡
-    - `types`: `string[] | (to, from) => string[]` - 适用于任何涉及此页面的过渡类型
-    - `toTypes`: `string[] | (to, from) => string[]` - 仅在导航**到**此页面时应用的类型
-    - `fromTypes`: `string[] | (to, from) => string[]` - 仅在导航**从**此页面时应用的类型
+    你也可以传入一个 `ViewTransitionPageOptions` 对象来配置[视图过渡类型](/docs/getting-started/transitions#view-transition-types)：
+    - `enabled`：`boolean | 'always'` - 启用或禁用过渡
+    - `types`：`string[] | (to, from) => string[]` - 应用于涉及此页面的任何过渡的类型
+    - `toTypes`：`string[] | (to, from) => string[]` - 仅在导航**到**此页面时应用的类型
+    - `fromTypes`：`string[] | (to, from) => string[]` - 仅在从此页面导航**离开**时应用的类型
 
   **`redirect`**
 
@@ -151,13 +151,13 @@ interface PageMeta {
 
   - **类型**: `boolean | (to: RouteLocationNormalized, from: RouteLocationNormalized) => boolean`
 
-    告诉 Nuxt 在渲染页面之前是否滚动到顶部。导航与渲染是相互独立的，因此即使页面没有重新渲染（例如使用固定的 [`key`](/docs/4.x/api/utils/define-page-meta#key) 时），滚动行为也总会触发。在这种情况下，将 `scrollToTop: false` 可禁用滚动。如果你想覆盖 Nuxt 的默认滚动行为，可以在 `~/router.options.ts` 中进行设置（更多信息参见[自定义路由](/docs/4.x/guide/recipes/custom-routing#using-routeroptions)）。
+    告知 Nuxt 是否要在渲染页面前滚动到顶部。导航与渲染相互独立，因此即使页面不会重新渲染，滚动行为也始终会触发（例如，使用固定的 [`key`](/docs/api/utils/define-page-meta#key) 时）。在这种情况下，设置 `scrollToTop: false` 可禁用滚动。如果你想覆盖 Nuxt 的默认滚动行为，可以在 `~/router.options.ts` 中进行设置（更多信息请参阅[自定义路由](/docs/guide/recipes/custom-routing#using-routeroptions)）。
 
   **`[key: string]`**
 
   - **类型**: `any`
 
-    除上述属性之外，你还可以设置 **自定义** 元数据。若要以类型安全的方式使用自定义元数据，可以通过[增强 `meta` 对象的类型](/docs/4.x/directory-structure/app/pages/#typing-custom-metadata)。
+    除上述属性外，你还可以设置**自定义**元数据。你可以通过[扩展 `meta` 对象的类型](/docs/directory-structure/app/pages/#typing-custom-metadata)，以类型安全的方式设置自定义元数据。
 
 ## 示例
 
@@ -234,7 +234,7 @@ definePageMeta({
 
 ### 定义布局
 
-你可以定义与（默认情况下）位于 [`app/layouts/` 目录](/docs/4.x/directory-structure/app/layouts) 中布局文件名相匹配的布局。你也可以通过将 `layout` 设置为 `false` 来禁用布局：
+你可以定义与（默认情况下）位于 [`app/layouts/` 目录](/docs/directory-structure/app/layouts)中的布局文件名相匹配的布局。你也可以将 `layout` 设置为 `false` 来禁用布局：
 
 ```vue [app/pages/some-page.vue]
 <script setup lang="ts">
@@ -295,4 +295,4 @@ const props = defineProps<{
 通过 `definePageMeta` 设置的布局属性完全基于布局的 `defineProps` 进行类型定义。您将在编辑器中获得自动补全和类型检查。
 ::
 
-:read-more{to="/docs/4.x/directory-structure/app/layouts#passing-props-to-layouts"}
+:read-more{to="/docs/directory-structure/app/layouts#passing-props-to-layouts"}

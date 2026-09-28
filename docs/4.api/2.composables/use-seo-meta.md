@@ -14,7 +14,7 @@ links:
 这是向站点添加元标签的推荐方式，因为它是 XSS 安全的并且提供完整的 TypeScript 支持。
 ::
 
-:read-more{to="/docs/4.x/getting-started/seo-meta"}
+:read-more{to="/docs/getting-started/seo-meta"}
 
 ## 用法
 
@@ -48,7 +48,7 @@ useSeoMeta({
 
 有 100 多个参数。请参阅 [源代码中的完整参数列表](https://github.com/harlan-zw/zhead/blob/main/packages/zhead/src/metaFlat.ts#L1035)。
 
-:read-more{to="/docs/4.x/getting-started/seo-meta"}
+:read-more{to="/docs/getting-started/seo-meta"}
 
 ## 性能
 
@@ -77,4 +77,4 @@ useSeoMeta({
 </script>
 ```
 
-以前这使用的是 [`useServerSeoMeta`](/docs/4.x/api/composables/use-server-seo-meta) 可组合函数，但它已弃用，推荐使用当前这种方式。
+之前使用的是 [`useServerSeoMeta`](/docs/api/composables/use-server-seo-meta) 可组合函数，但它已弃用，推荐使用这种方式。

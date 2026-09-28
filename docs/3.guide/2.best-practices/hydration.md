@@ -24,7 +24,7 @@ description: 为什么修复水合问题很重要
 ## 如何检测它们
 
 ## 开发时控制台警告
-### Development Console Warnings
+### 开发时控制台警告
 
 Vue 会在开发时在浏览器控制台记录水合不匹配的警告：
 
@@ -48,7 +48,7 @@ const userTheme = localStorage.getItem('theme') || 'light'
 </script>
 ```
 
-**解决方案**：你可以使用 [`useCookie`](/docs/4.x/api/composables/use-cookie)：
+**解决方案**：你可以使用 [`useCookie`](/docs/api/composables/use-cookie)：
 
 ```html
 <template>
@@ -145,7 +145,7 @@ const greeting = hour < 12 ? '早上好' : '下午好'
 </script>
 ```
 
-**解决方案**：使用 [`NuxtTime`](/docs/4.x/api/components/nuxt-time) 组件或在客户端处理：
+**解决方案**：使用 [`NuxtTime`](/docs/api/components/nuxt-time) 组件，或在客户端处理：
 
 ```html
 <template>
@@ -179,10 +179,10 @@ onMounted(() => {
 
 ## 总结
 
-1. **使用对 SSR 友好的组合式 API**：[`useFetch`](/docs/4.x/api/composables/use-fetch)、[`useAsyncData`](/docs/4.x/api/composables/use-async-data)、[`useState`](/docs/4.x/api/composables/use-state)
-2. **封装仅客户端代码**：对浏览器特有的内容使用 [`ClientOnly`](/docs/4.x/api/components/client-only) 组件
-3. **一致的数据源**：确保服务器和客户端使用相同的数据
-4. **避免在 setup 中产生副作用**：将依赖浏览器的代码移动到 `onMounted`
+1. **使用对 SSR 友好的组合式函数**：[`useFetch`](/docs/api/composables/use-fetch)、[`useAsyncData`](/docs/api/composables/use-async-data)、[`useState`](/docs/api/composables/use-state)
+2. **包装仅客户端代码**：对浏览器专属内容使用 [`ClientOnly`](/docs/api/components/client-only) 组件
+3. **保持数据源一致**：确保服务端和客户端使用相同的数据
+4. **避免在 setup 中产生副作用**：将依赖浏览器的代码移至 `onMounted`
 
 ::tip
 你可以阅读 [Vue 关于 SSR 水合不匹配的文档](https://vue.zhcndoc.com/guide/scaling-up/ssr#hydration-mismatch) 来更好地理解水合问题。

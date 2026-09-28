@@ -15,7 +15,7 @@ links:
 ::
 
 ::note
-`useHydration` 的设计目的是用于 **确保 SSR 期间的状态同步与恢复**。如果你需要在 Nuxt 中创建一个全局的、对 SSR 友好的响应式状态，推荐使用 [`useState`](/docs/4.x/api/composables/use-state)。
+`useHydration` 旨在**确保 SSR 期间的状态同步与恢复**。如果你需要在 Nuxt 中创建 SSR 友好的全局响应式状态，建议使用 [`useState`](/docs/api/composables/use-state)。
 ::
 
 ## 用法
