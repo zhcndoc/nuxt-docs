@@ -8,7 +8,7 @@ links:
     size: xs
 ---
 
-你可以使用内置的 [`useRequestHeader`](/docs/api/composables/use-request-header) 组合式函数，在你的页面、组件和插件中访问任何传入的请求头。
+你可以使用内置的 [`useRequestHeader`](/docs/api/composables/use-request-header) 组合式函数，在页面、组件和插件中访问任意传入的请求头。
 
 ```ts
 // 获取 authorization 请求头

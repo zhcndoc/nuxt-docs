@@ -10,7 +10,7 @@ links:
 
 ## 用法
 
-`useHeadSafe` 组合函数是对 [`useHead`](/docs/3.x/api/composables/use-head) 组合函数的封装，限制输入只允许安全的值。这是在处理用户输入时管理头部数据的推荐方式，因为它通过对潜在危险的属性进行消毒，从而防止 XSS 攻击。
+`useHeadSafe` 组合函数是 [`useHead`](/docs/api/composables/use-head) 组合函数的包装器，它会限制输入，只允许安全值。这是处理用户输入时管理头部数据的推荐方式，因为它会清理潜在危险的属性，从而防止 XSS 攻击。
 
 ::warning  
 使用 `useHeadSafe` 时，诸如脚本中的 `innerHTML` 或 meta 标签中的 `http-equiv` 之类的潜在危险属性会被自动剥离，以防止 XSS 攻击。只要处理用户生成的内容，就应该使用此组合函数。  
@@ -42,7 +42,7 @@ const WhitelistAttributes = {
 
 ## 参数
 
-`input`：一个包含头部数据的 `MaybeComputedRef<HeadSafe>` 对象。你可以传入和 [`useHead`](/docs/3.x/api/composables/use-head) 相同的值，但只有安全的属性会被渲染。
+`input`：包含头部数据的 `MaybeComputedRef<HeadSafe>` 对象。你可以传入与 [`useHead`](/docs/api/composables/use-head) 相同的所有值，但只会渲染安全属性。
 
 ## 返回值
 

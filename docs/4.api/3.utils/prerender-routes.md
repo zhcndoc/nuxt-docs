@@ -11,7 +11,7 @@ links:
 在预渲染时，你可以提示 Nitro 预渲染额外的路径，即使它们的 URL 并未显示在生成页面的 HTML 中。
 
 ::important
-`prerenderRoutes` 只能在 [Nuxt 上下文](/docs/guide/going-further/nuxt-app#the-nuxt-context) 中调用。
+`prerenderRoutes` 只能在 [Nuxt 上下文](/docs/guide/going-further/nuxt-app#the-nuxt-context)中调用。
 ::
 
 ::note

@@ -8,7 +8,7 @@ links:
     size: xs
 ---
 
-在 [Nuxt 上下文](/docs/guide/going-further/nuxt-app#the-nuxt-context) 中，你可以使用 `useRequestEvent` 来访问传入的请求。
+在 [Nuxt context](/docs/guide/going-further/nuxt-app#the-nuxt-context) 中，你可以使用 `useRequestEvent` 访问传入的请求。
 
 ```ts
 // 获取底层请求事件

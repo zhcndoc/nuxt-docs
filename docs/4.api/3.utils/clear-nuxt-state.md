@@ -20,4 +20,4 @@ export function clearNuxtState (keys?: string | string[] | ((key: string) => boo
 
 ## 参数
 
-- `keys`：一个或多个用于 [`useState`](/docs/api/composables/use-state) 的键，用于删除它们的缓存状态。如果未提供任何键，**所有状态** 都会被失效。
+- `keys`：用于在 [`useState`](/docs/api/composables/use-state) 中删除缓存状态的一个键或键数组。如果未提供键，**所有状态** 都将失效。

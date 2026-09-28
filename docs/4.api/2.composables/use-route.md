@@ -19,7 +19,7 @@ links:
 
 ## 示例
 
-下面的示例中，我们通过 [`useFetch`](/docs/3.x/api/composables/use-fetch) 调用 API，使用动态页面参数 `slug` 作为 URL 的一部分。
+在以下示例中，我们使用动态页面参数 `slug` 作为 URL 的一部分，通过 [`useFetch`](/docs/api/composables/use-fetch) 调用 API。
 
 ```html [~/pages/[slug\\].vue]
 <script setup lang="ts">
@@ -75,8 +75,8 @@ import { useRoute } from '#app'
 这同样适用于内部使用 `useRoute()` 的任何组合函数。
 ::
 
-::read-more{to="/docs/3.x/directory-structure/middleware"}
-阅读更多关于在中间件中访问路由的内容。
+::read-more{to="/docs/directory-structure/middleware"}
+在中间件部分了解更多有关访问路由的信息。
 ::
 
 ### `route.fullPath` 的服务端渲染问题

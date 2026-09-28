@@ -10,7 +10,7 @@ links:
 
 ## 用法
 
-`navigateTo` 在服务端和客户端均可用。它可以在 [Nuxt 上下文](/docs/guide/going-further/nuxt-app#the-nuxt-context) 中或直接使用，用于执行页面导航。
+`navigateTo` 在服务器端和客户端均可用。它可在 [Nuxt 上下文](/docs/guide/going-further/nuxt-app#the-nuxt-context)中使用，也可直接使用，以执行页面导航。
 
 ::warning
 调用 `navigateTo` 时，请确保始终对其返回结果使用 `await` 或 `return`。
@@ -68,17 +68,17 @@ export default defineNuxtRouteMiddleware((to, from) => {
 
 此时 `navigateTo` 会被执行但未被返回，可能导致意外行为。
 
-:read-more{to="/docs/3.x/directory-structure/middleware"}
+:read-more{to="/docs/directory-structure/middleware"}
 
 ### 跳转到外部 URL
 
 `navigateTo` 中的 `external` 参数决定了如何处理跳转到的 URL：
 
-- **不设置或 `external: false`**:
+- **不设置或 `external: false`**：
   - 内部 URL 正常导航。
   - 外部 URL 会抛出错误。
 
-- **设置为 `external: true`**:
+- **设置为 `external: true`**：
   - 内部 URL 导航时会进行全页面刷新。
   - 外部 URL 正常导航。
 

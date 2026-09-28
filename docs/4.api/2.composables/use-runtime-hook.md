@@ -23,8 +23,8 @@ function useRuntimeHook<THookName extends keyof RuntimeNuxtHooks> (
 
 ### 参数
 
-- `name`：要注册的运行时钩子名称。你可以在此处查看完整的[运行时 Nuxt 钩子列表](/docs/api/advanced/hooks#app-hooks-runtime)。
-- `fn`：当钩子被触发时执行的回调函数。函数签名根据钩子名称有所不同。
+- `name`：要注册的运行时钩子的名称。你可以在[此处](/docs/api/advanced/hooks#app-hooks-runtime)查看完整的 [runtime Nuxt hooks] 列表。
+- `fn`：钩子触发时执行的回调函数。函数签名因钩子名称而异。
 
 ### 返回值
 

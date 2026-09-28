@@ -8,13 +8,13 @@ links:
     size: xs
 ---
 
-预加载路由会加载用户未来可能访问的指定路由的组件。这确保组件更早可用，从而减少阻塞导航的可能性，提升性能。
+预加载路由会加载用户未来可能访问的指定路由组件。这确保组件更早可用，从而减少导航被阻塞的可能性，提升性能。
 
 ::tip{icon="i-lucide-rocket"}
 如果你使用 `NuxtLink` 组件，Nuxt 已经会自动预加载必要的路由。
 ::
 
-:read-more{to="/docs/3.x/api/components/nuxt-link"}
+:read-more{to="/docs/api/components/nuxt-link"}
 
 ## 示例
 
@@ -34,7 +34,7 @@ const submit = async () => {
 }
 ```
 
-:read-more{to="/docs/3.x/api/utils/navigate-to"}
+:read-more{to="/docs/api/utils/navigate-to"}
 
 ::note
 在服务器端，`preloadRouteComponents` 不会生效。

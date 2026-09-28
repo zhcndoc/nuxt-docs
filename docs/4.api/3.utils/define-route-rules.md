@@ -8,8 +8,8 @@ links:
     size: xs
 ---
 
-::read-more{to="/docs/3.x/guide/going-further/experimental-features#inlinerouterules" icon="i-lucide-star"}
-该功能处于实验阶段，使用前需在 `nuxt.config` 中启用 `experimental.inlineRouteRules` 选项。
+::read-more{to="/docs/guide/going-further/experimental-features#inlinerouterules" icon="i-lucide-star"}
+此功能为实验性功能，要使用它，必须在 `nuxt.config` 中启用 `experimental.inlineRouteRules` 选项。
 ::
 
 ## 用法
@@ -37,7 +37,7 @@ export default defineNuxtConfig({
 ```
 
 ::note
-运行 [`nuxt build`](/docs/api/commands/build) 时，主页会被预渲染到 `.output/public/index.html` 并作为静态资源进行服务。
+运行 [`nuxt build`](/docs/api/commands/build) 时，主页将预渲染到 `.output/public/index.html` 中，并以静态方式提供。
 ::
 
 ## 说明
@@ -45,8 +45,8 @@ export default defineNuxtConfig({
 - 在 `~/pages/foo/bar.vue` 中定义的规则将应用于 `/foo/bar` 请求。
 - 在 `~/pages/foo/[id].vue` 中定义的规则将应用于 `/foo/**` 请求。
 
-如果需要更细粒度的控制，比如在页面的 [`definePageMeta`](/docs/api/utils/define-page-meta) 中使用了自定义的 `path` 或 `alias`，应当直接在 `nuxt.config` 中设置 `routeRules`。
-  
-::read-more{to="/docs/3.x/guide/concepts/rendering#hybrid-rendering" icon="i-lucide-medal"}
-阅读更多关于 `routeRules` 的内容。
+如需更精细的控制，例如在页面的 [`definePageMeta`](/docs/api/utils/define-page-meta) 中使用自定义的 `path` 或 `alias`，应直接在 `nuxt.config` 中设置 `routeRules`。
+
+::read-more{to="/docs/guide/concepts/rendering#hybrid-rendering" icon="i-lucide-medal"}
+详细了解 `routeRules`。
 ::

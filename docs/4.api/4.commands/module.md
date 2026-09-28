@@ -1,5 +1,5 @@
 ---
-title: "nuxt module"
+title: "Nuxt 模块"
 description: "使用命令行搜索并添加模块到你的 Nuxt 应用。"
 links:
   - label: 源码
@@ -38,9 +38,9 @@ npx nuxt module add <MODULENAME> [--cwd=<directory>] [--logLevel=<silent|info|ve
 
 执行命令时，会：
 
-- 使用你的包管理器安装模块依赖
-- 将模块添加到你的 [package.json](/docs/guide/directory-structure/package) 文件中
-- 更新你的 [`nuxt.config`](/docs/guide/directory-structure/nuxt-config) 配置文件
+- 使用你的包管理器将模块安装为依赖项
+- 将其添加到你的 [package.json](/docs/directory-structure/package) 文件中
+- 更新你的 [`nuxt.config`](/docs/directory-structure/nuxt-config) 文件
 
 **示例：**
 

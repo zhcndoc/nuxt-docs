@@ -8,7 +8,7 @@ links:
     size: xs
 ---
 
-路由中间件存储在 Nuxt 应用的 [`middleware/`](/docs/3.x/directory-structure/middleware) 文件夹中（除非[另有配置](/docs/3.x/api/nuxt-config#middleware)）。
+路由中间件存储在 Nuxt 应用的 [`middleware/`](/docs/directory-structure/middleware) 目录中（除非[另有设置](/docs/api/nuxt-config#middleware)）。
 
 ## 类型
 
@@ -24,7 +24,7 @@ interface RouteMiddleware {
 
 ### `middleware`
 
-- **类型**: `RouteMiddleware`
+- **类型**：`RouteMiddleware`
 
 一个函数，接受两个 Vue Router 的路由位置对象作为参数：第一个是目标路由 `to`，第二个是当前路由 `from`。
 
@@ -48,7 +48,7 @@ export default defineNuxtRouteMiddleware((to) => {
 
 ### 重定向
 
-结合在路由中间件中使用 [`useState`](/docs/3.x/api/composables/use-state) 和 `navigateTo` 辅助函数，根据用户的认证状态将其重定向到不同的路由：
+在路由中间件中，将 [`useState`](/docs/api/composables/use-state) 与 `navigateTo` 辅助函数结合使用，可根据用户的身份验证状态将其重定向到不同路由：
 
 ```ts [middleware/auth.ts]
 export default defineNuxtRouteMiddleware((to, from) => {
@@ -64,4 +64,4 @@ export default defineNuxtRouteMiddleware((to, from) => {
 })
 ```
 
-`[navigateTo](/docs/3.x/api/utils/navigate-to)` 和 `[abortNavigation](/docs/3.x/api/utils/abort-navigation)` 是全局可用的辅助函数，可以在 `defineNuxtRouteMiddleware` 中使用。
+[navigateTo](/docs/api/utils/navigate-to) 和 [abortNavigation](/docs/api/utils/abort-navigation) 都是全局可用的辅助函数，你可以在 `defineNuxtRouteMiddleware` 中使用。

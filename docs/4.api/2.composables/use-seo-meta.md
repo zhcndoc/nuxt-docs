@@ -14,7 +14,7 @@ links:
 这是向站点添加元标签的推荐方式，因为它防止 XSS 攻击并且拥有完整的 TypeScript 支持。
 ::
 
-:read-more{to="/docs/3.x/getting-started/seo-meta"}
+:read-more{to="/docs/getting-started/seo-meta"}
 
 ## 用法
 
@@ -48,13 +48,13 @@ useSeoMeta({
 
 参数超过 100 个。请查看[源码中的完整参数列表](https://github.com/harlan-zw/zhead/blob/main/packages/zhead/src/metaFlat.ts#L1035)。
 
-:read-more{to="/docs/3.x/getting-started/seo-meta"}
+:read-more{to="/docs/getting-started/seo-meta"}
 
 ## 性能
 
 大多数情况下，SEO 元标签不需要响应式，因为搜索引擎机器人主要扫描页面首次加载时的内容。
 
-为了更好性能，当元标签不需要响应式时，你可以在服务器端条件下调用 `useSeoMeta`：
+为了更好的性能，当元标签不需要响应式时，你可以在服务器端条件下调用 `useSeoMeta`：
 
 ```vue [app.vue]
 <script setup lang="ts">
@@ -77,4 +77,4 @@ useSeoMeta({
 </script>
 ```
 
-该方案之前使用的是 [`useServerSeoMeta`](/docs/api/composables/use-server-seo-meta) 组合式函数，但现已废弃，推荐使用此方法。
+此功能之前使用的是 [`useServerSeoMeta`](/docs/api/composables/use-server-seo-meta) 组合式函数，但现在已弃用，推荐采用这种方式。

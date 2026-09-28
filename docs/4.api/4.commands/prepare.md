@@ -14,7 +14,7 @@ npx nuxt prepare [ROOTDIR] [--dotenv] [--cwd=<directory>] [--logLevel=<silent|in
 ```
 <!--/prepare-cmd-->
 
-`prepare` 命令会在你的应用中创建一个 [`.nuxt`](/docs/guide/directory-structure/nuxt) 目录并生成类型。这在 CI 环境中或作为 [`package.json`](/docs/guide/directory-structure/package) 中的 `postinstall` 命令时非常有用。
+`prepare` 命令会在你的应用中创建一个 [`.nuxt`](/docs/directory-structure/nuxt) 目录并生成类型。在 CI 环境中或作为 [`package.json`](/docs/directory-structure/package) 中的 `postinstall` 命令时，这会很有用。
 
 ## 参数
 

@@ -11,7 +11,7 @@ links:
 `useRequestURL` 是一个辅助函数，返回一个在服务器端和客户端均适用的 [URL 对象](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL)。
 
 ::important
-当使用带有缓存策略的[混合渲染](/docs/guide/concepts/rendering#hybrid-rendering)时，通过 [Nitro 缓存层](https://nitro.zhcndoc.com/guide/cache) 处理缓存响应时，所有传入请求头都会被丢弃（这意味着 `useRequestURL` 对于 `host` 会返回 `localhost`）。
+在使用 [Hybrid Rendering](/docs/guide/concepts/rendering#hybrid-rendering) 和缓存策略时，通过 [Nitro 缓存层](https://nitro.build/guide/cache)处理缓存响应时，所有传入的请求头都会被丢弃（这意味着 `useRequestURL` 将为 `host` 返回 `localhost`）。
 
 你可以定义 [`cache.varies` 选项](https://nitro.zhcndoc.com/guide/cache#options) 来指定在缓存和响应时要考虑的请求头，例如多租户环境下的 `host` 和 `x-forwarded-host`。
 ::

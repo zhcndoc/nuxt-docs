@@ -12,7 +12,7 @@ links:
 此组合函数在 Nuxt v3.14+ 版本中可用。
 ::
 
-你可以使用内置的 [`useResponseHeader`](/docs/api/composables/use-response-header) 组合函数，在你的页面、组件和插件中设置任何服务器响应头。
+你可以使用内置的 [`useResponseHeader`](/docs/api/composables/use-response-header) 组合函数，在页面、组件和插件中设置任意服务器响应头。
 
 ```ts
 // 设置自定义响应头
@@ -37,7 +37,7 @@ header.value = 'my-value'
 </template>
 ```
 
-例如，我们也可以在 Nuxt [中间件](/docs/guide/directory-structure/middleware) 中使用 `useResponseHeader`，为所有页面设置响应头。
+例如，我们可以在 Nuxt [中间件](/docs/directory-structure/middleware)中使用 `useResponseHeader` 为所有页面设置响应头。
 
 ```ts [middleware/my-header-middleware.ts]
 export default defineNuxtRouteMiddleware((to, from) => {

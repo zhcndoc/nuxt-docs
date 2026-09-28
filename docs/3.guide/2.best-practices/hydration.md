@@ -47,7 +47,7 @@ const userTheme = localStorage.getItem('theme') || 'light'
 </script>
 ```
 
-**解决方案**：你可以使用 [`useCookie`](/docs/3.x/api/composables/use-cookie) ：
+**解决方案**：你可以使用 [`useCookie`](/docs/api/composables/use-cookie)：
 
 ```html
 <template>
@@ -144,7 +144,7 @@ const greeting = hour < 12 ? '早上好' : '下午好'
 </script>
 ```
 
-**解决方案**：使用 [`NuxtTime`](/docs/3.x/api/components/nuxt-time) 组件或客户端处理：
+**解决方案**：使用 [`NuxtTime`](/docs/api/components/nuxt-time) 组件或在客户端处理：
 
 ```html
 <template>
@@ -178,10 +178,10 @@ onMounted(() => {
 
 ## 总结
 
-1. **使用 SSR 友好的组合式函数**：[`useFetch`](/docs/3.x/api/composables/use-fetch)、[`useAsyncData`](/docs/3.x/api/composables/use-async-data)、[`useState`](/docs/3.x/api/composables/use-state)
-2. **包裹仅客户端代码**：使用 [`ClientOnly`](/docs/3.x/api/components/client-only) 组件处理浏览器特有内容
-3. **数据源保持一致**：确保服务器和客户端使用相同数据
-4. **避免在 setup 中副作用**：将依赖浏览器的代码移动到 `onMounted`
+1. **使用 SSR 友好的组合式函数**：[`useFetch`](/docs/api/composables/use-fetch)、[`useAsyncData`](/docs/api/composables/use-async-data)、[`useState`](/docs/api/composables/use-state)
+2. **包装仅客户端代码**：对浏览器特有内容使用 [`ClientOnly`](/docs/api/components/client-only) 组件
+3. **保持数据源一致**：确保服务器和客户端使用相同的数据
+4. **避免在 setup 中产生副作用**：将依赖浏览器的代码移至 `onMounted`
 
 ::tip
 你可以阅读 [Vue 关于 SSR hydration 不匹配的文档](https://vuejs.org/guide/scaling-up/ssr.html#hydration-mismatch) 来更好地理解 hydration。

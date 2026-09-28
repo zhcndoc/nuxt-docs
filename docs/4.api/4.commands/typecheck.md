@@ -36,9 +36,9 @@ npx nuxt typecheck [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbos
 <!--/typecheck-opts-->
 
 ::note
-此命令会将 `process.env.NODE_ENV` 设置为 `production`。若想覆盖，请在 [`.env`](/docs/3.x/directory-structure/env) 文件中定义 `NODE_ENV` 或作为命令行参数传入。
+此命令会将 `process.env.NODE_ENV` 设置为 `production`。如需覆盖此设置，请在 [`.env`](/docs/directory-structure/env) 文件中定义 `NODE_ENV`，或将其作为命令行参数传入。
 ::
 
-::read-more{to="/docs/3.x/guide/concepts/typescript#type-checking"}
-了解更多关于如何在构建或开发时启用类型检查的信息。
+::read-more{to="/docs/guide/concepts/typescript#type-checking"}
+了解如何在构建或开发时启用类型检查。
 ::

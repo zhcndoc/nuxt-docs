@@ -8,10 +8,10 @@ links:
     size: xs
 ---
 
-`useLazyAsyncData` 是对 [`useAsyncData`](/docs/3.x/api/composables/use-async-data) 的一个封装，通过将 `lazy` 选项设置为 `true`，让导航在处理函数解析前即可触发。
+`useLazyAsyncData` 是 [`useAsyncData`](/docs/api/composables/use-async-data) 的封装，它会将 `lazy` 选项设为 `true`，从而在处理函数解析前触发导航。
 
 ::note
-默认情况下，[`useAsyncData`](/docs/3.x/api/composables/use-async-data) 会阻止导航，直到其异步处理函数解析完毕。`useLazyAsyncData` 允许导航立即发生，同时数据获取在后台继续进行。
+默认情况下，[`useAsyncData`](/docs/api/composables/use-async-data) 会阻止导航，直到其异步处理函数解析完成。`useLazyAsyncData` 允许导航立即发生，同时数据获取会在后台继续进行。
 ::
 
 ## 用法
@@ -57,19 +57,19 @@ export function useLazyAsyncData<DataT, ErrorT> (
 ): AsyncData<DataT, ErrorT>
 ```
 
-`useLazyAsyncData` 拥有与 [`useAsyncData`](/docs/3.x/api/composables/use-async-data) 相同的签名。
+`useLazyAsyncData` 与 [`useAsyncData`](/docs/api/composables/use-async-data) 的签名相同。
 
 ## 参数
 
-`useLazyAsyncData` 接受与 [`useAsyncData`](/docs/3.x/api/composables/use-async-data) 相同的参数，只是 `lazy` 选项会被自动设置为 `true`。
+`useLazyAsyncData` 接受与 [`useAsyncData`](/docs/api/composables/use-async-data) 相同的参数，并自动将 `lazy` 选项设为 `true`。
 
-:read-more{to="/docs/3.x/api/composables/use-async-data#parameters"}
+:read-more{to="/docs/api/composables/use-async-data#parameters"}
 
 ## 返回值
 
-`useLazyAsyncData` 返回与 [`useAsyncData`](/docs/3.x/api/composables/use-async-data) 相同的值。
+`useLazyAsyncData` 返回与 [`useAsyncData`](/docs/api/composables/use-async-data) 相同的值。
 
-:read-more{to="/docs/3.x/api/composables/use-async-data#return-values"}
+:read-more{to="/docs/api/composables/use-async-data#return-values"}
 
 ## 示例
 
@@ -92,4 +92,4 @@ watch(count, (newCount) => {
 </template>
 ```
 
-:read-more{to="/docs/3.x/getting-started/data-fetching"}
+:read-more{to="/docs/getting-started/data-fetching"}

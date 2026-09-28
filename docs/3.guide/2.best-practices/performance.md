@@ -12,7 +12,7 @@ Nuxt 提供了多种内置功能，帮助你优化网站性能。理解这些功
 
 ### 链接
 
-[`<NuxtLink>`](/docs/3.x/api/components/nuxt-link) 是 Vue Router 的 `<RouterLink>` 组件和 HTML `<a>` 标签的替代方案。它能智能判断链接是内部还是外部链接，并应用相应的优化（预取、默认属性等）进行渲染。
+[`<NuxtLink>`](/docs/api/components/nuxt-link) 是 Vue Router 的 `<RouterLink>` 组件和 HTML 的 `<a>` 标签的直接替代品。它会智能判断链接是内部链接还是外部链接，并根据情况进行渲染，同时应用可用的优化（预取、默认属性等）。
 
 ```html
 <template>
@@ -42,7 +42,7 @@ export default defineNuxtConfig({
 })
 ```
 
-:read-more{title="NuxtLink" to="/docs/3.x/api/components/nuxt-link"}
+:read-more{title="NuxtLink" to="/docs/api/components/nuxt-link"}
 
 ### 混合渲染
 
@@ -93,7 +93,7 @@ const show = ref(false)
 
 使用 Lazy 前缀可以延迟加载组件代码，直到真正需要时再加载，这有助于优化 JavaScript 包体积。
 
-:read-more{title="组件懒加载" to="/docs/guide/directory-structure/components#dynamic-imports"}
+:read-more{title="懒加载组件" to="/docs/directory-structure/components#dynamic-imports"}
 
 ### 延迟激活（水合）
 
@@ -109,11 +109,11 @@ const show = ref(false)
 
 为了优化你的应用，你可能想延迟部分组件的激活，直到它们可见，或者直到浏览器完成更重要的任务。
 
-:read-more{title="延迟激活（懒水合）" to="/docs/guide/directory-structure/components#delayed-or-lazy-hydration"}
+:read-more{title="延迟水合" to="/docs/directory-structure/components#delayed-or-lazy-hydration"}
 
 ### 获取数据
 
-为避免重复获取数据（服务器端和客户端各获取一次），Nuxt 提供了 [`useFetch`](/docs/3.x/api/composables/use-fetch) 和 [`useAsyncData`](/docs/3.x/api/composables/use-async-data)。它们确保如果 API 请求在服务器端调用，数据会随负载转发到客户端，而不会重复请求。
+为避免重复获取相同数据（一次在服务器上，一次在客户端），Nuxt 提供了 [`useFetch`](/docs/api/composables/use-fetch) 和 [`useAsyncData`](/docs/api/composables/use-async-data)。它们确保如果在服务器上发起了 API 调用，数据会通过 payload 传递给客户端，而不是再次获取。
 
 :read-more{title="数据获取" to="/docs/getting-started/data-fetching"}
 
@@ -129,7 +129,7 @@ Nuxt 提供了 [Nuxt Image](https://image.nuxt.com/) 模块，是 Nuxt 应用的
 
 :video-accordion{title="观看 LearnVue 关于 Nuxt Image 的视频" videoId="_UBff2eqGY0"}
 
-[`<NuxtImg>`](/docs/3.x/api/components/nuxt-img) 是对原生 `<img>` 标签的替代，带有如下增强功能：
+[`<NuxtImg>`](/docs/api/components/nuxt-img) 是原生 `<img>` 标签的直接替代品，并提供以下增强功能：
 
 * 支持内置提供者优化本地和远程图片
 * 将 `src` 转换为优化后的提供者 URL，支持现代格式如 WebP 或 Avif
@@ -218,7 +218,7 @@ onLoaded((gtag) => {
 
 ### Nuxi Analyze
 
-[`nuxi`](/docs/3.x/api/commands/analyze) 的该命令允许你分析生产环境的打包文件或 Nuxt 应用。它利用 `vite-bundle-visualizer`（类似 `webpack-bundle-analyzer`）生成应用包的视觉化表示，更易识别占用空间最大的组件。
+`nuxi` 的[此命令](/docs/api/commands/analyze)可分析 Nuxt 应用的生产构建包。它利用 `vite-bundle-visualizer`（类似于 `webpack-bundle-analyzer`）生成应用构建包的可视化图表，让你更容易识别占用空间最大的组件。
 
 当可视化图中出现大块时，通常意味着优化机会 —— 可以将它拆分为更小部分，实现懒加载，或使用更高效替代方案（尤其是第三方库）。
 

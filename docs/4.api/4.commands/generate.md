@@ -38,5 +38,5 @@ npx nuxt generate [ROOTDIR] [--cwd=<directory>] [--logLevel=<silent|info|verbose
 <!--/generate-opts-->
 
 ::read-more{to="/docs/getting-started/deployment#static-hosting"}
-阅读更多关于预渲染和静态托管的信息。
+了解有关预渲染和静态托管的更多信息。
 ::

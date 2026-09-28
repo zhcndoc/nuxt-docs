@@ -9,7 +9,7 @@ links:
 ---
 
 ::note
-路由中间件是存储在你的 Nuxt 应用的 [`middleware/`](/docs/3.x/directory-structure/middleware) 目录下的导航守卫（除非[另有设置](/docs/3.x/api/nuxt-config#middleware)）。
+路由中间件是导航守卫，存储在你的 Nuxt 应用的 [`middleware/`](/docs/directory-structure/middleware) 目录中（除非[另行设置](/docs/api/nuxt-config#middleware)）。
 ::
 
 ## 类型
@@ -31,7 +31,7 @@ interface AddRouteMiddlewareOptions {
 
 可以是字符串或者 `RouteMiddleware` 类型的函数。函数接收下一个路由 `to` 作为第一个参数，当前路由 `from` 作为第二个参数，这两个参数都是 Vue 路由对象。
 
-了解更多关于[路由对象](/docs/3.x/api/composables/use-route)的可用属性。
+了解有关[路由对象](/docs/api/composables/use-route)可用属性的更多信息。
 
 ### `middleware`
 

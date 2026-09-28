@@ -8,7 +8,7 @@ links:
     size: xs
 ---
 
-你可以使用内置的 [`useRequestHeaders`](/docs/api/composables/use-request-headers) 组合函数，在页面、组件和插件中访问传入的请求头。
+你可以使用内置的 [`useRequestHeaders`](/docs/api/composables/use-request-headers) 可组合函数，在页面、组件和插件中访问传入的请求头。
 
 ```js
 // 获取所有请求头
@@ -24,7 +24,7 @@ const { cookie } = useRequestHeaders(['cookie'])
 
 ## 示例
 
-我们可以使用 `useRequestHeaders` 访问初始请求的 `authorization` 头，并在 SSR 期间将其代理到任何未来的内部请求。
+我们可以使用 `useRequestHeaders` 访问初始请求的 `authorization` 头，并在 SSR 期间将其代理到任何后续的内部请求。
 
 下面的示例演示了如何在同构的 `$fetch` 调用中添加 `authorization` 请求头。
 

@@ -10,8 +10,7 @@ links:
 
 ## 描述
 
-一个返回页面加载状态的组合函数。被 [`<NuxtLoadingIndicator>`](/docs/api/components/nuxt-loading-indicator) 使用且可以被控制。  
-它监听 [`page:loading:start`](/docs/api/advanced/hooks#app-hooks-runtime) 和 [`page:loading:end`](/docs/api/advanced/hooks#app-hooks-runtime) 事件来改变其状态。
+一个返回页面加载状态的组合函数。由 [`<NuxtLoadingIndicator>`](/docs/api/components/nuxt-loading-indicator) 使用，并且可以控制。它会接入 [`page:loading:start`](/docs/api/advanced/hooks#app-hooks-runtime) 和 [`page:loading:end`](/docs/api/advanced/hooks#app-hooks-runtime)，以改变其状态。
 
 ## 参数
 
@@ -23,18 +22,18 @@ links:
 
 ### `isLoading`
 
-- **type**: `Readonly<ShallowRef<boolean>>`
-- **description**: 加载状态
+- **类型**：`Readonly<ShallowRef<boolean>>`
+- **描述**：加载状态
 
 ### `error`
 
-- **type**: `Readonly<ShallowRef<boolean>>`
-- **description**: 错误状态
+- **类型**：`Readonly<ShallowRef<boolean>>`
+- **描述**：错误状态
 
 ### `progress`
 
-- **type**: `Readonly<ShallowRef<number>>`
-- **description**: 进度状态。从 `0` 到 `100`。
+- **类型**：`Readonly<ShallowRef<number>>`
+- **描述**：进度状态。从 `0` 到 `100`。
 
 ## 方法
 

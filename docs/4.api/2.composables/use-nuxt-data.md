@@ -9,7 +9,7 @@ links:
 ---
 
 ::note
-`useNuxtData` 允许你访问带有显式提供的 key 的 [`useAsyncData`](/docs/3.x/api/composables/use-async-data)、[`useLazyAsyncData`](/docs/3.x/api/composables/use-lazy-async-data)、[`useFetch`](/docs/3.x/api/composables/use-fetch) 和 [`useLazyFetch`](/docs/3.x/api/composables/use-lazy-fetch) 的当前缓存值。
+`useNuxtData` 让你可以访问 [`useAsyncData`](/docs/api/composables/use-async-data)、[`useLazyAsyncData`](/docs/api/composables/use-lazy-async-data)、[`useFetch`](/docs/api/composables/use-fetch) 和 [`useLazyFetch`](/docs/api/composables/use-lazy-fetch) 当前缓存的值，这些组合函数都需要显式提供 key。
 ::
 
 ## 用法

@@ -15,7 +15,7 @@ links:
 ::
 
 ::note
-`useHydration` 旨在**确保 SSR 过程中的状态同步与恢复**。如果你需要在 Nuxt 中创建一个全局响应式且支持 SSR 的状态，推荐使用 [`useState`](/docs/api/composables/use-state)。
+`useHydration` 旨在 **确保 SSR 期间的状态同步和恢复**。如果你需要在 Nuxt 中创建一个支持 SSR 的全局响应式状态，推荐使用 [`useState`](/docs/api/composables/use-state)。
 ::
 
 服务器端 `get` 函数返回的数据会存储在 `nuxtApp.payload` 中，使用传递给 `useHydration` 的第一个参数（唯一键）作为键名。在水合过程中，这些数据会在客户端被取出，避免重复的计算或 API 调用。

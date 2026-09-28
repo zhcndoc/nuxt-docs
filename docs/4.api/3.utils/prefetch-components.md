@@ -20,7 +20,7 @@ await prefetchComponents(['MyGlobalComponent1', 'MyGlobalComponent2'])
 ```
 
 ::note
-当前实现行为与 [`preloadComponents`](/docs/api/utils/preload-components) 完全相同，都是通过预加载组件而非仅仅预取组件，我们正在努力改进此行为。
+当前实现的行为与 [`preloadComponents`](/docs/api/utils/preload-components) 完全相同，会预加载组件而非仅进行预取，我们正在努力改进此行为
 ::
 
 ::note

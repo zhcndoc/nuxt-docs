@@ -11,7 +11,7 @@ links:
 在你的页面、组件和插件中，你可以使用 useAsyncData 访问异步解析的数据。
 
 ::note
-[`useAsyncData`](/docs/3.x/api/composables/use-async-data) 是一个组合式函数，旨在直接在 [Nuxt 上下文](/docs/3.x/guide/going-further/nuxt-app#the-nuxt-context) 中调用。它返回响应式的组合式函数并处理将响应添加到 Nuxt 负载中，使其能够从服务器传递到客户端，**在页面水合时不会重新在客户端获取数据**。
+[`useAsyncData`](/docs/api/composables/use-async-data) 是一个组合式函数，旨在 Nuxt 上下文中直接调用（参见 [Nuxt 上下文](/docs/guide/going-further/nuxt-app#the-nuxt-context)）。它会返回响应式组合式函数，并将响应添加到 Nuxt payload 中，以便在页面水合时从服务器传递到客户端，**而无需在客户端重新获取数据**。
 ::
 
 ## 用法
@@ -25,8 +25,8 @@ const { data, status, pending, error, refresh, clear } = await useAsyncData(
 </script>
 ```
 
-::warning{to="/docs/3.x/guide/recipes/custom-usefetch#custom-usefetchuseasyncdata"}
-如果你正在使用自定义的 `useAsyncData` 包装器，请勿在组合式函数中对其加 await，因为这可能导致意外行为。请参考[此示例](/docs/3.x/guide/recipes/custom-usefetch#custom-usefetch)了解如何制作自定义的异步数据获取器。
+::warning{to="/docs/guide/recipes/custom-usefetch#custom-usefetchuseasyncdata"}
+如果你使用自定义的 `useAsyncData` 包装器，请勿在组合式函数中对其使用 await，因为这可能导致意外行为。请参阅自定义异步数据获取器的示例。
 ::
 
 ::note
@@ -130,17 +130,17 @@ const { data, error } = await useAsyncData(
 - 超过 `options.timeout` 时间时
 
 ::warning
-[`useAsyncData`](/docs/3.x/api/composables/use-async-data) 是编译器保留的函数名，所以你不应该将自定义函数命名为 [`useAsyncData`](/docs/3.x/api/composables/use-async-data)。
+[`useAsyncData`](/docs/api/composables/use-async-data) 是由编译器转换的保留函数名，因此你不应将自己的函数命名为 [`useAsyncData`](/docs/api/composables/use-async-data)。
 ::
 
-:read-more{to="/docs/3.x/getting-started/data-fetching#useasyncdata"}
+:read-more{to="/docs/getting-started/data-fetching#useasyncdata"}
 
 ## 参数
 
 - `key`：唯一键，确保在请求间正确去重数据获取。如果不提供，系统会为 `useAsyncData` 实例生成基于文件名和行号的唯一键。
 - `handler`：异步函数，必须返回真值（例如，不应返回 `undefined` 或 `null`），否则客户端可能会重复请求数据。
 ::warning
-`handler` 函数应**无副作用**以确保 SSR 和客户端水合期间行为可预测。如果你需要触发副作用，请使用 [`callOnce`](/docs/3.x/api/utils/call-once) 工具实现。
+`handler` 函数应当**没有副作用**，以确保 SSR 和 CSR 水合期间的行为可预测。如果你需要触发副作用，请使用 [`callOnce`](/docs/api/utils/call-once) 工具函数。
 ::
 - `options`:
   - `server`: 是否在服务器端获取数据（默认为 `true`）
@@ -167,8 +167,8 @@ const { data, error } = await useAsyncData(
 底层实现上，`lazy: false` 会利用 `<Suspense>` 阻塞路由加载，直到数据获取完成。建议使用 `lazy: true` 并实现加载状态，以获得更流畅的用户体验。
 ::
 
-::read-more{to="/docs/3.x/api/composables/use-lazy-async-data"}
-你可以使用 `useLazyAsyncData` 来获得与 `useAsyncData` 中 `lazy: true` 相同的行为。
+::read-more{to="/docs/api/composables/use-lazy-async-data"}
+你可以使用 `useLazyAsyncData`，以获得与 `useAsyncData` 搭配 `lazy: true` 相同的行为。
 ::
 
 :video-accordion{title="观看 Alexander Lichter 关于使用 getCachedData 进行客户端缓存的视频" videoId="aQPR0xn-MMk"}
@@ -203,7 +203,7 @@ const { data: users2 } = useAsyncData('users', (_nuxtApp, { signal }) => $fetch(
 ```
 
 ::tip
-通过 `useAsyncData` 创建的带键状态可以通过 [`useNuxtData`](/docs/3.x/api/composables/use-nuxt-data) 在整个 Nuxt 应用中获取。
+使用 `useAsyncData` 创建的带键状态，可以通过 [`useNuxtData`](/docs/api/composables/use-nuxt-data) 在 Nuxt 应用中获取。
 ::
 
 ## 返回值
@@ -224,7 +224,7 @@ const { data: users2 } = useAsyncData('users', (_nuxtApp, { signal }) => $fetch(
 默认情况下，Nuxt 会等待一次 `refresh` 完成后才允许再次执行。
 
 ::note
-如果您没有在服务器上获取数据（例如，使用 `server: false`），那么数据_将不会_在水合完成之前被获取。这意味着即使您在客户端等待 [`useAsyncData`](/docs/3.x/api/composables/use-async-data)，`data` 在 `<script setup>` 中仍将保持 `undefined`。
+如果你没有在服务器上获取数据（例如使用 `server: false`），那么在水合完成之前**不会**获取数据。这意味着即使你在客户端对 [`useAsyncData`](/docs/api/composables/use-async-data) 使用 await，`data` 在 `<script setup>` 中仍会保持为 `undefined`。
 ::
 
 ## 类型
@@ -280,4 +280,4 @@ interface AsyncDataExecuteOptions {
 type AsyncDataRequestStatus = 'idle' | 'pending' | 'success' | 'error'
 ```
 
-:read-more{to="/docs/3.x/getting-started/data-fetching"}
+:read-more{to="/docs/getting-started/data-fetching"}
