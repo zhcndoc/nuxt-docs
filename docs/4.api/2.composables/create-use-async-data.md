@@ -1,7 +1,7 @@
 ---
 title: 'createUseAsyncData'
 description: 创建一个自定义的 useAsyncData 可组合项工厂函数，并预设默认选项。
-minimalVersion: "4.2"
+minimalVersion: "4.4"
 links:
   - label: Source
     icon: i-simple-icons-github
@@ -40,7 +40,7 @@ const { data: mountains } = await useCachedData(
 
 ```ts [Signature]
 function createUseAsyncData (
-  options?: Partial<AsyncDataOptions>,
+  options?: Partial<AsyncDataOptions> & { addons?: UseAsyncDataAddon[] },
 ): typeof useAsyncData
 
 function createUseAsyncData (
@@ -53,6 +53,49 @@ function createUseAsyncData (
 `createUseAsyncData` 接受与 [`useAsyncData`](/docs/api/composables/use-async-data#parameters) 相同的所有选项，包括 `server`、`lazy`、`immediate`、`default`、`transform`、`pick`、`getCachedData`、`deep`、`dedupe`、`timeout` 和 `watch`。
 
 请参阅 [`useAsyncData` 文档](/docs/api/composables/use-async-data#parameters)中的完整选项列表。
+
+返回的组合式函数签名会包含 [addons](#addons) 提供的自定义选项和返回值扩展。
+
+## Addons
+
+除 `useAsyncData` 选项外，`createUseAsyncData` 还接受 `addons` 数组。Addon 是使用 [`defineUseAsyncDataAddon`](/docs/api/utils/define-use-async-data-addon) 定义的可复用行为单元。它们可以声明调用时的自定义选项、在 handler 外运行中间件、扩展返回对象，并为组合式函数添加自定义逻辑。
+
+例如，下面的 addon 会在窗口重新获得焦点时刷新数据，并通过自定义的 `refreshOnFocus` 选项控制；调用方可以逐次选择是否启用：
+
+```ts [app/composables/useCustomAsyncData.ts]
+const refreshOnFocus = defineUseAsyncDataAddon({
+  // 为自定义 useAsyncData 实例扩展调用选项
+  setup: (options: UseAsyncDataAddonOptions<{ refreshOnFocus?: boolean }>) => {
+    // 创建 useAsyncData 实例之前运行
+    if (import.meta.server || !options.refreshOnFocus) { return }
+
+    return (asyncData) => {
+      // 创建 useAsyncData 实例之后运行
+      const focused = useWindowFocus()
+      watch(focused, (focused) => {
+        if (focused) { asyncData.refresh() }
+      })
+
+      return { focused } // 为返回对象增加新属性
+    }
+  },
+})
+
+export const useCustomAsyncData = createUseAsyncData({ addons: [refreshOnFocus] })
+```
+
+```vue [app/pages/index.vue]
+<script setup lang="ts">
+// 创建的组合式函数会为 `refreshOnFocus` 提供类型
+const { data } = await useCustomAsyncData(
+  'mountains',
+  () => $fetch('https://api.nuxtjs.dev/mountains'),
+  { refreshOnFocus: true },
+)
+</script>
+```
+
+:read-more{to="/docs/api/utils/define-use-async-data-addon"}
 
 ## 默认模式 vs 覆盖模式
 

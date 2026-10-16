@@ -22,6 +22,7 @@ import { resolveModulePath } from 'exsolve'
 
 import { toVirtualId } from '../utils/index.ts'
 import { collectDevCss } from '../utils/css.ts'
+import { isBundlerTracingEnabled, traceAsync } from '../utils/tracing.ts'
 import { resolveClientEntry, resolveServerEntry } from '../utils/config.ts'
 import type { ErrorPartial } from '../types.ts'
 import type { ViteNodeErrorData } from '../vite-node-runner.ts'
@@ -411,7 +412,7 @@ export function ViteNodePlugin (nuxt: Nuxt): VitePlugin | undefined {
 
       nuxt.hook('close', cleanupSocket)
 
-      const client = clientServer.environments.client
+      const client = nuxt.options.experimental.viteEnvironmentApi ? clientServer.environments.client : clientServer
       nuxt.hook('app:templatesGenerated', (_app, changedTemplates) => {
         // The SSR dev server runs with `hmr: false`, so a regenerated template
         // (e.g. `routes.mjs` after a page is added) only ever invalidates its
@@ -497,7 +498,10 @@ function createViteNodeSocketServer (nuxt: Nuxt, ssrServer: ViteDevServer, clien
             if (!resolveId) {
               throw { status: 400, message: 'Missing id for resolve' } satisfies ErrorPartial
             }
-            const resolvedResult = await ssrServer.environments.ssr.pluginContainer.resolveId(resolveId, importer).catch(() => null)
+            const ssrNode = nuxt.options.experimental.viteEnvironmentApi
+              ? ssrServer.environments.ssr.pluginContainer
+              : getNode(ssrServer)
+            const resolvedResult = await ssrNode.resolveId(resolveId, importer).catch(() => null)
             sendResponse<typeof request.type>(socket, request.id, resolvedResult)
             return
           }
@@ -505,14 +509,23 @@ function createViteNodeSocketServer (nuxt: Nuxt, ssrServer: ViteDevServer, clien
             if (request.payload.moduleId === '/') {
               throw { status: 400, message: 'Invalid moduleId' } satisfies ErrorPartial
             }
-            const response = await ssrServer.environments.ssr.fetchModule(request.payload.moduleId)
+            const moduleId = request.payload.moduleId
+            const fetchModule = nuxt.options.experimental.viteEnvironmentApi
+              ? () => ssrServer.environments.ssr.fetchModule(moduleId)
+              : isBundlerTracingEnabled(nuxt)
+                ? () => traceAsync('nuxt.bundler.module', { url: moduleId, environment: 'ssr' }, () => getNode(ssrServer).fetchModule(moduleId))
+                : () => getNode(ssrServer).fetchModule(moduleId)
+            const response = await Promise.resolve(fetchModule())
               .catch(async (err) => {
                 const file = ssrServer.environments.ssr.moduleGraph.getModuleById(request.payload.moduleId)?.file ?? undefined
                 const errorData = serializeViteNodeError(err, request.payload.moduleId, file)
 
                 if (!errorData.frame && err.code === 'PARSE_ERROR') {
                   try {
-                    errorData.frame = await ssrServer.environments.client.transformRequest(request.payload.moduleId)
+                    const clientNode = nuxt.options.experimental.viteEnvironmentApi
+                      ? ssrServer.environments.client
+                      : getNode(ssrServer)
+                    errorData.frame = await clientNode.transformRequest(request.payload.moduleId)
                       .then(res => `${err.message || ''}\n${res?.code}`).catch(() => undefined)
                   } catch {
                     // Ignore transform errors

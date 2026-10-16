@@ -1,13 +1,14 @@
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest'
 import { dirname, join, normalize, resolve } from 'pathe'
 import { resolveModulePath } from 'exsolve'
 import { withoutTrailingSlash } from 'ufo'
 import { defu } from 'defu'
-import { logger, tryUseNuxt, useNuxt } from '@nuxt/kit'
+import { logger, resolvePath, tryUseNuxt, useNuxt } from '@nuxt/kit'
 import { findWorkspaceDir } from 'pkg-types'
+import { _generateTypes } from '../../kit/src/template.ts'
 import { loadNuxt } from '../src/index.ts'
 import type { NitroConfig, NuxtConfig } from '../schema.ts'
 import type { Nitro } from 'nitropack/types'
@@ -37,6 +38,36 @@ afterEach(() => {
 })
 
 describe('loadNuxt', () => {
+  it('resolves layer runtime imports through the consuming app', async () => {
+    const layerDir = mkdtempSync(join(tmpdir(), 'nuxt-layer-runtime-'))
+    onTestFinished(() => rmSync(layerDir, { recursive: true, force: true }))
+    const layerNuxtDir = join(layerDir, 'node_modules/nuxt')
+    mkdirSync(layerNuxtDir, { recursive: true })
+    writeFileSync(join(layerNuxtDir, 'package.json'), JSON.stringify({
+      name: 'nuxt',
+      type: 'module',
+      exports: { './app': './app.ts' },
+    }))
+    writeFileSync(join(layerNuxtDir, 'app.ts'), 'export const runtime = "layer"')
+
+    const nuxt = await loadNuxt({ cwd: repoRoot })
+    onTestFinished(() => nuxt.close())
+    const resolverOptions = { cwd: layerDir, alias: nuxt.options.alias }
+
+    expect(await resolvePath('nuxt/app', resolverOptions)).toBe(await resolvePath('#app', resolverOptions))
+  })
+
+  it('preserves a custom runtime import alias', async () => {
+    const customRuntime = resolve(repoRoot, 'packages/nuxt/src/app/composables/router.ts')
+    const nuxt = await loadNuxt({
+      cwd: repoRoot,
+      overrides: { alias: { 'nuxt/app': customRuntime } },
+    })
+    onTestFinished(() => nuxt.close())
+
+    expect(await resolvePath('nuxt/app', { alias: nuxt.options.alias })).toBe(customRuntime)
+  })
+
   it('respects hook overrides', async () => {
     let hookRan = false
     const nuxt = await loadNuxt({
@@ -159,6 +190,24 @@ describe('loadNuxt', () => {
     )
 
     expect(hasLayerServer).toBe(true)
+
+    await nuxt.close()
+  })
+
+  it('includes nuxt.schema files relative to typesDir in the node tsconfig', async () => {
+    const layerFixtureDir = withoutTrailingSlash(
+      normalize(fileURLToPath(new URL('./layers-fixture', import.meta.url))),
+    )
+
+    const nuxt = await loadNuxt({
+      cwd: layerFixtureDir,
+      overrides: { buildDir: join(layerFixtureDir, 'node_modules/.cache/nuxt/.nuxt') },
+      ready: true,
+    })
+    const { nodeTsConfig } = await _generateTypes(nuxt)
+
+    expect(nodeTsConfig.include).toContain('../nuxt.schema.*')
+    expect(nodeTsConfig.include).toContain('../layers/*/nuxt.schema.*')
 
     await nuxt.close()
   })

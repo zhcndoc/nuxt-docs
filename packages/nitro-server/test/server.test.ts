@@ -6,11 +6,20 @@ import type { H3Event } from 'h3'
 import * as shipped from '../../nuxt/src/server/index.ts'
 import type { RequestEvent } from '../../nuxt/src/server/index.ts'
 
+const { hooks, localFetch } = vi.hoisted(() => ({
+  hooks: {},
+  localFetch: vi.fn((_path: string, _init: RequestInit) => Promise.resolve(new Response('ok'))),
+}))
+
 // the delegate re-exports nitro's own `getRouteRules`/`useRuntimeConfig`, which only resolve
 // inside a built server bundle
 vi.mock('nitropack/runtime', () => ({
   getRouteRules: () => ({}),
-  useRuntimeConfig: () => ({}),
+  useRuntimeConfig: () => ({ app: { baseURL: '/base/' } }),
+  useNitroApp: () => ({ hooks, localFetch }),
+}))
+vi.mock('nitropack/runtime/internal/route-rules', () => ({
+  getRouteRulesForPath: () => ({}),
 }))
 
 const delegate = await import('../src/runtime/server.ts')
@@ -37,9 +46,9 @@ describe('the h3-backed `nuxt/server` implementations', () => {
  */
 describe('the shape of what it reads off an h3 v1 event', () => {
   /** The web-standard event the shipped implementations read, for comparing against. */
-  function webEvent (url: string): RequestEvent {
+  function webEvent (url: string, headers?: Record<string, string>): RequestEvent {
     return {
-      req: new Request(url),
+      req: new Request(url, { headers }),
       url: new URL(url),
       res: { headers: new Headers() },
       context: {},
@@ -105,6 +114,50 @@ describe('the shape of what it reads off an h3 v1 event', () => {
     expect(e.node.res.getHeader('access-control-allow-origin')).toBe('https://nuxt.com')
     expect(e.node.res.getHeader('access-control-allow-methods')).toBe('PUT')
     expect(e.node.res.getHeader('vary')).toBe('origin, access-control-request-method, access-control-request-headers')
+  })
+
+  it.for([
+    ['no header', {}],
+    ['forwarded headers', { 'x-forwarded-host': ' nuxt.com:8443 , proxy', 'x-forwarded-proto': 'https, http' }],
+    ['an unsupported forwarded protocol', { 'x-forwarded-proto': 'ftp' }],
+    ['a forwarded IPv6 host', { 'x-forwarded-host': '[::1]:99999' }],
+  ] as const)('reads the host, protocol and URL from %s the same way as the shipped implementation', ([, forwarded]) => {
+    const headers = { host: 'internal:3000', ...forwarded }
+    const web = webEvent('http://internal:3000/api?a=1', headers)
+    for (const trust of [false, true]) {
+      const options = { xForwardedHost: trust, xForwardedProto: trust }
+      const e = event('/api?a=1', { headers })
+      expect([delegate.getRequestURL(e, options).href, delegate.getRequestHost(e, options), delegate.getRequestProtocol(e, options)])
+        .toEqual([shipped.getRequestURL(web, options).href, shipped.getRequestHost(web, options), shipped.getRequestProtocol(web, options)])
+    }
+  })
+
+  it('reads the host, protocol and URL off the event it hands a handler', () => {
+    const e = event('/api?a=1', { headers: { 'x-forwarded-host': 'nuxt.com', 'x-forwarded-proto': 'https' } })
+    const portable = toPortableEvent(e)
+    const options = { xForwardedHost: true, xForwardedProto: true }
+    expect([delegate.getRequestURL(portable as never, options).href, delegate.getRequestHost(portable as never, options), delegate.getRequestProtocol(portable as never, options)])
+      .toEqual(['https://nuxt.com/api?a=1', 'nuxt.com', 'https'])
+  })
+
+  it('parses every cookie the same way as the shipped implementation', () => {
+    const cookie = 'a=1; b=%20; a=2'
+    expect(delegate.parseCookies(event('/', { headers: { cookie } }))).toEqual(shipped.parseCookies(webEvent('https://nuxt.com/', { cookie })))
+  })
+
+  it('fetches a route of the app relative to the base URL', async () => {
+    const e = event('/page', { headers: { 'cookie': 'a=1', 'x-other': 'y' } })
+
+    expect(await (await delegate.serverFetch(e, '/api/echo?a=1', { method: 'POST' })).text()).toBe('ok')
+
+    const [path, init] = localFetch.mock.calls[0]!
+    expect(path).toBe('/base/api/echo?a=1')
+    expect(init.method).toBe('POST')
+    expect(Object.fromEntries(init.headers as Headers)).toEqual({ cookie: 'a=1' })
+  })
+
+  it('registers server hooks on the nitro app', () => {
+    expect(delegate.useServerHooks()).toBe(hooks)
   })
 
   it('reads a missing header as undefined rather than as an empty string', () => {

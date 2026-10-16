@@ -16,40 +16,49 @@ import {
   getQuery as getH3Query,
   getRequestHeader as getH3RequestHeader,
   getRequestHeaders as getH3RequestHeaders,
-  getRequestURL,
+  getRequestURL as getH3RequestURL,
+  parseCookies,
   readBody,
   setCookie,
   setResponseHeader,
   setResponseStatus,
 } from 'h3'
 import type { H3Event } from 'h3'
-import { getRouteRules as getNitroRouteRules, useRuntimeConfig as useNitroRuntimeConfig } from 'nitropack/runtime'
+import { getRouteRules as getNitroRouteRules, useNitroApp, useRuntimeConfig as useNitroRuntimeConfig } from 'nitropack/runtime'
+import { joinURL } from 'ufo'
 import type { AppRouteRules, RuntimeConfig } from 'nuxt/schema'
-import type { EventHandler, NuxtErrorLike } from 'nuxt/server'
+import type { EventHandler, ForwardedOptions, NuxtErrorLike, NuxtServerHooks, NuxtServerRendererHooks, ServerFetchInit, ServerHookable } from 'nuxt/server'
 
 import {
   clearSession as clearPortableSession,
+  getRequestHost as getPortableRequestHost,
+  getRequestProtocol as getPortableRequestProtocol,
+  getRequestURL as getPortableRequestURL,
   getRouterParams as getPortableRouterParams,
   getSession as getPortableSession,
   getValidatedQuery as getPortableValidatedQuery,
   handleCors as handlePortableCors,
   readValidatedBody as readPortableValidatedBody,
+  resolveServerFetchInit,
   updateSession as updatePortableSession,
   useSession as usePortableSession,
 } from 'nuxt/internal/server-default'
 
 import { NUXT_ERROR_SIGNATURE } from '#app/error'
 import { PORTABLE_EVENT, toPortableEvent } from './utils/event'
+import { baseURL } from './utils/paths'
 import { serverDiagnostics } from './diagnostics'
 
 export {
   deleteCookie,
   getCookie,
-  getRequestURL,
+  parseCookies,
   readBody,
   setCookie,
   setResponseStatus,
 }
+
+export { getRouteRulesForPath as matchRouteRules } from 'nitropack/runtime/internal/route-rules'
 
 export {
   deriveSecret,
@@ -75,7 +84,7 @@ function requirePortableEvent<F extends (event: any, ...args: any[]) => any> (he
 }
 
 export type { AppRouteRules, ServerRoutes } from 'nuxt/schema'
-export type { CorsOptions, EventHandler, NuxtError, NuxtErrorJSON, NuxtErrorLike, RequestEvent, RequestEventContext, NuxtRequestEvent, Session, SessionConfig, SessionData, SessionEvent, SessionManager, SessionPassword, SessionUpdate, ValidateResult } from 'nuxt/server'
+export type { CorsOptions, EventHandler, ForwardedOptions, NuxtError, NuxtErrorJSON, NuxtErrorLike, RequestEvent, RequestEventContext, NuxtRequestEvent, NuxtServerHooks, NuxtServerRendererHooks, ServerFetchInit, ServerHookable, ServerHookResult, Session, SessionConfig, SessionData, SessionEvent, SessionManager, SessionPassword, SessionUpdate, ValidateResult } from 'nuxt/server'
 
 /**
  * @see {@link import('nuxt/server').defineEventHandler}
@@ -152,6 +161,26 @@ export function isNuxtError<DataT = unknown> (error: unknown): error is NuxtErro
   // an error nitro threw for itself carries the h3 v1 names only
   withPortableStatus(error)
   return true
+}
+
+/** @see {@link import('nuxt/server').getRequestURL} */
+export function getRequestURL (event: H3Event, options: ForwardedOptions = {}): URL {
+  return getPortableRequestURL(toForwardedEvent(event, options), options)
+}
+
+/** @see {@link import('nuxt/server').getRequestHost} */
+export function getRequestHost (event: H3Event, options: Pick<ForwardedOptions, 'xForwardedHost'> = {}): string {
+  return getPortableRequestHost({ req: { headers: event.headers } as Request }, options)
+}
+
+/** @see {@link import('nuxt/server').getRequestProtocol} */
+export function getRequestProtocol (event: H3Event, options: Pick<ForwardedOptions, 'xForwardedProto'> = {}): string {
+  return getPortableRequestProtocol(toForwardedEvent(event, options), options)
+}
+
+/** The URL h3 resolves for the request, with the headers to read forwarded values from. */
+function toForwardedEvent (event: H3Event, options: Pick<ForwardedOptions, 'xForwardedProto'>): { req: Request, url: URL } {
+  return { req: { headers: event.headers } as Request, url: getH3RequestURL(event, { xForwardedProto: options.xForwardedProto }) }
 }
 
 /** @see {@link import('nuxt/server').getRequestHeader} */
@@ -257,6 +286,16 @@ const REDIRECT_UNSAFE_RE = /["'<>&]/g
 /** @see {@link import('nuxt/server').getRouteRules} */
 export function getRouteRules (event: H3Event): AppRouteRules {
   return getNitroRouteRules(event) as AppRouteRules
+}
+
+/** @see {@link import('nuxt/server').serverFetch} */
+export function serverFetch (event: H3Event, path: string, init?: ServerFetchInit): Promise<Response> {
+  return useNitroApp().localFetch(joinURL(baseURL(), path), resolveServerFetchInit({ req: { headers: event.headers } as Request }, init))
+}
+
+/** @see {@link import('nuxt/server').useServerHooks} */
+export function useServerHooks (): ServerHookable<NuxtServerHooks & NuxtServerRendererHooks> {
+  return useNitroApp().hooks as unknown as ServerHookable<NuxtServerHooks & NuxtServerRendererHooks>
 }
 
 /** @see {@link import('nuxt/server').useRuntimeConfig} */

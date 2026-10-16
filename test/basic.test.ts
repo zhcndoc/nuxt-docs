@@ -11,7 +11,7 @@ import { $fetchComponent } from '@nuxt/test-utils/experimental'
 import { createRegExp, exactly } from 'magic-regexp'
 
 import { sessionConfig } from './fixtures/basic/server/utils/session'
-import { asyncContext, isDev, isRenderingJson, isTestingAppManifest, isWebpack, runsOnceInMatrix, runsOncePerBuilderInMatrix, runsOncePerEnvInMatrix } from './matrix'
+import { asyncContext, inlineErrorRendering, isDev, isRenderingJson, isTestingAppManifest, isWebpack, runsOnceInMatrix, runsOncePerBuilderInMatrix, runsOncePerEnvInMatrix } from './matrix'
 import { expectNoClientErrors, gotoPath, parseData, parsePayload, renderPage } from './utils'
 
 const appSecret = 'nuxt-runtime-app-secret-test-value'
@@ -1275,6 +1275,53 @@ describe('nuxt links', () => {
     await page.close()
   })
 
+  it('renders internal anchors identically to `<RouterLink>`', async () => {
+    const html = await $fetch<string>('/parent/link-state')
+
+    const attributes = (html: string, attribute: string) => {
+      const anchors: Record<string, string[]> = {}
+      for (const [anchor] of html.matchAll(/<a [^>]*>/g)) {
+        const name = anchor.match(new RegExp(`${attribute}="([^"]*)"`))?.[1]
+        if (name) {
+          anchors[name] = anchor.slice(3, -1).trim().split(/\s+(?=[\w-]+=)/).filter(a => !a.startsWith(attribute)).sort()
+        }
+      }
+      return anchors
+    }
+
+    const nuxtLinks = attributes(html, 'data-nuxt-link')
+    const routerLinks = attributes(html, 'data-router-link')
+
+    expect(Object.keys(nuxtLinks).sort()).toEqual(['active', 'exact', 'inactive', 'query'])
+    for (const name in nuxtLinks) {
+      expect(nuxtLinks[name], name).toEqual(routerLinks[name])
+    }
+    expect(nuxtLinks).toMatchInlineSnapshot(`
+      {
+        "active": [
+          "class="foo-active-class"",
+          "href="/parent"",
+        ],
+        "exact": [
+          "aria-current="page"",
+          "class="foo-active-class bar-exact-active-class"",
+          "href="/parent/link-state"",
+        ],
+        "inactive": [
+          "class=""",
+          "href="/nuxt-link/trailing-slash"",
+        ],
+        "query": [
+          "aria-current="page"",
+          "class="foo-active-class bar-exact-active-class"",
+          "href="/parent/link-state?a=1"",
+        ],
+      }
+    `)
+
+    await expectNoClientErrors('/parent/link-state')
+  })
+
   it('preserves route state', async () => {
     const { page } = await renderPage('/nuxt-link/trailing-slash')
 
@@ -1499,7 +1546,29 @@ describe('preserves current instance', () => {
 })
 
 describe('errors', () => {
-  it('should render a JSON error page', async () => {
+  it.skipIf(!inlineErrorRendering)('should render the error page for a request that accepts JSON', async () => {
+    const res = await fetch('/error', {
+      headers: {
+        accept: 'application/json',
+      },
+    })
+    expect(res.status).toBe(422)
+    expect(res.statusText).toBe('This is a custom error')
+    expect(res.headers.get('content-type')).toContain('text/html')
+    expect(await res.text()).toContain('This is a custom error')
+  })
+
+  it('should return JSON for a server route error, unless error rendering is legacy', async () => {
+    const res = await fetch('/api/error', {
+      headers: {
+        accept: 'text/html',
+      },
+    })
+    expect(res.status).toBe(400)
+    expect(res.headers.get('content-type')).toContain(inlineErrorRendering ? 'application/json' : 'text/html')
+  })
+
+  it.skipIf(inlineErrorRendering)('should render a JSON error page', async () => {
     const res = await fetch('/error', {
       headers: {
         accept: 'application/json',
@@ -1543,16 +1612,17 @@ describe('errors', () => {
       expect(html).not.toContain('root cause')
     }
 
-    const jsonResponse = await fetch('/error-cause', {
-      headers: { accept: 'application/json' },
-    })
-    const json = await jsonResponse.json()
-    expect(json).not.toHaveProperty('cause')
-    expect(JSON.stringify(json)).not.toContain('inner error')
-    expect(JSON.stringify(json)).not.toContain('root cause')
+    if (!inlineErrorRendering) {
+      const json = await fetch('/error-cause', {
+        headers: { accept: 'application/json' },
+      }).then(r => r.json())
+      expect(json).not.toHaveProperty('cause')
+      expect(JSON.stringify(json)).not.toContain('inner error')
+      expect(JSON.stringify(json)).not.toContain('root cause')
+    }
   })
 
-  it('should not allow accessing error route directly', async () => {
+  it.skipIf(inlineErrorRendering)('should not allow accessing error route directly', async () => {
     const res = await fetch('/__nuxt_error', {
       headers: {
         accept: 'application/json',
@@ -1693,6 +1763,11 @@ describe('composables', () => {
     expect(pageErrors).toEqual([])
     await page.close()
   })
+  it.each(['/use-id-server-prefetch', '/use-id-preload-payload'])('`useId` should work with server prefetch hooks (%s)', async (path) => {
+    const html = await $fetch<string>(path)
+    expect(html).toContain('<div>v-0-0-0</div>')
+    await expectNoClientErrors(path)
+  })
 })
 
 describe('middlewares', () => {
@@ -1790,6 +1865,18 @@ describe('plugins', () => {
   it('runs a nitro plugin registered by a module', async () => {
     const html = await $fetch<string>('/plugins')
     expect(html).toContain('<meta name="module-nitro-plugin" content="registered">')
+  })
+
+  it('passes the rendered response to nitro `render:response` listeners', async () => {
+    const res = await fetch('/?render-response')
+    expect(res.status).toBe(203)
+    expect(JSON.parse(res.headers.get('x-render-response')!)).toEqual({
+      body: 'string',
+      html: true,
+      contentType: 'text/html;charset=utf-8',
+    })
+    expect(res.headers.get('x-powered-by')).toBeNull()
+    expect(await res.text()).toContain('<!--render:response--></body>')
   })
 })
 
@@ -1997,6 +2084,14 @@ describe.runIf(isDev && !isWebpack)('css links', () => {
     const html = await $fetch<string>('/')
     const links = html.match(/<link[^>]+global\.css[^>]*>/g) || []
     expect(links).toHaveLength(1)
+  })
+
+  it('should link null-byte virtual css through `/@id/`', async () => {
+    const html = await $fetch<string>('/')
+    expect(html).not.toContain('\0')
+    const links = [...html.matchAll(/<link[^>]+href="([^"]*virtual-nul\.css)"[^>]*>/g)].map(m => m[1])
+    expect(links).toEqual(['/_nuxt/@id/__x00__/virtual-nul.css'])
+    expect(await $fetch<string>(links[0]!, { headers: { accept: 'text/css' } })).toMatch(/--virtual-nul:\s*red/)
   })
 })
 

@@ -23,6 +23,7 @@
     "nonexistent-package",
     "pkg-pr-new",
     "ofetch",
+    "verkit",
     "@nuxt/webpack-builder",
     "@nuxt/rspack-builder",
     "@rspack/core"
@@ -62,6 +63,19 @@
         "@babel/plugin-proposal-decorators",
         "@babel/plugin-syntax-jsx",
         "nested-dep"
+      ]
+    },
+    "test/fixtures/unhead-duplicate": {
+      "entry": [
+        "**/*.{js,ts,tsx,mjs,mts,vue}!"
+      ],
+      "paths": {
+        "~~/*": ["./*"],
+        "~/*": ["./*"],
+        "#shared/*": ["./shared/*"]
+      },
+      "ignoreDependencies": [
+        "unhead"
       ]
     },
     "packages/nitro-server": {
@@ -143,7 +157,6 @@
     },
     "packages/rspack": {
       "ignoreDependencies": [
-        "@nuxt/friendly-errors-webpack-plugin",
         "@nuxt/kit",
         "@nuxt/schema",
         "@types/webpack-bundle-analyzer",

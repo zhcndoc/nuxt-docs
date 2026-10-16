@@ -44,10 +44,18 @@ describe.skipIf(!runsOncePerEnvInMatrix || !isDev)('pure vite dev server with ss
   })
 
   it('renders the error page for a route no page matches', async () => {
-    const response = await fetch('/not-a-page')
+    const response = await fetch('/not-a-page', { headers: { accept: 'text/html' } })
 
     expect(response.status).toBe(404)
     expect(await response.text()).toContain('id="__nuxt"')
+  })
+
+  it('answers a JSON client with the error as JSON', async () => {
+    const response = await fetch('/not-a-page', { headers: { accept: 'application/json' } })
+
+    expect(response.status).toBe(404)
+    expect(response.headers.get('content-type')).toBe('application/json;charset=utf-8')
+    expect(await response.json()).toMatchObject({ error: true, status: 404, data: { path: '/not-a-page' } })
   })
 })
 
@@ -102,6 +110,14 @@ describe.skipIf(!runsOnceInMatrix)('pure vite server build', () => {
 
   it('renders each route it serves', async () => {
     expect(await (await render('/about')).text()).toContain('<p id="about"> about page </p>')
+  })
+
+  it('renders asset URLs without process-wide helpers', async () => {
+    expect(await (await render('/asset')).text()).toMatch(/<img id="asset" src="\/_nuxt\/logo\.[^"]+\.svg"/)
+
+    const files = await glob('**/*.mjs', { cwd: join(outputDir, 'server'), absolute: true })
+    const sources = await Promise.all(files.map(file => readFile(file, 'utf-8')))
+    expect(sources.filter(source => /__(?:build|public)AssetsURL/.test(source))).toEqual([])
   })
 
   it('serves the public directory in front of the renderer', async () => {

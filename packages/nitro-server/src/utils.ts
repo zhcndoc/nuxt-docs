@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url'
 import { matchesGlob } from 'node:path'
-import { dirname, join, relative } from 'pathe'
+import { dirname, isAbsolute, join, normalize, relative } from 'pathe'
 import escapeRE from 'escape-string-regexp'
 
 const TEMPLATE_PARAM_RE = /\{\{ ?([\w.]+) ?\}\}/g
@@ -21,6 +21,12 @@ export function resolveNitroCommand (command: string | undefined, options: Recor
 
 export function toArray<T> (value: T | T[]): T[] {
   return Array.isArray(value) ? value : [value]
+}
+
+const NUXT_DIST_RE = /\/node_modules\/nuxt(?:3|-nightly)?\/dist\//
+
+export function isNuxtDistId (id: string): boolean {
+  return NUXT_DIST_RE.test(normalize(id))
 }
 
 const NODE_MODULES_RE = /\/node_modules\//g
@@ -53,6 +59,18 @@ export function getLayerNodeModulesExcludePattern (layerRoots: Iterable<string>)
   return excludePaths.length
     ? new RegExp(`node_modules\\/(?!${excludePaths.join('|')})`)
     : /node_modules/
+}
+
+/**
+ * Convert a `build.transpile` entry into a Nitro `externals.inline` entry. An absolute
+ * directory matches its own files but not the dependencies installed beneath it.
+ */
+export function toTranspileNoExternal (entry: string): string | RegExp {
+  if (!isAbsolute(entry)) {
+    return entry
+  }
+  const dir = escapeRE(normalize(entry)).replace(/\//g, '[\\\\/]')
+  return new RegExp(`^${dir}(?!.*[\\\\/]node_modules[\\\\/])`)
 }
 
 /**

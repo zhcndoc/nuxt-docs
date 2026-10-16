@@ -25,7 +25,7 @@ const { data, status, pending, error, refresh, clear } = await useAsyncData(
 </script>
 ```
 
-::tip{to="/docs/guide/recipes/custom-usefetch#custom-usefetch-with-createusefetch"}
+::tip{to="/docs/api/composables/create-use-async-data"}
 需要带有预定义默认值的 `useAsyncData`？使用 `createUseAsyncData` 创建完全类型化的自定义组合式函数。详情请参阅[自定义 useFetch 配方](/docs/guide/recipes/custom-usefetch)。
 ::
 
@@ -168,7 +168,10 @@ type AsyncDataOptions<ResT, DataT = ResT> = {
   timeout?: number
   enabled?: MaybeRefOrGetter<boolean>
   serialize?: boolean
+  middleware?: AsyncDataMiddleware<ResT>[]
 }
+
+type AsyncDataMiddleware<ResT> = (next: () => Promise<ResT>, ctx: { signal: AbortSignal }) => Promise<ResT>
 
 type AsyncDataRequestContext = {
   /** 本次数据请求的原因 */
@@ -220,6 +223,7 @@ type AsyncDataRequestStatus = 'idle' | 'pending' | 'success' | 'error'
 | `dedupe` :badge[v3.9]{color="info" size="xs" class="align-middle"}        | `'cancel' \| 'defer'`                       | `'cancel'` | 同时多次触发执行时采用的策略。                                                                                                                                                                                                                        |
 | `enabled` :badge[v4.5]{color="info" size="xs" class="align-middle"}       | `boolean`                                   | `true`     | 控制 `handler` 是否可以运行的屏障。值为 `false` 时，所有执行都会被阻止（初始获取、`execute`/`refresh` 和 watch 触发）；从 `true` 切换到 `false` 时，会取消正在进行的请求，但不会清除 `data`。重新启用本身不会触发重新获取。 |
 | `serialize` :badge[v4.6]{color="info" size="xs" class="align-middle"}     | `boolean`                                   | `true`     | 是否将解析后的数据存储在 Nuxt payload（`__NUXT_DATA__`）中。值为 `false` 时，服务器获取的数据不会存入 payload；如果组件渲染了该数据，客户端会在水合后重新获取。搭配[延迟水合](/docs/guide/best-practices/performance#lazy-hydration)使用，可避免水合不匹配和不必要的客户端请求。 |
+| `middleware` :badge[v4.6]{color="info" size="xs" class="align-middle"}    | `AsyncDataMiddleware[]`                     | -          | 包装 `handler` 执行的函数。每个函数会收到 `next`（用于运行后续链并解析为数据）以及处理程序上下文（`{ signal }`）。数组中的第一个函数是最外层包装器。调用 `next()` 以继续，或抛出错误以中止。 |
 
 ::note
 所有选项都可以提供 `computed` 或 `ref` 值。它们会被监听，并在值更新时自动使用新值发起新的请求。
@@ -255,6 +259,7 @@ const getDefaultCachedData = (key, nuxtApp, ctx) => nuxtApp.isHydrating
 - `pick` 数组
 - `getCachedData` 函数
 - `default` 值
+- `middleware` 数组
 
 以下选项可以不同，而不会触发警告：
 - `server`

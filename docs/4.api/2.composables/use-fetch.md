@@ -24,7 +24,7 @@ const { data, status, error, refresh, clear } = await useFetch('/api/modules', {
 </script>
 ```
 
-::tip{to="/docs/guide/recipes/custom-usefetch#custom-usefetch-with-createusefetch"}
+::tip{to="/docs/guide/recipes/custom-usefetch#recipe-api-client-with-auth"}
 需要一个带预定义默认值（例如 `baseURL` 或身份验证标头）的自定义 `useFetch`？使用 `createUseFetch` 创建一个完全类型化的自定义可组合函数。
 ::
 
@@ -108,7 +108,7 @@ const { data } = await useFetch('/api/random', { key: 'random' })
 ::
 
 ::warning
-`useFetch` 是一个由编译器转换的保留函数名，因此你不应将自己的函数命名为 `useFetch`。要创建带有预定义选项的自定义变体，请改用 [`createUseFetch`](/docs/guide/recipes/custom-usefetch#custom-usefetch-with-createusefetch)。
+`useFetch` 是一个由编译器转换的保留函数名，因此你不应将自己的函数命名为 `useFetch`。要创建带有预定义选项的自定义变体，请改用 [`createUseFetch`](/docs/api/composables/create-use-fetch)。
 ::
 
 ::warning  
@@ -170,6 +170,7 @@ type UseFetchOptions<ResT, DataT = ResT> = {
   timeout?: number
   enabled?: MaybeRefOrGetter<boolean>
   serialize?: boolean
+  middleware?: AsyncDataMiddleware<ResT>[]
   default?: () => DataT | Ref<DataT>
   transform?: (input: ResT) => DataT | Promise<DataT>
   pick?: string[]
@@ -230,6 +231,7 @@ type AsyncDataRequestStatus = 'idle' | 'pending' | 'success' | 'error'
 | `dedupe` :badge[v3.9]{color="info" size="xs" class="align-middle"}        | `'cancel' \| 'defer'`                                                   | `'cancel'` | 避免同时多次获取相同的 key。                                                                                                                                                                                                                                  |
 | `enabled` :badge[v4.5]{color="info" size="xs" class="align-middle"}       | `boolean`                                                               | `true`     | 控制请求是否可以运行的屏障。当值为 `false` 时，会阻止所有执行（初始获取、`execute`/`refresh` 和监听触发），并且从 `true` 切换为 `false` 时会取消任何正在进行的请求，但不会清除 `data`。重新启用本身不会触发重新获取。 |
 | `serialize` :badge[v4.6]{color="info" size="xs" class="align-middle"}     | `boolean`                                                               | `true`     | 是否将解析后的数据存储在 Nuxt payload（`__NUXT_DATA__`）中。为 `false` 时，服务器获取的数据不会写入 payload，如果组件渲染了该数据，客户端会在水合后重新获取。配合[惰性水合](/docs/guide/best-practices/performance#lazy-hydration)使用，避免水合不匹配和不必要的客户端请求。 |
+| `middleware` :badge[v4.6]{color="info" size="xs" class="align-middle"}    | `AsyncDataMiddleware[]`                                                 | -          | 包装请求执行的函数。每个函数会收到 `next`（用于运行后续链并解析为数据）以及处理程序上下文（`{ signal }`）。数组中的第一个函数是最外层包装器。调用 `next()` 以继续，或抛出错误以中止。 |
 | `$fetch` :badge[v3.2]{color="info" size="xs" class="align-middle"}        | `typeof globalThis.$fetch`                                              | -          | 自定义 `$fetch` 实现。请参阅 [Nuxt 中的自定义 useFetch](/docs/guide/recipes/custom-usefetch)                                                                                                                                                                               |
 
 ::note
