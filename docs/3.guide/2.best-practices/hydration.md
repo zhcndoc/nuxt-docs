@@ -177,6 +177,26 @@ onMounted(() => {
 </script>
 ```
 
+### iOS Safari 中的电话号码
+
+**问题**：iOS Safari 会检测渲染文本中的电话号码（以及日期、地址和电子邮件地址等其他数据），并将其包裹在链接中。这会在 Vue 对其进行水合之前改变 DOM，仅在 iOS 上导致水合不匹配。
+
+**解决方案**：在你的 `nuxt.config` 中使用 `format-detection` meta 标签禁用检测：
+
+```ts [nuxt.config.ts]
+export default defineNuxtConfig({
+  app: {
+    head: {
+      meta: [
+        { name: 'format-detection', content: 'telephone=no, date=no, email=no, address=no' },
+      ],
+    },
+  },
+})
+```
+
+如果希望电话号码仍可点击，请将其包裹在 `<a href="tel:...">` 元素中，使链接成为服务端渲染 HTML 的一部分。
+
 ## 总结
 
 1. **使用对 SSR 友好的组合式函数**：[`useFetch`](/docs/api/composables/use-fetch)、[`useAsyncData`](/docs/api/composables/use-async-data)、[`useState`](/docs/api/composables/use-state)

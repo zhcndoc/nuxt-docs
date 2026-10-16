@@ -8,7 +8,7 @@ links:
     size: xs
 ---
 
-`definePageMeta` 是一个编译器宏，你可以使用它为位于 [`app/pages/`](/docs/directory-structure/app/pages) 目录中的**页面**组件设置元数据（除非[另有设置](/docs/api/nuxt-config#pages)）。这样，你就可以为 Nuxt 应用程序中的每个静态或动态路由设置自定义元数据。
+`definePageMeta` 是一个编译器宏，你可以使用它为位于 [`app/pages/`](/docs/directory-structure/app/pages) 目录中的**页面**组件设置元数据（除非[另有设置](/docs/api/nuxt-config#dir-pages)）。这样，你就可以为 Nuxt 应用程序中的每个静态或动态路由设置自定义元数据。
 
 ```vue [app/pages/some-page.vue]
 <script setup lang="ts">

@@ -331,6 +331,9 @@ async function initNuxt (nuxt: Nuxt) {
         filename: 'types/builder-env.d.ts',
         dependsOn: [],
         getContents: () => genImport(environmentTypes),
+      }, {
+        nuxt: true,
+        nitro: nuxt.options.experimental.nitroViteEnvironment && environmentTypes === 'vite/client',
       })
     }
   }
@@ -417,6 +420,8 @@ async function initNuxt (nuxt: Nuxt) {
     opts.sharedTsConfig.compilerOptions = defu(opts.sharedTsConfig.compilerOptions, { paths: { ...paths } })
     // bundler-resolved, so it takes the same substitutions as the app
     opts.serverTsConfig.compilerOptions = defu(opts.serverTsConfig.compilerOptions, { paths: { ...paths } })
+    // required for the generated route types, which `serverFetch` resolves against
+    opts.serverTsConfig.compilerOptions!.paths!['#app/types'] ||= [resolve(nuxt.options.appDir, 'types')]
 
     for (const dirs of layerDirs) {
       const declaration = join(dirs.root, 'index.d.ts')
@@ -501,6 +506,7 @@ async function initNuxt (nuxt: Nuxt) {
     if (Object.keys(nuxt.options.optimization.treeShake.composables.client).length) {
       addBuildPlugin(TreeShakeComposablesPlugin({
         composables: nuxt.options.optimization.treeShake.composables.client,
+        stubs: { onServerPrefetch: '#app/composables/server-prefetch' },
       }), { server: false })
     }
 
@@ -986,6 +992,7 @@ export async function loadNuxt (opts: LoadNuxtOptions): Promise<Nuxt> {
 
   // Temporary until finding better placement for each
   options.appDir = options.alias['#app'] = withTrailingSlash(resolve(distDir, 'app'))
+  options.alias['nuxt/app'] ||= options.appDir
   options._majorVersion = 4
 
   // De-duplicate key arrays
@@ -1000,8 +1007,8 @@ export async function loadNuxt (opts: LoadNuxtOptions): Promise<Nuxt> {
       : options.devtools?.enabled !== false // enabled by default unless explicitly disabled
 
     if (isDevToolsEnabled) {
-      if (!options._modules.some(m => m === '@nuxt/devtools' || m === '@nuxt/devtools-nightly' || m === '@nuxt/devtools-edge')) {
-        options._modules.push('@nuxt/devtools')
+      if (!options._modules.some(m => m === '@nuxt/devtools-onboard' || m === '@nuxt/devtools' || m === '@nuxt/devtools-nightly' || m === '@nuxt/devtools-edge')) {
+        options._modules.push('@nuxt/devtools-onboard')
       }
     }
   }

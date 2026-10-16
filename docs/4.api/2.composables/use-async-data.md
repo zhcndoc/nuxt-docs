@@ -25,7 +25,7 @@ const { data, status, pending, error, refresh, clear } = await useAsyncData(
 </script>
 ```
 
-::tip{to="/docs/guide/recipes/custom-usefetch#custom-usefetch-with-createusefetch"}
+::tip{to="/docs/api/composables/create-use-async-data"}
 需要一个具有预定义默认值的 `useAsyncData`？使用 `createUseAsyncData` 创建一个完全类型化的自定义组合式函数。详情请参阅[自定义 useFetch 配方](/docs/guide/recipes/custom-usefetch)。
 ::
 

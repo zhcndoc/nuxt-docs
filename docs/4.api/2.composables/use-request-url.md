@@ -18,7 +18,7 @@ links:
 ::
 
 ::note
-如果你设置了 [`app.baseURL`](/docs/api/nuxt-config#baseurl)，服务器返回的路径将相对于它，因此 `/base/about` 会以 `/about` 的形式提供。在客户端，`useRequestURL` 会读取 `window.location`，其中包含 base URL。
+如果你设置了 [`app.baseURL`](/docs/api/nuxt-config#app-baseurl)，服务器返回的路径将相对于它，因此 `/base/about` 会以 `/about` 的形式提供。在客户端，`useRequestURL` 会读取 `window.location`，其中包含 base URL。
 ::
 
 ::code-group

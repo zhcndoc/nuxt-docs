@@ -24,7 +24,7 @@ const { data, status, error, refresh, clear } = await useFetch('/api/modules', {
 </script>
 ```
 
-::tip{to="/docs/guide/recipes/custom-usefetch#custom-usefetch-with-createusefetch"}
+::tip{to="/docs/guide/recipes/custom-usefetch#recipe-api-client-with-auth"}
 需要具有预定义默认值（例如 `baseURL` 或身份验证标头）的自定义 `useFetch`？使用 `createUseFetch` 创建一个完全类型化的自定义可组合函数。
 ::
 
@@ -112,7 +112,7 @@ const { data } = await useFetch('/api/random', { key: 'random' })
 ::
 
 ::warning
-`useFetch` 是一个由编译器转换的保留函数名，因此你不应将自己的函数命名为 `useFetch`。若要创建具有预定义选项的自定义变体，请改用 [`createUseFetch`](/docs/guide/recipes/custom-usefetch#custom-usefetch-with-createusefetch)。
+`useFetch` 是一个由编译器转换的保留函数名，因此你不应将自己的函数命名为 `useFetch`。若要创建具有预定义选项的自定义变体，请改用 [`createUseFetch`](/docs/api/composables/create-use-fetch)。
 ::
 
 ::warning  

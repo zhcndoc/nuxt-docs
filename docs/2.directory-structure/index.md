@@ -26,6 +26,7 @@ Nuxt 应用程序的根目录是包含 `nuxt.config.ts` 文件的目录。此文
 - [`app.config.ts`](/docs/directory-structure/app/app-config)：应用程序中的响应式配置
 - [`app.vue`](/docs/directory-structure/app/app)：Nuxt 应用程序的根组件
 - [`error.vue`](/docs/directory-structure/app/error)：Nuxt 应用程序的错误页面
+- [`spa-loading-template.html`](/docs/directory-structure/app/spa-loading-template)：客户端渲染（`ssr: false`）页面初始化时显示的加载画面
 
 ## 公共目录
 
