@@ -9,6 +9,7 @@
   "type": "module",
   "scripts": {
     "build": "pnpm --filter './packages/**' build",
+    "bench": "node bench/run.ts",
     "build:kit": "pnpm --filter @nuxt/kit build",
     "build:stub": "pnpm dev:prepare",
     "dev": "pnpm play",
@@ -58,10 +59,12 @@
     "@nuxt/cli": "catalog:build",
     "@nuxt/eslint-config": "catalog:dev",
     "@nuxt/kit": "workspace:*",
+    "@nuxt/rsbuild-builder": "workspace:*",
     "@nuxt/rspack-builder": "workspace:*",
     "@nuxt/test-utils": "catalog:dev",
     "@nuxt/webpack-builder": "workspace:*",
     "@playwright/test": "catalog:dev",
+    "@rsbuild/core": "catalog:webpack",
     "@rspack/core": "catalog:dev",
     "@testing-library/vue": "catalog:dev",
     "@types/babel__core": "catalog:dev",
@@ -119,7 +122,7 @@
     "vue-tsc": "catalog:dev",
     "webpack": "catalog:webpack"
   },
-  "packageManager": "pnpm@12.11.2",
+  "packageManager": "pnpm@12.16.1",
   "simple-git-hooks": {
     "pre-commit": "pnpm nano-staged"
   },

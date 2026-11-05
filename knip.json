@@ -20,19 +20,25 @@
     "ofetch",
     "verkit",
     "@nuxt/webpack-builder",
+    "@nuxt/rsbuild-builder",
     "@nuxt/rspack-builder",
+    "@rsbuild/core",
     "@rspack/core"
   ],
   "workspaces": {
     ".": {
       "entry": [
         "scripts/*",
+        "bench/**/*.{ts,mjs}",
+        "bench/fixtures/**/*.vue",
         "test/*.ts",
+        "test/bench/*.ts",
         "test/e2e/*.ts",
         "test/renderer/*.ts",
         "test/no-jiti/*.mjs",
         "test/runtime/app/**/*.ts",
         "test/mocks/app-config.ts",
+        "test/mocks/app-manifest.ts",
         "test/mocks/paths.ts"
       ]
     },
@@ -80,8 +86,20 @@
       "ignoreDependencies": [
         "@babel/plugin-proposal-decorators",
         "@babel/plugin-syntax-jsx",
+        "@rsbuild/plugin-pug",
         "nested-dep"
       ]
+    },
+    "test/fixtures/lazy-hydration": {
+      "entry": [
+        "**/*.{js,ts,tsx,mjs,mts,vue}!"
+      ],
+      "paths": {
+        "~~/*": ["./*"],
+        "~/*": ["./*"],
+        "#shared/*": ["./shared/*"]
+      },
+      "ignoreDependencies": ["@rsbuild/plugin-pug", "pug"]
     },
     "packages/nitro-server": {
       "entry": [
@@ -91,6 +109,7 @@
         "mocked-exports",
         "vue-devtools-stub",
         "ohash",
+        "unenv",
         "@babel/plugin-proposal-decorators",
         "@babel/plugin-syntax-typescript"
       ]
@@ -135,7 +154,8 @@
         "@nuxt/nitro-server",
         "@nuxt/telemetry",
         "@nuxt/vite-builder",
-        "@nuxt/vite-server"
+        "@nuxt/vite-server",
+        "pug"
       ]
     },
     "packages/ui-templates": {
@@ -162,10 +182,19 @@
         "vue"
       ]
     },
+    "packages/rsbuild": {
+      "ignoreDependencies": [
+        "@vue/compiler-sfc",
+        "exsolve",
+        "knitwork",
+        "ohash",
+        "seroval",
+        "vue",
+        "vue-bundle-renderer"
+      ]
+    },
     "packages/rspack": {
       "ignoreDependencies": [
-        "@nuxt/kit",
-        "@nuxt/schema",
         "@types/webpack-bundle-analyzer",
         "@vue/compiler-sfc",
         "autoprefixer",
@@ -191,7 +220,6 @@
         "pug-plain-loader",
         "raw-loader",
         "rolldown-string",
-        "rollup",
         "seroval",
         "time-fix-plugin",
         "tinyglobby",

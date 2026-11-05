@@ -1,6 +1,6 @@
 import { isReadonly, reactive, shallowReactive, shallowRef } from 'vue'
 import type { Ref, VNode } from 'vue'
-import type { RouteLocationNormalizedLoadedGeneric, Router, RouterScrollBehavior } from 'vue-router'
+import type { NavigationGuardReturn, RouteLocationNormalized, RouteLocationNormalizedLoadedGeneric, Router, RouterScrollBehavior } from 'vue-router'
 import { NavigationFailureType, START_LOCATION, createMemoryHistory, createRouter, createWebHashHistory, createWebHistory, isNavigationFailure } from 'vue-router'
 import { isSamePath, withBase, withoutBase } from 'ufo'
 
@@ -11,7 +11,7 @@ import { generateRouteKey, toArray } from '../utils'
 
 import { getRouteRules } from '#app/composables/manifest'
 import { defineNuxtPlugin, useRuntimeConfig } from '#app/nuxt'
-import { _showErrorUnlessCrawler, clearError, createError, isNuxtError, showError, useError } from '#app/composables/error'
+import { _showErrorUnlessCrawler, clearError, createError, createErrorFromThrown, isNuxtError, showError, useError } from '#app/composables/error'
 import { navigateTo } from '#app/composables/router'
 import { navigationDiagnostics } from '../../../app/diagnostics/navigation'
 
@@ -22,6 +22,7 @@ import { globalMiddleware, namedMiddleware } from '#build/middleware'
 import { pageIslandRoutes } from '#build/components.islands.mjs'
 import { serverPathFallback, tracingChannelNuxt } from '#build/nuxt.config.mjs'
 import { traceAsync } from '#app/internal/tracing'
+import { documentURL } from '#app/internal/location'
 
 // matches a trailing slash on the path only, leaving query and hash significant
 const PATH_TRAILING_SLASH_RE = /\/(?=$|[?#])/
@@ -162,12 +163,19 @@ const plugin: Plugin<{ router: Router }> = defineNuxtPlugin({
     const error = useError()
     // we only skip redirect handlers for component islands, not page islands
     const isServerPage = import.meta.server && nuxtApp.ssrContext?.islandContext?.name?.startsWith('page_')
+
+    function endNavigation (to: RouteLocationNormalized) {
+      if (import.meta.server) {
+        delete nuxtApp._processingMiddleware
+        delete nuxtApp._middlewareTo
+      } else if (nuxtApp._middlewareTo && (nuxtApp._middlewareTo.redirectedFrom ?? nuxtApp._middlewareTo) === (to.redirectedFrom ?? to)) {
+        delete nuxtApp._middlewareTo
+      }
+    }
+
     if (import.meta.client || !nuxtApp.ssrContext?.islandContext || isServerPage) {
       router.afterEach(async (to, _from, failure) => {
-        delete nuxtApp._processingMiddleware
-        if (import.meta.server) {
-          delete nuxtApp._middlewareTo
-        }
+        endNavigation(to)
 
         if (import.meta.client && !nuxtApp.isHydrating && error.value && !isNavigationFailure(failure, NavigationFailureType.aborted | NavigationFailureType.cancelled)) {
           // Clear any existing errors
@@ -187,11 +195,8 @@ const plugin: Plugin<{ router: Router }> = defineNuxtPlugin({
     }
 
     // vue-router logs a navigation failure to the console when no error handler is registered
-    router.onError(async () => {
-      delete nuxtApp._processingMiddleware
-      if (import.meta.server) {
-        delete nuxtApp._middlewareTo
-      }
+    router.onError(async (_error, to) => {
+      endNavigation(to)
       await nuxtApp.callHook('page:loading:end')
     })
 
@@ -256,8 +261,9 @@ const plugin: Plugin<{ router: Router }> = defineNuxtPlugin({
       router.beforeResolve((to) => {
         // never reload the path this document was served for, so an SPA fallback cannot loop
         if (to.matched.length || isSamePath(to.path, documentPath)) { return }
-        const url = new URL(withBase(to.fullPath, routerBase), window.location.href)
-        if (url.origin === window.location.origin) {
+        const documentLocation = documentURL()
+        const url = new URL(withBase(to.fullPath, routerBase), documentLocation)
+        if (url.origin === documentLocation.origin) {
           window.location.assign(url)
           return false
         }
@@ -265,16 +271,29 @@ const plugin: Plugin<{ router: Router }> = defineNuxtPlugin({
     }
 
     const initialLayout = nuxtApp.payload.state._layout
+    let runningMiddleware = 0
     router.beforeEach(async (to, from) => {
+      if (import.meta.server) {
+        return runMiddleware(to, from)
+      }
+      runningMiddleware++
+      try {
+        return await runMiddleware(to, from)
+      } finally {
+        if (--runningMiddleware === 0) {
+          delete nuxtApp._processingMiddleware
+        }
+      }
+    })
+
+    async function runMiddleware (to: RouteLocationNormalized, from: RouteLocationNormalized): Promise<NavigationGuardReturn> {
       await nuxtApp.callHook('page:loading:start')
       to.meta = reactive(to.meta)
       if (nuxtApp.isHydrating && initialLayout && !isReadonly(to.meta.layout)) {
         to.meta.layout = initialLayout as any
       }
       nuxtApp._processingMiddleware = true
-      if (import.meta.server) {
-        nuxtApp._middlewareTo = to
-      }
+      nuxtApp._middlewareTo = to
 
       if (import.meta.client || !nuxtApp.ssrContext?.islandContext || isServerPage) {
         type MiddlewareDef = string | RouteMiddleware
@@ -346,7 +365,7 @@ const plugin: Plugin<{ router: Router }> = defineNuxtPlugin({
               return result
             }
           } catch (err: any) {
-            const error = createError(err)
+            const error = createErrorFromThrown(err)
             if (error.fatal) {
               await nuxtApp.runWithContext(() => showError(error))
               pushErroredRoute(to)
@@ -355,7 +374,7 @@ const plugin: Plugin<{ router: Router }> = defineNuxtPlugin({
           }
         }
       }
-    })
+    }
 
     if (isServerPage) {
       // validate that a server page is rendering the correct url
@@ -412,7 +431,13 @@ const plugin: Plugin<{ router: Router }> = defineNuxtPlugin({
             nuxtApp['~restoreDeferredRoute'] = undefined
             // Assign synchronously: `router.replace` only finalises `currentRoute` a microtask
             // later, after mounted hooks flush. Resolve fresh so `route.name` survives.
-            ;(router.currentRoute as Ref<RouteLocationNormalizedLoadedGeneric>).value = router.resolve(initialURL) as RouteLocationNormalizedLoadedGeneric
+            const currentRoute = router.currentRoute as Ref<RouteLocationNormalizedLoadedGeneric>
+            const restoredRoute = router.resolve(initialURL) as RouteLocationNormalizedLoadedGeneric
+            // Keep the hydrated meta, e.g. a layout set via `setPageLayout` in middleware (#36429)
+            if (restoredRoute.matched.at(-1) === currentRoute.value.matched.at(-1)) {
+              restoredRoute.meta = currentRoute.value.meta
+            }
+            currentRoute.value = restoredRoute
             syncCurrentRoute()
             router.replace({ ...resolvedInitialRoute, force: true }).catch(() => {})
           }

@@ -1,10 +1,13 @@
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { dirname, isAbsolute, join, resolve } from 'pathe'
 import type { Nuxt } from '@nuxt/schema'
-import { createServerAutoImports } from '../src/auto-imports.ts'
+import { createServerAutoImports, resolveNestedServerUtilsDirs, resolveServerImportDirs } from '../src/auto-imports.ts'
+import { ServerAutoImportsPlugin } from '../src/auto-imports-plugin.ts'
+import { nitroBuildDiagnostics } from '../src/diagnostics.ts'
 import { getH3ImportsPreset, nuxtServerImportsPreset, v2ImportsPreset } from '../src/imports.ts'
+import { getLayerNodeModulesExcludePattern } from '../src/utils.ts'
 
 const TYPE_EXTENSIONS = ['.d.ts', '.d.mts', '.d.cts', '.ts', '.mts', '.js', '.mjs']
 
@@ -18,6 +21,29 @@ function mockNuxt (): Nuxt {
       _layers: [],
     },
   } as unknown as Nuxt
+}
+
+function createNestedUtilsFixture (): Nuxt {
+  const rootDir = mkdtempSync(join(tmpdir(), 'server-auto-imports-nested-'))
+  const layerDir = join(rootDir, 'layer')
+  const files: Record<string, string> = {
+    'server/utils/top.ts': 'export const useTopLevelUtil = () => {}',
+    'server/utils/admin/oauth.ts': 'export const requireAdminSession = () => {}\nexport interface AdminSession {}',
+    'layer/server/utils/deeply/nested/util.ts': 'export const useLayerNestedUtil = () => {}',
+    'server/types/nested/type.ts': 'export interface NestedServerType {}',
+    'shared/utils/nested/util.ts': 'export const useNestedSharedUtil = () => {}',
+    'shared/types/nested/type.ts': 'export interface NestedSharedType {}',
+  }
+  for (const [path, contents] of Object.entries(files)) {
+    mkdirSync(dirname(join(rootDir, path)), { recursive: true })
+    writeFileSync(join(rootDir, path), contents + '\n')
+  }
+  const nuxt = mockNuxt()
+  nuxt.options.rootDir = rootDir
+  nuxt.options.srcDir = rootDir
+  nuxt.options.imports = {} as Nuxt['options']['imports']
+  nuxt.options._layers = [{ cwd: rootDir, config: { rootDir } }, { cwd: layerDir, config: { rootDir: layerDir } }] as unknown as Nuxt['options']['_layers']
+  return nuxt
 }
 
 describe('createServerAutoImports', () => {
@@ -162,11 +188,121 @@ describe('createServerAutoImports', () => {
     expect(imports.filter(i => i.name === 'useMyServerUtil').map(i => i.from)).toEqual([join(rootDir, 'server/utils/useMyServerUtil.ts')])
   })
 
+  it('only auto-imports server utils directly in `server/utils/` by default', async () => {
+    const nuxt = createNestedUtilsFixture()
+
+    const autoImports = createServerAutoImports(
+      nuxt,
+      { autoImport: true, dirs: resolveServerImportDirs(nuxt) },
+      mkdtempSync(join(tmpdir(), 'server-auto-imports-')),
+    )
+
+    const imports = await autoImports.getImports()
+    expect(imports.map(i => i.name)).toEqual(['useTopLevelUtil'])
+  })
+
+  it('auto-imports server utils nested in subdirectories of each layer with `nestedUtils`', async () => {
+    const nuxt = createNestedUtilsFixture()
+
+    const autoImports = createServerAutoImports(
+      nuxt,
+      { autoImport: true, dirs: resolveServerImportDirs(nuxt, { nestedUtils: true }) },
+      mkdtempSync(join(tmpdir(), 'server-auto-imports-')),
+    )
+
+    const imports = await autoImports.getImports()
+    expect(imports.map(i => i.name).sort()).toEqual(['AdminSession', 'requireAdminSession', 'useLayerNestedUtil', 'useTopLevelUtil'])
+
+    await autoImports.writeTypes()
+    const declarations = readFileSync(autoImports.importsModulePath + '.d.ts', 'utf8')
+    expect(declarations).toContain('const requireAdminSession: typeof import(')
+    expect(declarations).toContain('const useLayerNestedUtil: typeof import(')
+  })
+
+  it('warns once when a nested server util is used without an import', async () => {
+    const nuxt = createNestedUtilsFixture()
+    const report = vi.spyOn(nitroBuildDiagnostics, 'NUXT_B9006').mockImplementation(() => ({}) as any)
+
+    const autoImports = createServerAutoImports(
+      nuxt,
+      { autoImport: true, dirs: resolveServerImportDirs(nuxt) },
+      mkdtempSync(join(tmpdir(), 'server-auto-imports-')),
+      { nestedUtilsDirs: resolveNestedServerUtilsDirs(nuxt) },
+    )
+
+    const handler = join(nuxt.options.rootDir, 'server/api/admin.ts')
+    const code = 'export default (): AdminSession => [requireAdminSession(), useTopLevelUtil()]'
+    await autoImports.injectImports(code, handler)
+    await autoImports.injectImports(code, handler)
+    await autoImports.injectImports(`import { requireAdminSession } from '../utils/admin/oauth'\n${code}`, join(nuxt.options.rootDir, 'server/api/imported.ts'))
+    await autoImports.injectImports('export default (useLayerNestedUtil: () => void) => useLayerNestedUtil()', join(nuxt.options.rootDir, 'server/api/shadowed.ts'))
+
+    expect(report).toHaveBeenCalledTimes(1)
+    expect(report).toHaveBeenCalledWith({
+      file: 'server/api/admin.ts',
+      count: 1,
+      names: '`requireAdminSession` (from `server/utils/admin/oauth.ts`)',
+    })
+    report.mockRestore()
+  })
+
+  it('reports server utilities used without an import while their presets are disabled', async () => {
+    const report = vi.spyOn(nitroBuildDiagnostics, 'NUXT_B9007').mockImplementation(() => ({}) as any)
+    const autoImports = createServerAutoImports(
+      mockNuxt(),
+      { autoImport: true, imports: [{ name: 'useLocal', from: '/app/server/utils/local.ts' }] },
+      mkdtempSync(join(tmpdir(), 'server-auto-imports-')),
+      { disabledPresets: [nuxtServerImportsPreset, ...v2ImportsPreset] },
+    )
+
+    const cached = 'export const fetchPackage = defineCachedFunction(() => useLocal())'
+    await autoImports.injectImports(cached, '/app/server/utils/npm.ts')
+    await autoImports.injectImports(cached, '/app/server/utils/npm.ts')
+    await autoImports.injectImports('export default defineEventHandler(event => getQuery(event))', '/app/server/api/query.ts')
+    await autoImports.injectImports('import { defineEventHandler } from \'nuxt/server\'\nexport default defineEventHandler(() => 1)', '/app/server/api/imported.ts')
+
+    await vi.waitFor(() => expect(report).toHaveBeenCalled())
+    expect(report).toHaveBeenCalledTimes(1)
+    expect(report).toHaveBeenCalledWith({
+      count: 2,
+      files: '`server/api/query.ts` (`defineEventHandler`, `getQuery`)\n  - `server/utils/npm.ts` (`defineCachedFunction`)',
+      imports: '`import { defineEventHandler, getQuery } from \'nuxt/server\'`, `import { defineCachedFunction } from \'nitro/cache\'`',
+    })
+    report.mockRestore()
+  })
+
   it('resolves `#imports` to a path inside the types directory', () => {
     const typesDir = '/app/.nuxt'
     const autoImports = createServerAutoImports(mockNuxt(), { autoImport: true }, typesDir)
 
     expect(isAbsolute(autoImports.importsModulePath)).toBe(true)
     expect(autoImports.importsModulePath.startsWith(typesDir)).toBe(true)
+  })
+})
+
+describe('ServerAutoImportsPlugin', () => {
+  const createPlugin = (layerRoots: string[]) => ServerAutoImportsPlugin.raw({
+    autoImports: createServerAutoImports(mockNuxt(), { autoImport: true }, '/app/.nuxt'),
+    buildDir: '/app/.nuxt',
+    exclude: [getLayerNodeModulesExcludePattern(layerRoots)],
+  }, {} as any) as { transformInclude: (id: string) => boolean }
+
+  it('does not transform bundled environment outputs', () => {
+    const plugin = createPlugin(['/app/'])
+
+    expect(plugin.transformInclude('/app/server/api/hello.ts')).toBe(true)
+    expect(plugin.transformInclude('/app/.nuxt/vite/services-utils.ts')).toBe(true)
+    expect(plugin.transformInclude('/app/.nuxt/vite/services/ssr/index.mjs')).toBe(false)
+    expect(plugin.transformInclude('/app/.nuxt/dist/server/server.mjs')).toBe(false)
+    expect(plugin.transformInclude('/app/.nuxt/dist/server/_nuxt/chunk.mjs')).toBe(false)
+    expect(plugin.transformInclude('/app/node_modules/pkg/index.mjs')).toBe(false)
+  })
+
+  it('transforms the server code of a layer installed in node_modules', () => {
+    const plugin = createPlugin(['/app/', '/app/node_modules/.pnpm/layer@1.0.0/node_modules/layer/'])
+
+    expect(plugin.transformInclude('/app/node_modules/.pnpm/layer@1.0.0/node_modules/layer/server/api/hello.get.ts')).toBe(true)
+    expect(plugin.transformInclude('/app/node_modules/.pnpm/layer@1.0.0/node_modules/layer/server/utils/hello.ts')).toBe(true)
+    expect(plugin.transformInclude('/app/node_modules/.pnpm/pkg@1.0.0/node_modules/pkg/index.mjs')).toBe(false)
   })
 })

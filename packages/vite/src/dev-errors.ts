@@ -2,7 +2,7 @@ import process from 'node:process'
 import type { Nuxt } from '@nuxt/schema'
 import type { ErrorReport } from 'my-bad'
 import type { BuildProgress } from 'my-bad/channel'
-import type { ViteDevServer, Plugin as VitePlugin } from 'vite'
+import type { NormalizedHotChannelClient, ViteDevServer, Plugin as VitePlugin } from 'vite'
 import { joinURL } from 'ufo'
 import { ERROR_CHANNEL_ENV, openErrorBroadcast } from 'nuxt/internal/dev-error'
 
@@ -185,8 +185,8 @@ export function createDevErrorReporter (nuxt: Nuxt, options: { print: (rendered:
         }) as typeof environment.hot.send
       }
       const hot = devServer.environments.client?.hot
-      hot?.on?.('nuxt:dev:client-error', (data: ClientRuntimeError) => {
-        reportRuntimeError(data).catch(() => {})
+      hot?.on?.('nuxt:dev:client-error', (data: ClientRuntimeError, client) => {
+        reportRuntimeError(data, client).catch(() => {})
       })
       hot?.on?.('nuxt:dev:error:shown', ({ since }: { since?: number }, client) => {
         if (typeof since === 'number' && since < clearedAt) {
@@ -194,7 +194,8 @@ export function createDevErrorReporter (nuxt: Nuxt, options: { print: (rendered:
         }
       })
       hot?.on?.('nuxt:dev:error:ready', (_data: unknown, client) => {
-        if (pendingOverlay) {
+        // a runtime report belongs to the page load that raised it
+        if (pendingOverlay && current?.kind === 'compile') {
           client.send(pendingOverlay)
         }
       })
@@ -207,7 +208,7 @@ export function createDevErrorReporter (nuxt: Nuxt, options: { print: (rendered:
   }
 
   /** Report an error the browser raised, whose stack points at the modules Vite served. */
-  async function reportRuntimeError (error: ClientRuntimeError): Promise<void> {
+  async function reportRuntimeError (error: ClientRuntimeError, client: NormalizedHotChannelClient): Promise<void> {
     if (!server) {
       return
     }
@@ -219,7 +220,7 @@ export function createDevErrorReporter (nuxt: Nuxt, options: { print: (rendered:
     const key = `runtime:${error.name}:${error.message}:${error.stack}`
     if (key === lastKey) {
       if (pendingOverlay) {
-        server.environments.client?.hot.send(pendingOverlay)
+        client.send(pendingOverlay)
       }
       return
     }
@@ -234,8 +235,9 @@ export function createDevErrorReporter (nuxt: Nuxt, options: { print: (rendered:
       })
       const report = await createReport(input, {
         cwd: nuxt.options.rootDir,
-        // the stack is client-controlled, so no filesystem loader: only the module graph
-        loaders: [viteLoader(server)],
+        // the message and stack are client-controlled: no compile detection, no filesystem reads, only the module graph
+        kind: 'error',
+        loaders: [viteLoader(server, { fs: false })],
         presets: [nuxtPreset()],
       })
       current = report

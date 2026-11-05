@@ -1,3 +1,6 @@
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'pathe'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Nuxt } from '@nuxt/schema'
 import type { ViteDevServer } from 'vite'
@@ -284,30 +287,54 @@ describe('createDevErrorReporter (runtime errors from the browser)', () => {
     nuxt.close()
   })
 
-  it('replays a runtime error to a ready page and on the same error', async () => {
+  it('does not read a file a client names in its message', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'nuxt-dev-errors-'))
+    const outside = join(dir, 'outside-of-the-project.txt')
+    writeFileSync(outside, 'should never reach a report\n')
+    const nuxt = createNuxt()
+    const print = vi.fn()
+    const { messages, channel } = listen()
+    const reporter = createDevErrorReporter(nuxt, { print })
+    const { server, listeners } = devServer({ graph: clientGraph() })
+    reporter.attach(server)
+
+    listeners['nuxt:dev:client-error']!({ name: 'Error', message: `boom\n${outside}:1:1`, stack: 'Error: boom' })
+    await vi.waitFor(() => expect(messages).toHaveLength(1))
+
+    expect(print).toHaveBeenCalledTimes(1)
+    expect(messages[0].report).toMatchObject({ kind: 'error', name: 'Error', message: `boom\n${outside}:1:1` })
+    expect(messages[0].report.frames).toEqual([])
+    expect(JSON.stringify(messages[0].report)).not.toContain('should never reach a report')
+
+    rmSync(dir, { recursive: true })
+    channel.close()
+    nuxt.close()
+  })
+
+  it('replays a runtime error only to a page that raises it again', async () => {
     const nuxt = createNuxt()
     const print = vi.fn()
     const reporter = createDevErrorReporter(nuxt, { print })
     const { server, send, listeners } = devServer({ graph: clientGraph() })
     reporter.attach(server)
-    const client = { send: vi.fn() }
+    const noisy = { send: vi.fn() }
+    const quiet = { send: vi.fn() }
 
     const error = { name: 'Error', message: 'boom', stack: 'Error: boom\n    at setup (http://localhost:3000/_nuxt/pages/index.vue?t=1:3:1)' }
-    listeners['nuxt:dev:client-error']!(error)
+    listeners['nuxt:dev:client-error']!(error, noisy)
     await vi.waitFor(() => expect(send).toHaveBeenCalledTimes(1))
 
-    listeners['nuxt:dev:error:ready']!(undefined, client)
-    expect(client.send).toHaveBeenCalledWith(send.mock.calls[0]![0])
-    listeners['nuxt:dev:client-error']!({ ...error })
-    await vi.waitFor(() => expect(send).toHaveBeenCalledTimes(2))
-    expect(new Set(send.mock.calls.map(([payload]) => JSON.stringify(payload))).size).toBe(1)
+    listeners['nuxt:dev:error:ready']!(undefined, quiet)
+    expect(quiet.send).not.toHaveBeenCalled()
+
+    listeners['nuxt:dev:error:ready']!(undefined, noisy)
+    listeners['nuxt:dev:client-error']!({ ...error }, noisy)
+    expect(noisy.send).toHaveBeenCalledExactlyOnceWith(send.mock.calls[0]![0])
+    expect(send).toHaveBeenCalledTimes(1)
     expect(print).toHaveBeenCalledTimes(1)
 
     reporter.clear()
     expect(send).toHaveBeenLastCalledWith({ type: 'custom', event: 'nuxt:dev:error:clear' })
-    client.send.mockClear()
-    listeners['nuxt:dev:error:ready']!(undefined, client)
-    expect(client.send).not.toHaveBeenCalled()
     nuxt.close()
   })
 })

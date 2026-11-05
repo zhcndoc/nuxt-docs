@@ -10,6 +10,7 @@ import { FastResponse } from 'srvx'
 import { filterIslandProps, getIslandHash } from '#app/island-hash'
 import { findUnsafeIslandPropKey } from '#app/island-props'
 import { MAX_ISLAND_BODY_BYTES, MAX_ISLAND_DRAIN_BYTES, exceedsMaxBytes, exceedsMaxDepth } from '../utils/island-props'
+import { toSafeHeadInput } from '../utils/island-head'
 import type { NuxtIslandContext, NuxtIslandResponse } from '#app/types'
 import { traceAsync } from '#app/internal/tracing'
 import { runtimeCompiler, tracingChannelNuxt } from '#internal/nuxt.config.mjs'
@@ -25,11 +26,11 @@ import { recordDevClientCss } from '../utils/renderer/dev-client-css'
 
 import { rendererInstance } from '../utils/renderer/options'
 import { prerenderRenderingURLs } from '../utils/cache'
-import { useStorage } from 'nitro/storage'
+import { useKV } from 'nitro/kv'
 import type { Storage } from 'unstorage'
 
-export const islandCache: Storage<NuxtIslandResponse> | null = import.meta.prerender ? useStorage<NuxtIslandResponse>('internal:nuxt:prerender:island') : null
-export const islandPropCache: Storage<string> | null = import.meta.prerender ? useStorage<string>('internal:nuxt:prerender:island-props') : null
+export const islandCache: Storage<NuxtIslandResponse> | null = import.meta.prerender ? useKV<NuxtIslandResponse>('internal:nuxt:prerender:island') : null
+export const islandPropCache: Storage<string> | null = import.meta.prerender ? useKV<string>('internal:nuxt:prerender:island-props') : null
 
 const ISLAND_SUFFIX_RE = /\.json(?:\?.*)?$/
 const ISLAND_PATH_PREFIX = '/__nuxt_island/'
@@ -194,7 +195,8 @@ async function renderIsland (event: H3Event): Promise<IslandRenderResult> {
 
   const islandHead: SerializableHead = {}
   for (const entry of ssrContext.head.entries.values()) {
-    for (const [key, value] of Object.entries(walkResolver(entry.input, VueResolver) as SerializableHead)) {
+    const input = walkResolver(entry.input, VueResolver) as SerializableHead
+    for (const [key, value] of Object.entries(entry.options?._safe ? toSafeHeadInput(input) : input)) {
       const currentValue = islandHead[key as keyof SerializableHead]
       if (Array.isArray(currentValue)) {
         currentValue.push(...value)

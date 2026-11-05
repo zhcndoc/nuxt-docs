@@ -1,7 +1,7 @@
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { Nuxt, NuxtConfig } from '@nuxt/schema'
 import { defu } from 'defu'
 import { findWorkspaceDir } from 'pkg-types'
@@ -13,6 +13,21 @@ import { _generateTypes, resolveLayerPaths, writeTypes } from '../src/template.t
 import { getLayerDirectories } from 'nuxt/kit'
 
 const typesFixtureDir = fileURLToPath(new URL('./types-fixture', import.meta.url))
+
+vi.mock('../src/internal/package-json.ts', async (original) => {
+  const mod = await original<typeof import('../src/internal/package-json.ts')>()
+  return {
+    ...mod,
+    readPackageJSON: async (id: string, ...args: any[]) => {
+      const delay = typeof id === 'string' ? Number(id.match(/^delayed-module-(\d+)$/)?.[1] ?? Number.NaN) : Number.NaN
+      if (Number.isNaN(delay)) {
+        return mod.readPackageJSON(id, ...args)
+      }
+      await new Promise(resolve => setTimeout(resolve, delay))
+      return { name: id }
+    },
+  }
+})
 
 type DeepPartial<T> = {
   [P in keyof T]?: T[P] extends Record<string, any> ? DeepPartial<T[P]> : T[P]
@@ -102,15 +117,48 @@ describe('tsConfig generation', () => {
         "../modules/*/runtime/server/**/*",
         "../layers/*/server/**/*",
         "../layers/*/modules/*/runtime/server/**/*",
-        "../modules/*.*",
+        "../modules/*.mjs",
+        "../modules/*.js",
+        "../modules/*.cjs",
+        "../modules/*.mts",
+        "../modules/*.ts",
+        "../modules/*.cts",
+        "../modules/*.tsx",
+        "../modules/*.jsx",
         "../nuxt.config.*",
         "../.config/nuxt.*",
         "../layers/*/nuxt.config.*",
         "../layers/*/.config/nuxt.*",
-        "../layers/*/modules/*.*",
-        "../layers/*/modules/*/*.*",
+        "../layers/*/modules/*.mjs",
+        "../layers/*/modules/*.js",
+        "../layers/*/modules/*.cjs",
+        "../layers/*/modules/*.mts",
+        "../layers/*/modules/*.ts",
+        "../layers/*/modules/*.cts",
+        "../layers/*/modules/*.tsx",
+        "../layers/*/modules/*.jsx",
+        "../layers/*/modules/*/*.mjs",
+        "../layers/*/modules/*/*.js",
+        "../layers/*/modules/*/*.cjs",
+        "../layers/*/modules/*/*.mts",
+        "../layers/*/modules/*/*.ts",
+        "../layers/*/modules/*/*.cts",
+        "../layers/*/modules/*/*.tsx",
+        "../layers/*/modules/*/*.jsx",
       ]
     `)
+  })
+
+  it('should not exclude module directories with a dot in their name', async () => {
+    const { tsConfig, nodeTsConfig } = await _generateTypes(mockNuxtWithOptions({
+      _installedModules: [{ meta: { name: 'dotted-module', rawPath: '/my-app/modules/1.dotted/index.ts' }, entryPath: '/my-app/modules/1.dotted/index.ts', timings: {} }],
+    }))
+
+    expect(tsConfig.include).toContain('../modules/1.dotted/runtime')
+    expect(tsConfig.exclude).not.toEqual(expect.arrayContaining([expect.stringMatching(/\*\.\*$/)]))
+    expect(tsConfig.exclude).toEqual(expect.arrayContaining(['../modules/*.ts', '../modules/1.dotted/*.ts']))
+    expect(nodeTsConfig.include).toEqual(expect.arrayContaining(['../modules/*.ts', '../modules/1.dotted/*.ts']))
+    expect(nodeTsConfig.include).not.toEqual(expect.arrayContaining([expect.stringMatching(/\*\.\*$/)]))
   })
 
   it('should not exclude layer module runtime files from app tsconfig', async () => {
@@ -137,6 +185,42 @@ describe('tsConfig generation', () => {
     expect(legacyTsConfig.exclude).toContain('my-custom-exclude')
     // but computed app-only paths must still be absent
     expect(legacyTsConfig.exclude).not.toContain('../nuxt.config.*')
+  })
+
+  it('should store build info for each project in the build cache', async () => {
+    const { tsConfig, nodeTsConfig, sharedTsConfig, serverTsConfig, legacyTsConfig } = await _generateTypes(mockNuxt)
+    expect(tsConfig.compilerOptions?.tsBuildInfoFile).toBe('./cache/typecheck/tsconfig.app.tsbuildinfo')
+    expect(nodeTsConfig.compilerOptions?.tsBuildInfoFile).toBe('./cache/typecheck/tsconfig.node.tsbuildinfo')
+    expect(sharedTsConfig.compilerOptions?.tsBuildInfoFile).toBe('./cache/typecheck/tsconfig.shared.tsbuildinfo')
+    expect(serverTsConfig.compilerOptions?.tsBuildInfoFile).toBe('./cache/typecheck/tsconfig.server.tsbuildinfo')
+    expect(legacyTsConfig.compilerOptions?.tsBuildInfoFile).toBe('./cache/typecheck/tsconfig.tsbuildinfo')
+    for (const config of [tsConfig, nodeTsConfig, sharedTsConfig, serverTsConfig, legacyTsConfig]) {
+      expect(config.compilerOptions?.incremental).toBeUndefined()
+    }
+  })
+
+  it('should let user options override the build info location', async () => {
+    const global = await _generateTypes(mockNuxtWithOptions({
+      typescript: { tsConfig: { compilerOptions: { tsBuildInfoFile: './global.tsbuildinfo' } } },
+    }))
+    for (const config of [global.tsConfig, global.nodeTsConfig, global.sharedTsConfig, global.serverTsConfig, global.legacyTsConfig]) {
+      expect(config.compilerOptions?.tsBuildInfoFile).toBe('./global.tsbuildinfo')
+    }
+
+    const perContext = await _generateTypes(mockNuxtWithOptions({
+      typescript: {
+        tsConfig: { compilerOptions: { tsBuildInfoFile: './global.tsbuildinfo' } },
+        appTsConfig: { compilerOptions: { tsBuildInfoFile: './app.tsbuildinfo' } },
+        nodeTsConfig: { compilerOptions: { tsBuildInfoFile: './node.tsbuildinfo' } },
+        sharedTsConfig: { compilerOptions: { tsBuildInfoFile: './shared.tsbuildinfo' } },
+        serverTsConfig: { compilerOptions: { tsBuildInfoFile: './server.tsbuildinfo' } },
+      },
+    }))
+    expect(perContext.tsConfig.compilerOptions?.tsBuildInfoFile).toBe('./app.tsbuildinfo')
+    expect(perContext.nodeTsConfig.compilerOptions?.tsBuildInfoFile).toBe('./node.tsbuildinfo')
+    expect(perContext.sharedTsConfig.compilerOptions?.tsBuildInfoFile).toBe('./shared.tsbuildinfo')
+    expect(perContext.serverTsConfig.compilerOptions?.tsBuildInfoFile).toBe('./server.tsbuildinfo')
+    expect(perContext.legacyTsConfig.compilerOptions?.tsBuildInfoFile).toBe('./global.tsbuildinfo')
   })
 
   it('should propagate global tsConfig compiler options to node and shared tsconfigs', async () => {
@@ -221,6 +305,31 @@ describe('tsConfig generation', () => {
       expect(config.exclude).not.toContain('my-global-exclude')
       expect(config).not.toHaveProperty('vueCompilerOptions')
     }
+  })
+
+  it('should reference module types in the order modules are registered', async () => {
+    const modules = ['delayed-module-30', 'delayed-module-0', 'delayed-module-15']
+    const { declaration, nodeDeclaration } = await _generateTypes(mockNuxtWithOptions({ modules }))
+    const references = modules.map(id => `/// <reference types="${id}" />`).join('\n')
+    expect(declaration).toContain(references)
+    expect(nodeDeclaration).toContain(references)
+  })
+
+  it('should keep the generated declaration first in `include`', async () => {
+    const { tsConfig, nodeTsConfig, sharedTsConfig, serverTsConfig, legacyTsConfig } = await _generateTypes(mockNuxtWithOptions({
+      typescript: {
+        tsConfig: { include: ['../global/**/*.ts'] },
+        appTsConfig: { include: ['../test/**/*.ts'] },
+        nodeTsConfig: { include: ['../node/**/*.ts'] },
+        sharedTsConfig: { include: ['../shared-extra/**/*.ts'] },
+        serverTsConfig: { include: ['../server-extra/**/*.ts'] },
+      },
+    }))
+    expect(tsConfig.include?.slice(0, 3)).toEqual(['./nuxt.d.ts', '../test/**/*.ts', '../global/**/*.ts'])
+    expect(legacyTsConfig.include?.[0]).toBe('./nuxt.d.ts')
+    expect(nodeTsConfig.include?.slice(0, 2)).toEqual(['./nuxt.node.d.ts', '../node/**/*.ts'])
+    expect(sharedTsConfig.include?.slice(0, 2)).toEqual(['./nuxt.shared.d.ts', '../shared-extra/**/*.ts'])
+    expect(serverTsConfig.include?.slice(0, 2)).toEqual(['./nuxt.server.d.ts', '../server-extra/**/*.ts'])
   })
 
   it('should propagate appTsConfig excludes to legacy tsconfig', async () => {
@@ -396,13 +505,34 @@ describe('resolveLayerPaths', async () => {
           "../layers/*/*.d.ts",
         ],
         "node": [
-          "../custom-modules/*.*",
+          "../custom-modules/*.mjs",
+          "../custom-modules/*.js",
+          "../custom-modules/*.cjs",
+          "../custom-modules/*.mts",
+          "../custom-modules/*.ts",
+          "../custom-modules/*.cts",
+          "../custom-modules/*.tsx",
+          "../custom-modules/*.jsx",
           "../nuxt.config.*",
           "../.config/nuxt.*",
           "../layers/*/nuxt.config.*",
           "../layers/*/.config/nuxt.*",
-          "../layers/*/modules/*.*",
-          "../layers/*/modules/*/*.*",
+          "../layers/*/modules/*.mjs",
+          "../layers/*/modules/*.js",
+          "../layers/*/modules/*.cjs",
+          "../layers/*/modules/*.mts",
+          "../layers/*/modules/*.ts",
+          "../layers/*/modules/*.cts",
+          "../layers/*/modules/*.tsx",
+          "../layers/*/modules/*.jsx",
+          "../layers/*/modules/*/*.mjs",
+          "../layers/*/modules/*/*.js",
+          "../layers/*/modules/*/*.cjs",
+          "../layers/*/modules/*/*.mts",
+          "../layers/*/modules/*/*.ts",
+          "../layers/*/modules/*/*.cts",
+          "../layers/*/modules/*/*.tsx",
+          "../layers/*/modules/*/*.jsx",
         ],
         "nuxt": [
           "../app/**/*",

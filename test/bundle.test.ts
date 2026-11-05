@@ -52,10 +52,21 @@ describe.skipIf(process.env.SKIP_BUNDLE_SIZE === 'true' || process.env.ECOSYSTEM
     expect(bundle).not.toContain('EmptyShallowRef')
   })
 
+  it('does not ship the app in the server bundle of a spa build', async () => {
+    const server = (await Promise.all(
+      (await glob(['**/*.mjs'], { cwd: join(spaRootDir, '.output/server') }))
+        .map(file => fsp.readFile(join(spaRootDir, '.output/server', file), 'utf8')),
+    )).join('\n')
+    const client = await readClientBundle(join(spaRootDir, '.output/public'))
+
+    expect(server).not.toContain('Hello World!')
+    expect(client).toContain('Hello World!')
+  })
+
   it('default client bundle size (pages)', async () => {
     const clientStats = await analyzeSizes(['**/*.js'], join(pagesRootDir, '.output/public'), pagesRootDir)
 
-    expect.soft(roundToKilobytes(clientStats!.totalBytes)).toMatchInlineSnapshot(`"188k"`)
+    expect.soft(roundToKilobytes(clientStats!.totalBytes)).toMatchInlineSnapshot(`"185k"`)
 
     const files = clientStats!.files.map(f => f.replace(/\..*\.js/, '.js'))
 
@@ -76,21 +87,23 @@ describe.skipIf(process.env.SKIP_BUNDLE_SIZE === 'true' || process.env.ECOSYSTEM
     const serverDir = join(rootDir, '.output/server')
 
     const serverStats = await analyzeSizes(['**/*.mjs'], serverDir, rootDir)
-    expect.soft(roundToKilobytes(serverStats.totalBytes)).toMatchInlineSnapshot(`"281k"`)
+    expect.soft(roundToKilobytes(serverStats.totalBytes)).toMatchInlineSnapshot(`"212k"`)
 
     const packages = getVendorPackages(await glob(['_libs/**/*'], { cwd: serverDir }))
     expect(packages).toMatchInlineSnapshot(`
       [
-        "_vue/server-renderer+[...]",
         "devalue",
+        "h3",
         "h3+rou3+srvx",
+        "h32",
         "hookable",
-        "scule",
         "ufo",
         "vue",
-        "vue__reactivity+vue__shared",
+        "vue__reactivity",
         "vue__runtime-core",
         "vue__runtime-dom",
+        "vue__server-renderer",
+        "vue__shared",
       ]
     `)
   })
@@ -99,22 +112,25 @@ describe.skipIf(process.env.SKIP_BUNDLE_SIZE === 'true' || process.env.ECOSYSTEM
     const serverDir = join(pagesRootDir, '.output/server')
 
     const serverStats = await analyzeSizes(['**/*.mjs'], serverDir, pagesRootDir)
-    expect.soft(roundToKilobytes(serverStats.totalBytes)).toMatchInlineSnapshot(`"334k"`)
+    expect.soft(roundToKilobytes(serverStats.totalBytes)).toMatchInlineSnapshot(`"281k"`)
 
     const packages = getVendorPackages(await glob(['_libs/**/*'], { cwd: serverDir }))
     expect(packages).toMatchInlineSnapshot(`
       [
-        "_vue/server-renderer+[...]",
+        "defu",
         "devalue",
+        "h3",
         "h3+rou3+srvx",
+        "h32",
         "hookable",
-        "scule",
         "ufo",
         "vue",
         "vue-router",
-        "vue__reactivity+vue__shared",
+        "vue__reactivity",
         "vue__runtime-core",
         "vue__runtime-dom",
+        "vue__server-renderer",
+        "vue__shared",
       ]
     `)
   })

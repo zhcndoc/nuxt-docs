@@ -234,13 +234,14 @@ describe('server components/islands', () => {
 
     const isServerPageIsland = (req: string) => /^\/__nuxt_island\/page_server-page_/.test(req)
 
-    expect(requests.some(isServerPageIsland)).toBe(true)
+    // in dev, links do not import their pages to prefetch, so the island is fetched on navigation
+    expect(requests.some(isServerPageIsland)).toBe(!isDev)
     requests.length = 0
 
     await page.getByText('to server page').click()
     await page.waitForFunction(() => !!document.head.querySelector('meta[name="author"][content="Nuxt"]'))
 
-    expect(requests.some(isServerPageIsland)).toBe(false)
+    expect(requests.some(isServerPageIsland)).toBe(isDev)
     await page.close()
   })
 
@@ -695,7 +696,7 @@ describe('denial-of-service protections', () => {
       let received = ''
       socket.on('data', (chunk) => {
         received += chunk.toString()
-        const statuses = [...received.matchAll(/^HTTP\/1\.1 (\d{3})/gm)].map(m => m[1]!)
+        const statuses = [...received.matchAll(/HTTP\/1\.1 (\d{3}) /g)].map(m => m[1]!)
         if (statuses.length === 2) {
           socket.end()
           resolve(statuses)
@@ -769,6 +770,21 @@ describe('denial-of-service protections', () => {
     expect(result.slots?.loop?.props?.length ?? 0).toBe(3)
     expect(result.slots?.loop?.fallback?.match(/class="slot-item"/g)?.length ?? 0).toBe(3)
   })
+
+  it.each([
+    ['BoundedVForPug', 'pug-item'],
+    ['BoundedVForSrc', 'src-item'],
+    ['BoundedVForSpaced', 'spaced-item'],
+    ['BoundedVForForwarded', 'row-item'],
+  ])('bounds a large-integer v-for in %s', async (name, className) => {
+    const result = await $fetch<NuxtIslandResponse>(islandURL(name, { props: { count: 10_000_000 } }))
+    expect(result.html.match(new RegExp(`class="${className}"`, 'g'))?.length ?? 0).toBe(MAX_VFOR_LENGTH)
+  })
+
+  it('does not bound a large-integer v-for outside island renders', async () => {
+    const html = await $fetch<string>(`/row-list?rows=${MAX_VFOR_LENGTH + 1}`)
+    expect(html.match(/class="row-item"/g)?.length ?? 0).toBe(MAX_VFOR_LENGTH + 1)
+  })
 })
 
 describe('hash/render input alignment', () => {
@@ -829,6 +845,16 @@ describe('page-island middleware', () => {
     expect(res.headers.get('set-cookie')).toContain('island-auth-marker=set-from-island-middleware')
   })
 
+  it('honours `redirect` route rules for `page_*` islands', async () => {
+    const res = await fetch(islandURL('page_redirected-server-page', {
+      context: { url: '/redirected-server-page' },
+    }), { redirect: 'manual' })
+    expect(res.status).toBe(302)
+    expect(res.headers.get('location')).toBe('/server-page')
+    const body = await res.text()
+    expect(body).not.toContain('REDIRECTED-PAGE-ISLAND-BODY')
+  })
+
   it('still renders unguarded `page_*` islands', async () => {
     const res = await fetch(islandURL('page_server-page', {
       context: { url: '/server-page' },
@@ -872,6 +898,48 @@ describe('island request headers', () => {
     const anonymous = await $fetch<string>('/island-headers')
     expect(anonymous).toContain('<span id="island-cookie">none</span>')
     expect(anonymous).toContain('<span id="island-authorization">none</span>')
+  })
+})
+
+describe('island head', () => {
+  it('applies useHeadSafe rules to the island response', async () => {
+    const result = await $fetch<NuxtIslandResponse>(islandURL('SafeHead'))
+    expect(result.head.meta).toEqual([
+      { name: 'island-trusted-meta', content: 'trusted' },
+      { name: 'island-safe-meta', content: 'safe' },
+    ])
+    expect(result.head.bodyAttrs).toEqual({ class: 'island-safe-body' })
+    expect(JSON.stringify(result.head)).not.toContain('__islandUnsafe')
+  })
+
+  it('applies useHeadSafe rules to island head when server rendering the page', async () => {
+    const html = await $fetch<string>('/island-safe-head')
+    expect(html).toContain('<meta name="island-trusted-meta" content="trusted">')
+    expect(html).toContain('<meta name="island-safe-meta" content="safe">')
+    expect(html).toContain('island-safe-body')
+    expect(html).not.toContain('__islandUnsafe')
+  })
+
+  it('applies useHeadSafe rules to island head after hydration', async () => {
+    const { page } = await renderPage('/island-safe-head')
+    await page.locator('#safe-head-island').waitFor()
+    await page.waitForLoadState('networkidle')
+    expect(await page.evaluate(() => (window as any).__islandUnsafe)).toBeUndefined()
+    expect(await page.locator('body').getAttribute('onload')).toBeNull()
+    expect(await page.locator('body').getAttribute('class')).toContain('island-safe-body')
+    expect(await page.content()).not.toContain('__islandUnsafe')
+    await page.close()
+  })
+
+  it('applies useHeadSafe rules to island head on client-side navigation', async () => {
+    const { page } = await renderPage('/')
+    await page.evaluate(() => (window as any).useNuxtApp?.().$router.push('/island-safe-head'))
+    await page.locator('#safe-head-island').waitFor()
+    await page.waitForFunction(() => document.querySelector('meta[name="island-safe-meta"]'))
+    expect(await page.evaluate(() => (window as any).__islandUnsafe)).toBeUndefined()
+    expect(await page.locator('body').getAttribute('onload')).toBeNull()
+    expect(await page.content()).not.toContain('__islandUnsafe')
+    await page.close()
   })
 })
 

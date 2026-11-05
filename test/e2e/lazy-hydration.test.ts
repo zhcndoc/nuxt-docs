@@ -73,6 +73,7 @@ test('renders a previously loaded lazy hydration component on the first frame af
 const hydrationTests = {
   'in template': '',
   'with vue macros': '/macro',
+  'with pug templates': '/pug',
 }
 
 for (const [description, path] of Object.entries(hydrationTests)) {
@@ -126,9 +127,9 @@ for (const [description, path] of Object.entries(hydrationTests)) {
       await page.locator('data-testid=hydrate-on-interaction-click', { hasText: unhydratedText }).waitFor({ state: 'hidden' })
     })
 
-    if (description === 'in template') {
+    if (description === 'in template' || description === 'with pug templates') {
       test('does not delay hydration of components named after modifiers', async ({ page, goto }) => {
-        await goto('/delayed-hydration')
+        await goto(`/delayed-hydration${path}`)
 
         await page.locator('data-testid=event-view-normal-component', { hasText: 'This is mounted.' }).waitFor()
         await page.locator('data-testid=event-view-normal-component', { hasText: 'This is not mounted.' }).waitFor({ state: 'hidden' })
@@ -160,20 +161,12 @@ for (const [description, path] of Object.entries(hydrationTests)) {
       await countLocator.waitFor()
       expect(await countLocator.textContent()).toBe('0')
 
-      // The first interaction triggers hydration asynchronously, and the click
-      // that triggers it is not guaranteed to also register as an increment.
-      // Hover to start hydration, then click until the count actually advances
-      // before driving the deterministic loop below.
-      await incrementButton.hover()
-      await expect.poll(async () => {
-        await incrementButton.click()
-        return countLocator.textContent()
-      }).not.toBe('0')
+      await incrementButton.dispatchEvent('click')
+      await expect(countLocator).toHaveText('1')
 
-      let count = Number(await countLocator.textContent())
-      while (count < 10) {
+      for (let count = 2; count <= 10; count++) {
         await incrementButton.click()
-        await expect.poll(() => countLocator.textContent()).toBe(`${++count}`)
+        await expect(countLocator).toHaveText(`${count}`)
       }
 
       expect(await countLocator.textContent()).toBe('10')

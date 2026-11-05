@@ -11,6 +11,7 @@ import type { LoadNuxtOptions, ResolveTypePathsOptions } from '@nuxt/kit'
 import { addBuildPlugin, addComponent, addPlugin, addPluginTemplate, addRouteMiddleware, addTemplate, addTypeTemplate, addVitePlugin, directoryToURL, ensureDependencyInstalled, getAddDependencyCommand, getLayerDirectories, loadNuxtConfig, nuxtCtx, resolveAlias, resolveFiles, resolveIgnorePatterns, resolveModuleWithOptions, resolveTypePaths, runWithNuxtContext } from '@nuxt/kit'
 import { configDiagnostics, createServerBuild, installModules } from '@nuxt/kit/internal'
 import type { PackageJson } from 'pkg-types'
+import type { Unimport } from 'unimport'
 import { readPackageJSON } from 'pkg-types'
 import { hash } from 'ohash'
 import onChange from 'on-change'
@@ -41,7 +42,7 @@ import { distDir, pkgDir } from '../dirs.ts'
 import { runtimeDependencies } from '../../meta.js'
 import pkg from '../../package.json' with { type: 'json' }
 import { scriptsStubsPreset } from '../imports/presets.ts'
-import { linkToAlias, logger } from '../utils.ts'
+import { linkToAlias, logger, toArray } from '../utils.ts'
 import { installProxyDispatcher } from './utils/proxy.ts'
 import { buildServerRoutes, collectPageRoutes, collectServerRoutes, emitServerRoutesModule, resolveServerRoutes } from './utils/server-routes.ts'
 import { createImportProtectionPatterns } from './plugins/import-protection.ts'
@@ -50,6 +51,7 @@ import { TreeShakeComposablesPlugin } from './plugins/tree-shake.ts'
 import { DevOnlyPlugin } from './plugins/dev-only.ts'
 import { LayerAliasingPlugin } from './plugins/layer-aliasing.ts'
 import { addModuleTranspiles } from './modules.ts'
+import { findVitePlusConfig } from './external-config-files.ts'
 import { bundleServer } from './server.ts'
 import { NuxtPerfProfiler } from './perf.ts'
 import schemaModule from './schema.ts'
@@ -59,6 +61,8 @@ import { NavigateToEarlyReturnPlugin } from './plugins/navigate-to.ts'
 import { PrehydrateTransformPlugin } from './plugins/prehydrate.ts'
 import { ExtractAsyncDataHandlersPlugin } from './plugins/extract-async-data-handlers.ts'
 import { VirtualFSPlugin } from './plugins/virtual.ts'
+import { BundledVuePlugin } from './plugins/bundled-vue.ts'
+import { setupTemplateDiagnostics } from './template-diagnostics.ts'
 
 export function createNuxt (options: NuxtOptions): Nuxt {
   const hooks = createHooks<NuxtHooks>()
@@ -285,6 +289,13 @@ async function initNuxt (nuxt: Nuxt) {
     },
   })
 
+  // the shared context gets an empty route set, so it does not load server handlers
+  addTemplate({
+    filename: 'types/shared-server-routes.d.ts',
+    dependsOn: [],
+    getContents: () => emitServerRoutesModule({ routes: [], strict: false }),
+  })
+
   addTypeTemplate({
     filename: 'types/nitro-layouts.d.ts',
     dependsOn: [],
@@ -309,10 +320,12 @@ async function initNuxt (nuxt: Nuxt) {
   if (nuxt.options.typescript.builder !== false) {
     const envMap = {
       // defaults from `builder` based on package name
+      '@nuxt/rsbuild-builder': '@rsbuild/core/types',
       '@nuxt/rspack-builder': '@rsbuild/core/types',
       '@nuxt/vite-builder': 'vite/client',
       '@nuxt/webpack-builder': 'webpack/module',
       // simpler overrides from `typescript.builder` for better DX
+      'rsbuild': '@rsbuild/core/types',
       'rspack': '@rsbuild/core/types',
       'vite': 'vite/client',
       'webpack': 'webpack/module',
@@ -418,10 +431,20 @@ async function initNuxt (nuxt: Nuxt) {
     // required for the server builder's augmentations (referenced above)
     opts.nodeTsConfig.compilerOptions!.paths!['#app/types'] ||= [resolve(nuxt.options.appDir, 'types')]
     opts.sharedTsConfig.compilerOptions = defu(opts.sharedTsConfig.compilerOptions, { paths: { ...paths } })
+    opts.sharedTsConfig.compilerOptions!.paths!['#build/server-routes'] ||= [resolve(nuxt.options.buildDir, 'types/shared-server-routes.d.ts')]
     // bundler-resolved, so it takes the same substitutions as the app
     opts.serverTsConfig.compilerOptions = defu(opts.serverTsConfig.compilerOptions, { paths: { ...paths } })
     // required for the generated route types, which `serverFetch` resolves against
     opts.serverTsConfig.compilerOptions!.paths!['#app/types'] ||= [resolve(nuxt.options.appDir, 'types')]
+
+    const typesDir = nuxt.options.typesDir || nuxt.options.buildDir
+    for (const dir of new Set([nuxt.options.rootDir, nuxt.options.workspaceDir])) {
+      const vitePlusConfig = await findVitePlusConfig(dir)
+      if (vitePlusConfig) {
+        opts.nodeTsConfig.include ||= []
+        opts.nodeTsConfig.include.push(relative(typesDir, vitePlusConfig))
+      }
+    }
 
     for (const dirs of layerDirs) {
       const declaration = join(dirs.root, 'index.d.ts')
@@ -452,6 +475,14 @@ async function initNuxt (nuxt: Nuxt) {
     }
   }
 
+  if (!nuxt.options.dev && !nuxt.options.vue.runtimeCompiler) {
+    addBuildPlugin({ vite: () => BundledVuePlugin() }, { client: false })
+    nuxt.hook('nitro:config', (config) => {
+      config.rollupConfig ||= {}
+      config.rollupConfig.plugins = [...toArray(config.rollupConfig.plugins || []), BundledVuePlugin()]
+    })
+  }
+
   // Support Nuxt VFS
   addBuildPlugin(VirtualFSPlugin(nuxt, { mode: 'server' }), { client: false })
   addBuildPlugin(VirtualFSPlugin(nuxt, {
@@ -480,6 +511,9 @@ async function initNuxt (nuxt: Nuxt) {
     }))
   }
 
+  let importsContext: Unimport | undefined
+  nuxt.hook('imports:context', (ctx) => { importsContext = ctx })
+
   nuxt.hook('modules:done', () => {
     // Transform initial composable call within `<script setup>` to preserve context
     if (nuxt.options.experimental.asyncContext) {
@@ -498,14 +532,17 @@ async function initNuxt (nuxt: Nuxt) {
     }), { client: false })
 
     // Add composable tree-shaking optimisations
+    const getAutoImports = () => importsContext?.getImportMap()
     if (Object.keys(nuxt.options.optimization.treeShake.composables.server).length) {
       addBuildPlugin(TreeShakeComposablesPlugin({
         composables: nuxt.options.optimization.treeShake.composables.server,
+        getAutoImports,
       }), { client: false })
     }
     if (Object.keys(nuxt.options.optimization.treeShake.composables.client).length) {
       addBuildPlugin(TreeShakeComposablesPlugin({
         composables: nuxt.options.optimization.treeShake.composables.client,
+        getAutoImports,
         stubs: { onServerPrefetch: '#app/composables/server-prefetch' },
       }), { server: false })
     }
@@ -763,11 +800,6 @@ async function initNuxt (nuxt: Nuxt) {
     })
   }
 
-  // Track components used to render for webpack
-  if (nuxt.options.builder === '@nuxt/webpack-builder' || nuxt.options.builder === '@nuxt/rspack-builder') {
-    addPlugin(resolve(nuxt.options.appDir, 'plugins/preload.server'))
-  }
-
   // Add nuxt app hooks debugger
   if (
     nuxt.options.debug
@@ -789,6 +821,10 @@ async function initNuxt (nuxt: Nuxt) {
   // Registered after modules so its `post` transform runs after auto-import injection.
   if (nuxt.options.experimental.navigateToEarlyReturn) {
     addBuildPlugin(NavigateToEarlyReturnPlugin())
+  }
+
+  if (nuxt.options.experimental.templateDiagnostics) {
+    setupTemplateDiagnostics(nuxt)
   }
 
   if (nuxt.options.experimental.debugModuleMutation) {
@@ -817,6 +853,10 @@ async function initNuxt (nuxt: Nuxt) {
       filePath: resolve(nuxt.options.appDir, 'components/nuxt-island'),
       meta: getBuiltinComponentMeta('NuxtIsland'),
     })
+  }
+
+  if (nuxt.options.experimental.deferPrefetchHints) {
+    addPlugin(resolve(nuxt.options.appDir, 'plugins/deferred-prefetch.client'))
   }
 
   // Add experimental cross-origin prefetch support using Speculation Rules API
@@ -1308,6 +1348,11 @@ async function resolveTypescriptPaths (nuxt: Nuxt, options?: ResolveTypePathsOpt
     }
   }
 
+  // a single module identity keeps `nuxt/schema` and `@nuxt/schema` augmentations merged
+  if (paths['@nuxt/schema']) {
+    paths['nuxt/schema'] = paths['@nuxt/schema']
+  }
+
   return paths
 }
 
@@ -1322,7 +1367,7 @@ async function vueSupportsVapor (nuxt: Nuxt) {
   })
   if (!path) { return false }
   const { version } = await readPackageJSON(path).catch(() => ({}) as PackageJson)
-  return !!version && satisfies(version, '>=3.6.0-0')
+  return !!version && satisfies(version, '>=3.6.0-rc.6')
 }
 
 const RELATIVE_CSS_ENTRY_RE = /^\.{1,2}\//

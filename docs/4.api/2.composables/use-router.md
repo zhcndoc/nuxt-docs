@@ -85,7 +85,7 @@ router.replace({ hash: '#bio' })
 ## Promise 和错误处理
 
 - [`isReady()`](https://router.vuejs.org/api/interfaces/router#isReady-): 返回一个 Promise，当路由完成初始导航后该 Promise 会被 resolve。
-- [`onError`](https://router.vuejs.org/api/interfaces/router#onError-): 注册一个错误处理器，每当导航过程中发生非捕获错误时调用。
+- [`onError`](https://router.vuejs.org/api/interfaces/router#onError-): 注册一个错误处理器，每当导航过程中发生未捕获错误时调用。
 
 :read-more{icon="i-simple-icons-vuedotjs" to="https://router.vuejs.org/api/interfaces/router#Methods-" title="Vue Router 文档" target="_blank"}
 
