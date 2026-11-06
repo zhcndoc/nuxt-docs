@@ -1,9 +1,8 @@
 import { addTemplate } from '@nuxt/kit'
-import { defu } from 'defu'
 import { resolveModulePath } from 'exsolve'
 import type { Nuxt } from '@nuxt/schema'
 
-import { createNormalizedRouteRulesRouter, normalizePathCode, normalizeRouteRulePath, resolveRouteRulesRoutes } from '../../nuxt/src/core/utils/route-rules.ts'
+import { createNormalizedRouteRulesRouter, normalizePathCode, resolveRouteRules, resolveRouteRulesRoutes } from '../../nuxt/src/core/utils/route-rules.ts'
 
 /**
  * The rules this builder resolves for itself: the renderer reads `ssr`, `streaming`,
@@ -21,7 +20,7 @@ const defuPath = resolveModulePath('defu', { try: true, from: import.meta.url })
 export function createRouteRulesMatcher (nuxt: Nuxt): (path: string) => Record<string, any> {
   const fold = !nuxt.options.router.options.sensitive
   const router = createNormalizedRouteRulesRouter(resolveRouteRulesRoutes(nuxt).routes, '', fold)
-  return path => defu({}, ...router.matchAll('', normalizeRouteRulePath(path, fold)).reverse()) as Record<string, any>
+  return path => resolveRouteRules(router, path, fold)
 }
 
 /**
@@ -35,20 +34,26 @@ export function addRouteRulesTemplate (): string {
     getContents: ({ nuxt }) => {
       const fold = !nuxt.options.router.options.sensitive
       const { routes, baseURL } = resolveRouteRulesRoutes(nuxt)
+      const basePrefix = baseURL.endsWith('/') ? baseURL.slice(0, -1) : baseURL
       const matcher = createNormalizedRouteRulesRouter(routes, baseURL, fold).compileToString({
         matchAll: true,
         serialize: rules => `{${Object.entries(rules)
           .filter(([name, value]) => value !== undefined && SUPPORTED_RULES.has(name))
-          .map(([name, value]) => `${name}: ${JSON.stringify(value)}`)
+          .map(([name, value]) => `${name}: ${JSON.stringify(name === 'redirect' ? withRedirectBase(value, basePrefix) : value)}`)
           .join(',')}}`,
       })
       return [
         `import { defu } from ${JSON.stringify(defuPath)}`,
         `const matcher = ${matcher}`,
         normalizePathCode,
-        `export default path => defu({}, ...matcher('', normalizePath(path, ${fold})).map(r => r.data).reverse())`,
+        `export default path => defu({}, ...matchAllRouteRules(path => matcher('', normalizePath(path, ${fold})).map(r => r.data), path).reverse())`,
       ].join('\n')
     },
   })
   return dst
+}
+
+function withRedirectBase (redirect: unknown, prefix: string): unknown {
+  if (!prefix || !redirect || typeof redirect !== 'object' || typeof (redirect as { base?: unknown }).base !== 'string') { return redirect }
+  return { ...redirect, base: prefix + (redirect as { base: string }).base }
 }

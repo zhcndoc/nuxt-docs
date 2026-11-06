@@ -87,7 +87,24 @@ useHead({
 </template>
 ```
 
-指向 `public/` 目录中文件的链接，或指向同源其他应用的链接，都不是 Vue Router 知道的路由。请将它们标记为 [`external`](/docs/api/components/nuxt-link#handling-static-file-and-cross-app-links)，这样浏览器就会执行真正的导航，而不是因为找不到匹配的路由而失败。
+Vue Router 根据路由及其参数判断链接是否匹配，[不会考虑查询参数](https://router.vuejs.org/guide/essentials/active-links.html)。因此，如果链接与当前页面的区别仅在查询参数，它也会被标记为当前页面：一组筛选项或 `?edit=<id>` 列表中的多个行会同时被读作“当前页面”。一组元素中只能有一个当前项，因此这类链接应自行设置 `aria-current`。它的优先级高于路由器设置的值，而设为 `undefined` 会移除该属性：
+
+```vue
+<script setup lang="ts">
+const route = useRoute()
+</script>
+
+<template>
+  <NuxtLink
+    :to="{ query: { status: 'open' } }"
+    :aria-current="route.query.status === 'open' ? 'true' : undefined"
+  >Open</NuxtLink>
+</template>
+```
+
+如果这些链接用于切换同一页面中的面板，那么使用 `role="tab"` 和 `aria-selected` 的 [tabs 模式](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/)可能比 `aria-current` 更合适。
+
+指向 `public/` 目录中的文件或同源其他应用的链接，并不是 Vue Router 所识别的路由。请将它们标记为 [`external`](/docs/api/components/nuxt-link#handling-static-file-and-cross-app-links)，以便浏览器执行真正的导航，而不是因为无法匹配路由而失败。
 
 :read-more{title="NuxtLink" to="/docs/api/components/nuxt-link"}
 
@@ -104,10 +121,7 @@ useHead({
     href="#main"
   >跳转到主要内容</a>
   <AppHeader />
-  <main
-    id="main"
-    tabindex="-1"
-  >
+  <main id="main">
     <NuxtPage />
   </main>
 </template>
@@ -123,9 +137,23 @@ useHead({
 </style>
 ```
 
-`<main>` 本身无法获得焦点，因此需要设置 `tabindex="-1"`，以便接受来自跳过链接或脚本的焦点。请使用 `-1`，而不要使用正值；正值会改变元素在 Tab 顺序中的位置，让其他所有人都感到意外。
+跟随指向 `#main` 的链接会将浏览器顺序焦点导航的起点移至 `<main>`。虽然 `<main>` 本身不可聚焦，但在当前浏览器中，接下来的 <kbd>Tab</kbd> 会移至该起点之后的第一个可聚焦元素：如果 `<main>` 内含有可聚焦元素，就移至其中的第一个；否则移至 `<main>` 之后。
 
-如果适合你的应用，你还可以更进一步，通过插件在每次导航后将焦点移动到主要区域：
+如果适合你的应用，你还可以更进一步，在导航改变路径时通过插件将焦点移动到主区域。只有在 `<main>` 设置了 `tabindex="-1"` 后，脚本才能将焦点移至其中。请使用 `-1` 而不是正值，因为正值会改变元素在 Tab 顺序中的位置，让其他人感到意外：
+
+```vue [app.vue]
+<template>
+  <!-- ... -->
+  <main
+    id="main"
+    tabindex="-1"
+  >
+    <NuxtPage />
+  </main>
+</template>
+```
+
+仅更改查询参数或 hash 的导航（例如筛选链接或跳过链接本身）会让焦点保持原位：
 
 ```ts [app/plugins/focus-main.client.ts]
 export default defineNuxtPlugin(() => {
@@ -137,6 +165,10 @@ export default defineNuxtPlugin(() => {
   })
 })
 ```
+
+::note
+设置 `tabindex="-1"` 后，如果点击 `<main>` 内不属于其他可聚焦元素的内容，焦点可能会落到 `<main>` 本身，因为浏览器会聚焦被点击元素最近的可聚焦祖先。如果你的应用会将焦点返回到先前聚焦的元素（例如关闭对话框时），请考虑这一点。
+::
 
 ::tip
 仅使用键盘在应用中进行导航。在几次导航后，从跳过链接按 Tab 键进入 `<main>`，可以快速发现大多数焦点问题。

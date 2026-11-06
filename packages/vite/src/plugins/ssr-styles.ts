@@ -7,6 +7,7 @@ import { setBuildOutput } from '@nuxt/kit'
 import { useServerBuild } from '@nuxt/kit/internal'
 import type { Nuxt, NuxtPage } from '@nuxt/schema'
 import { generateTransform, rolldownString } from 'rolldown-string'
+import { parseSync } from 'rolldown/utils'
 import genericNames from 'generic-names'
 
 import { IS_CSS_RE, isCSS, isVue, parseModuleId } from '../utils/index.ts'
@@ -19,6 +20,9 @@ const QUERY_RE = /\?.+$/
 const MACRO_QUERY_RE = /[?&]macro(?:=|&|$)/
 const NUXT_COMPONENT_QUERY_RE = /[?&]nuxt_component=/
 const STYLE_QUERY_RE = /[?&]type=style/
+// style blocks the server bundle reads exports from: `?inline` (inlined styles, custom elements) and CSS modules
+const STYLE_WITH_EXPORTS_RE = /[?&]inline(?:&|$)|\.module\.\w+$/
+const EMPTY_STYLE_ID = '\0nuxt:ssr-styles:empty'
 
 /**
  * Wrap a string `generateScopedName` pattern into a function that strips any
@@ -73,7 +77,9 @@ export function SSRStylesPlugin (nuxt: Nuxt): Plugin | undefined {
   // client module graph reaches a component that inlines it. With a
   // function-valued `inlineStyles` (the default is one) a shared CSS source can
   // be inlined for one importer while another still relies on the link.
-  const isInlinedForEveryImporter = (cssId: string) => {
+  // A page that is only ever rendered on the client (`ssr: false`) never needs
+  // the link either: its CSS is loaded along with its chunk on navigation.
+  const isInlinedForEveryImporter = (cssId: string, spaOnlyPages: Set<string>) => {
     const consumers = inlinedCSSConsumers.get(cssId)
     if (!consumers) { return false }
     const seen = new Set<string>()
@@ -82,7 +88,8 @@ export function SSRStylesPlugin (nuxt: Nuxt): Plugin | undefined {
       const importer = queue.shift()!
       if (seen.has(importer)) { continue }
       seen.add(importer)
-      if (consumers.has(relativeToSrcDir(importer))) { continue }
+      const relativeImporter = relativeToSrcDir(importer)
+      if (consumers.has(relativeImporter) || spaOnlyPages.has(relativeImporter)) { continue }
       const parents = clientImporters.get(importer)
       if (!parents?.size) { return false }
       queue.push(...parents)
@@ -90,11 +97,11 @@ export function SSRStylesPlugin (nuxt: Nuxt): Plugin | undefined {
     return true
   }
 
-  const isDroppableCSSFile = (file: string) => {
+  const isDroppableCSSFile = (file: string, spaOnlyPages: Set<string>) => {
     const sources = cssSourcesByCSSFile.get(basename(file))
     if (!sources?.size) { return false }
     for (const cssId of sources) {
-      if (!isInlinedForEveryImporter(cssId)) { return false }
+      if (!isInlinedForEveryImporter(cssId, spaOnlyPages)) { return false }
     }
     return true
   }
@@ -212,9 +219,10 @@ export function SSRStylesPlugin (nuxt: Nuxt): Plugin | undefined {
     // link is therefore only removed here when every source is inlined for an
     // entry module; otherwise it is kept and the renderer drops it for the
     // requests that did inline it. (#36058)
+    const spaOnlyPages = new Set(nuxt.options._spaOnlyPageSources)
     for (const chunk of Object.values(manifest)) {
       if (!chunk.css?.length) { continue }
-      chunk.css = chunk.css.filter(file => !(isDroppableCSSFile(file) && dropCSSFile(file, entryIds)))
+      chunk.css = chunk.css.filter(file => !(isDroppableCSSFile(file, spaOnlyPages) && dropCSSFile(file, entryIds)))
     }
 
     setBuildOutput('entryIds', () => `export default ${JSON.stringify(Array.from(entryIds))}`, nuxt)
@@ -402,7 +410,7 @@ export function SSRStylesPlugin (nuxt: Nuxt): Plugin | undefined {
     // a `.vue` id can still carry CSS as its module contents (`?type=style&lang.css`)
     if (!SUPPORTED_FILES_RE.test(pathname) || STYLE_QUERY_RE.test(search) || isCSS(search)) { return }
 
-    for (const specifier of getStaticImportSpecifiers(ctx.parse(code))) {
+    for (const specifier of getStaticImportSpecifiers(ctx, code)) {
       if (!IS_CSS_RE.test(specifier) && !STYLE_QUERY_RE.test(specifier)) { continue }
 
       const resolved = await ctx.resolve(specifier, id)
@@ -473,6 +481,10 @@ export function SSRStylesPlugin (nuxt: Nuxt): Plugin | undefined {
             },
           },
           async handler (id, importer, _options) {
+            if (environment.name === 'ssr' && STYLE_QUERY_RE.test(id) && !STYLE_WITH_EXPORTS_RE.test(id)) {
+              return { id: EMPTY_STYLE_ID, moduleSideEffects: false }
+            }
+
             // We want to remove side effects (namely, emitting CSS) from `.vue` files and explicitly imported `.css` files
             // but only as long as we are going to inline that CSS.
             if ((options.shouldInline === false || (typeof options.shouldInline === 'function' && !options.shouldInline(importer)))) {
@@ -486,6 +498,12 @@ export function SSRStylesPlugin (nuxt: Nuxt): Plugin | undefined {
                 moduleSideEffects: false,
               }
             }
+          },
+        },
+        load: {
+          filter: { id: new RegExp(`^${escapeStringRegexp(EMPTY_STYLE_ID)}$`) },
+          handler () {
+            return 'export {}'
           },
         },
         generateBundle (outputOptions, bundle) {
@@ -706,12 +724,14 @@ function filename (name: string) {
   return _filename(name.replace(QUERY_RE, ''))
 }
 
-function getStaticImportSpecifiers (program: ReturnType<Rollup.PluginContext['parse']>) {
-  const specifiers: string[] = []
-  for (const node of program.body) {
-    if (node.type === 'ImportDeclaration') {
-      specifiers.push(node.source.value)
-    }
+/**
+ * Parses `code` as `this.parse` does, but reads the specifiers from the module record so the
+ * AST is never deserialized. Code that doesn't parse goes through `this.parse` for its error.
+ */
+function getStaticImportSpecifiers (ctx: Rollup.PluginContext, code: string) {
+  const result = parseSync('file.js', code, { lang: 'js', preserveParens: false })
+  if (result.errors.length) {
+    ctx.parse(code)
   }
-  return specifiers
+  return result.module.staticImports.map(node => node.moduleRequest.value)
 }

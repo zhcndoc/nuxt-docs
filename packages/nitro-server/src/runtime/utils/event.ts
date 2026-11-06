@@ -1,4 +1,4 @@
-import { getRequestHost, getRequestProtocol, getRequestURL, readRawBody } from 'h3'
+import { createError, getRequestHost, getRequestProtocol, getRequestURL, readRawBody } from 'h3'
 import type { H3Event } from 'h3'
 import type { RendererEvent } from 'nuxt/internal/renderer/runtime'
 import type { NuxtRequestContext, RequestEvent } from 'nuxt/schema'
@@ -9,6 +9,7 @@ const ENC_BRACKET_CLOSE_RE = /%5D/g
 const ENC_ENC_SLASH_RE = /%252F/gi
 const HASH_RE = /#/g
 const QUESTION_MARK_RE = /\?/g
+const DOT_SEGMENT_RE = /(?:^|\/)\.{1,2}(?:\/|$)/
 
 // h3 decodes the path, apart from `%2F`, and vue-router expects an encoded path
 function encodeEventPath (path: string): string {
@@ -123,6 +124,15 @@ const PAYLOAD_METHODS = new Set(['PATCH', 'POST', 'PUT', 'DELETE'])
 
 const BODY_READ_METHODS = new Set(['arrayBuffer', 'blob', 'bytes', 'formData', 'json', 'text'])
 
+const RAW_BODY = Symbol.for('h3RawBody')
+
+interface RequestBody {
+  read (): Promise<Uint8Array<ArrayBuffer>>
+  stream (): ReadableStream<Uint8Array<ArrayBuffer>>
+}
+
+const requestBodies = new WeakMap<object, RequestBody>()
+
 /**
  * The request in the web-standard shape, with every read of its body served from the bytes
  * h3 v1 caches on the node request.
@@ -139,20 +149,21 @@ function toWebRequest (event: H3Event): Request {
   }
 
   const method = event.method
+  const url = getRequestURL(event, { xForwardedProto: false })
   if (!PAYLOAD_METHODS.has(method)) {
-    return new Request(getRequestURL(event), { method, headers: event.headers })
+    return new Request(url, { method, headers: event.headers, signal: toRequestSignal(event) })
   }
 
-  const request = new Request(getRequestURL(event), {
+  const request = new Request(url, {
     method,
     headers: event.headers,
-    body: toBufferedBodyStream(event),
+    body: getRequestBody(event).stream(),
+    signal: toRequestSignal(event),
     // @ts-expect-error undici option, required to send a stream body
     duplex: 'half',
   })
 
-  const read = () => readRawBody(event, false).then(body => body ? new Uint8Array(body) : new Uint8Array())
-  const copy = () => read().then(body => new Response(body, { headers: request.headers }))
+  const copy = () => getRequestBody(event).read().then(body => new Response(body, { headers: request.headers }))
 
   const buffered: Request = new Proxy(request, {
     get (target, property) {
@@ -160,7 +171,7 @@ function toWebRequest (event: H3Event): Request {
         return false
       }
       if (property === 'body') {
-        return toBufferedBodyStream(event)
+        return getRequestBody(event).stream()
       }
       if (property === 'clone') {
         return () => buffered
@@ -176,16 +187,101 @@ function toWebRequest (event: H3Event): Request {
   return buffered
 }
 
-function toBufferedBodyStream (event: H3Event): ReadableStream<Uint8Array> {
-  return new ReadableStream({
-    async pull (controller) {
-      const body = await readRawBody(event, false)
-      if (body) {
-        controller.enqueue(new Uint8Array(body))
+/**
+ * Aborts when the client disconnects before the response is finished, the same moment an h3 v1
+ * handler would catch with `event.node.req.on('close')`.
+ */
+function toRequestSignal (event: H3Event): AbortSignal {
+  const controller = new AbortController()
+  const res = event.node?.res
+  if (typeof res?.once === 'function') {
+    res.once('close', () => {
+      if (!res.writableFinished) {
+        controller.abort()
       }
-      controller.close()
+    })
+  }
+  return controller.signal
+}
+
+/**
+ * The body of the request, shared by every view of it and by h3's own body helpers.
+ *
+ * An unread node request is read incrementally, only as far as a read of the body has
+ * requested, and the chunks are kept so that later reads resolve the same bytes. A body h3
+ * has already read, or one the request carries in memory, is served from h3.
+ */
+function getRequestBody (event: H3Event): RequestBody {
+  const req = event.node.req as H3Event['node']['req'] & Record<PropertyKey, unknown>
+  let body = requestBodies.get(req)
+  if (!body) {
+    const hasBody = Number.parseInt(req.headers['content-length'] || '') || /\bchunked\b/i.test(String(req.headers['transfer-encoding'] ?? ''))
+    const readByH3 = event._requestBody || req[RAW_BODY] || req.rawBody || req.body
+    body = hasBody && !readByH3 ? toIncrementalBody(req) : toRawBody(event)
+    requestBodies.set(req, body)
+  }
+  return body
+}
+
+function toRawBody (event: H3Event): RequestBody {
+  const read = () => readRawBody(event, false).then(body => body ? new Uint8Array(body) : new Uint8Array())
+  return {
+    read,
+    stream: () => new ReadableStream({
+      async pull (controller) {
+        const body = await read()
+        if (body.byteLength) {
+          controller.enqueue(body)
+        }
+        controller.close()
+      },
+    }, { highWaterMark: 0 }),
+  }
+}
+
+function toIncrementalBody (req: H3Event['node']['req']): RequestBody {
+  const chunks: Buffer[] = []
+  let source: AsyncIterator<Buffer> | undefined
+  let done = false
+  let pending: Promise<void> | undefined
+
+  const readChunk = () => (pending ??= (source ??= req[Symbol.asyncIterator]()).next().then((result) => {
+    if (result.done) {
+      done = true
+    } else {
+      chunks.push(result.value)
+    }
+  }).finally(() => {
+    pending = undefined
+  }))
+
+  const readAll = async () => {
+    while (!done) {
+      await readChunk()
+    }
+    return Buffer.concat(chunks)
+  }
+
+  Object.defineProperty(req, RAW_BODY, { configurable: true, get: readAll })
+
+  return {
+    read: () => readAll().then(body => new Uint8Array(body)),
+    stream: () => {
+      let index = 0
+      return new ReadableStream({
+        async pull (controller) {
+          while (index >= chunks.length && !done) {
+            await readChunk()
+          }
+          if (index < chunks.length) {
+            controller.enqueue(new Uint8Array(chunks[index++]!))
+          } else {
+            controller.close()
+          }
+        },
+      }, { highWaterMark: 0 })
     },
-  })
+  }
 }
 
 export const PORTABLE_EVENT = '~portable'
@@ -240,16 +336,38 @@ export function getFetchedRequestContext (event: H3Event): NuxtRequestContext | 
   return (event.node.req as { __unenv__?: { nuxt?: NuxtRequestContext } }).__unenv__?.nuxt
 }
 
-/** The event the SSR renderer reads, which reaches the h3 v1 event itself through `~app`. */
+/**
+ * The event the SSR renderer reads, which reaches the h3 v1 event itself through `~app`.
+ * Of the Nuxt context a request nitro made to itself was fetched with, only the error render
+ * flag carries over.
+ *
+ * Paths with `.` or `..` segments 404, as `url` would resolve them to a page other than the
+ * one `event.path` names.
+ */
 export function toRequestEvent (event: H3Event): RendererEvent {
+  const queryIndex = event.path.indexOf('?')
+  if (DOT_SEGMENT_RE.test(queryIndex === -1 ? event.path : event.path.slice(0, queryIndex))) {
+    throw createError({ statusCode: 404, statusMessage: 'Page Not Found' })
+  }
+
   const requestEvent = toWebView(event)
 
-  const fetchedWith = getFetchedRequestContext(event)
-  if (fetchedWith) {
-    event.context.nuxt = { ...fetchedWith, ...event.context.nuxt }
+  if (getFetchedRequestContext(event)?.['~rendering-error']) {
+    event.context.nuxt = { '~rendering-error': true, ...event.context.nuxt }
   }
 
   return requestEvent
+}
+
+// assigned through `pathname`, as a path starting with `//` would otherwise be read as a host
+function resolveEventURL (event: H3Event): URL {
+  const url = new URL(`${getRequestProtocol(event, { xForwardedProto: false })}://${getRequestHost(event)}`)
+  const path = encodeEventPath(event.path)
+  const queryIndex = path.indexOf('?')
+  url.pathname = queryIndex === -1 ? path : path.slice(0, queryIndex)
+  url.search = queryIndex === -1 ? '' : path.slice(queryIndex)
+  url.hash = ''
+  return url
 }
 
 /**
@@ -261,7 +379,7 @@ export function toRequestEvent (event: H3Event): RendererEvent {
  * than a copy of it, so a header the application sets through h3 and a header the renderer
  * sets are the same header.
  */
-function toWebView (event: H3Event, resolveURL = () => new URL(encodeEventPath(event.path), `${getRequestProtocol(event)}://${getRequestHost(event)}`)): RendererEvent {
+function toWebView (event: H3Event, resolveURL = () => resolveEventURL(event)): RendererEvent {
   const node = event.node
   let request: Request | undefined
   let url: URL | undefined

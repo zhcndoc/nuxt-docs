@@ -1,7 +1,7 @@
 import fs from 'node:fs'
-import { extname, normalize, relative } from 'pathe'
+import { extname, normalize, relative, resolve } from 'pathe'
 import { joinURL } from 'ufo'
-import { getLayerDirectories, resolveFiles, resolvePath, tryUseNuxt, useNuxt } from '@nuxt/kit'
+import { findPath, getLayerDirectories, resolveFiles, resolvePath, tryUseNuxt, useNuxt } from '@nuxt/kit'
 import { pageDiagnostics } from '@nuxt/kit/internal'
 import { genArrayFromRaw, genDynamicImport, genImport, genSafeVariableName } from 'knitwork'
 import { filename } from 'pathe/utils'
@@ -643,6 +643,8 @@ interface NormalizeRoutesOptions {
   restrictedPages?: ReadonlyMap<NuxtPage, keyof typeof PAGE_STUBS>
   serverComponentRuntime: string
   clientComponentRuntime: string
+  /** Module exporting `memoizeRouteComponent`, used to share lazy page imports between server requests. */
+  routeComponentRuntime?: string
 }
 
 // A page that can only render in one environment is imported there and stubbed
@@ -738,7 +740,8 @@ export function normalizeRoutes (routes: NuxtPage[], metaImports: Set<string> = 
       }
 
       const file = normalize(page.file)
-      const pageImportName = genSafeVariableName(filename(file) + hash(file).replace(/-/g, '_'))
+      const relativeFile = relative(nuxt.options.rootDir, file)
+      const pageImportName = genSafeVariableName(filename(file) + hash(relativeFile).replace(/-/g, '_'))
       const metaImportName = pageImportName + 'Meta'
       const metaImport = genImport(`${file}?macro=true`, [{ name: 'default', as: metaImportName }])
 
@@ -769,13 +772,17 @@ export function normalizeRoutes (routes: NuxtPage[], metaImports: Set<string> = 
         : `${metaImportName}?.name ?? ${route.name}`
 
       // we use this to validate that a server page is rendering the correct url
-      const islandKey = page.mode === 'server' && page.file
-        ? JSON.stringify(hash(relative(nuxt.options.rootDir, page.file)))
+      const islandKey = page.mode === 'server'
+        ? JSON.stringify(hash(relativeFile))
         : undefined
 
-      const component = restrictToEnvironment(nuxt.options.experimental.normalizePageNames
+      let component = restrictToEnvironment(nuxt.options.experimental.normalizePageNames
         ? normalizeComponentWithName(page, isSyncImport, pageImportName, pageImport, route.name, metaRouteName, islandKey)
         : normalizeComponent(page, pageImport, route.name, islandKey))
+      if (options.routeComponentRuntime && !isSyncImport) {
+        metaImports.add(genImport(options.routeComponentRuntime, [{ name: 'memoizeRouteComponent', as: '_memoizeRouteComponent' }]))
+        component = `import.meta.server ? _memoizeRouteComponent(${component}) : ${component}`
+      }
 
       // Named views from the `name@view.vue` filename convention. The scanner
       // emits `components: { default: <file>, <view>: <file> }`.
@@ -967,12 +974,49 @@ export function isSerializable (node: ESTree.Node): { value?: any, serializable:
 }
 
 /**
- * Statically determine whether a `router.options` file may modify `routes`.
- * Returns `true` (conservatively) when the default export is not a plain object
- * literal, contains spreads or computed keys, or defines a `routes` property.
+ * The `router.options` files of the app, in the order they are merged: the built-in options
+ * (when given, marked `optional`), then each layer's file, then any added by the
+ * `pages:routerOptions` hook.
  */
-export function routerOptionsMayModifyRoutes (code: string, filename: string): boolean {
-  let mayModify = true
+export async function resolveRouterOptions (nuxt: Nuxt, builtInRouterOptions?: string) {
+  const context = {
+    files: [] as Array<{ path: string, optional?: boolean }>,
+  }
+
+  for (const layer of nuxt.options._layers) {
+    const path = await findPath(resolve(layer.config.srcDir, layer.config.dir?.app || 'app', 'router.options'))
+    if (path) { context.files.unshift({ path }) }
+  }
+
+  if (builtInRouterOptions) {
+    context.files.unshift({ path: builtInRouterOptions, optional: true })
+  }
+
+  await nuxt.callHook('pages:routerOptions', context)
+  return context.files
+}
+
+/**
+ * The first non-optional `router.options` file that may define `key` (see
+ * {@link routerOptionsMayDefine}), counting files that cannot be read.
+ */
+export async function findRouterOptionsFileDefining (nuxt: Nuxt, key: 'routes' | 'sensitive', builtInRouterOptions?: string): Promise<string | undefined> {
+  for (const file of await resolveRouterOptions(nuxt, builtInRouterOptions)) {
+    if (file.optional) { continue }
+    const code = await fs.promises.readFile(file.path, 'utf-8').catch(() => undefined)
+    if (code === undefined || routerOptionsMayDefine(code, file.path, key)) {
+      return file.path
+    }
+  }
+}
+
+/**
+ * Statically determine whether a `router.options` file may define `key`.
+ * Returns `true` (conservatively) when the default export is not a plain object
+ * literal, contains spreads or computed keys, or defines `key`.
+ */
+export function routerOptionsMayDefine (code: string, filename: string, key: 'routes' | 'sensitive'): boolean {
+  let mayDefine = true
   try {
     parseAndWalk(code, filename, (node) => {
       if (node.type !== 'ExportDefaultDeclaration') { return }
@@ -981,17 +1025,17 @@ export function routerOptionsMayModifyRoutes (code: string, filename: string): b
         declaration = declaration.expression
       }
       if (declaration.type !== 'ObjectExpression') { return }
-      mayModify = declaration.properties.some((property) => {
+      mayDefine = declaration.properties.some((property) => {
         if (property.type === 'SpreadElement') { return true }
-        const key = property.key
-        const name = key.type === 'Identifier' && !property.computed ? key.name : key.type === 'Literal' ? String(key.value) : undefined
-        return name === undefined || name === 'routes'
+        const propertyKey = property.key
+        const name = propertyKey.type === 'Identifier' && !property.computed ? propertyKey.name : propertyKey.type === 'Literal' ? String(propertyKey.value) : undefined
+        return name === undefined || name === key
       })
     })
   } catch {
     return true
   }
-  return mayModify
+  return mayDefine
 }
 
 /**

@@ -1,4 +1,4 @@
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 
 import { join } from 'pathe'
@@ -147,6 +147,42 @@ describe('buildCache', { concurrent: false, timeout: 120_000 }, async () => {
     expect(expected.ssrStyles).not.toBe('export default {}')
   })
 
+  it('should restore files with names longer than 100 bytes', { timeout: 300_000 }, async () => {
+    const rootDir = join(tmpDir, 'project')
+    const outputDir = join(rootDir, '.output')
+    await writeFile(join(rootDir, 'app.vue'), '<template><NuxtPage /></template>')
+    await mkdir(join(rootDir, 'pages'), { recursive: true })
+    await writeFile(join(rootDir, 'pages/index.vue'), '<template><div>hello</div></template>')
+    const longPageName = 'very-long-name-'.repeat(9) + 'page'
+    await writeFile(join(rootDir, `pages/${longPageName}.vue`), '<template><div>long</div></template>')
+
+    const overrides = {
+      buildId: 'long-names-1',
+      experimental: { buildCache: true },
+      dev: false,
+      workspaceDir: tmpDir,
+    }
+
+    const nuxt1 = await loadNuxt({ cwd: rootDir, overrides })
+    await build(nuxt1)
+    const serverChunksDir = join(nuxt1.options.buildDir, 'dist/server/_nuxt')
+    const serverChunks = (await readdir(serverChunksDir)).sort()
+    expect(serverChunks.some(file => file.startsWith(longPageName))).toBe(true)
+
+    await rm(outputDir, { recursive: true, force: true })
+    await rm(nuxt1.options.buildDir, { recursive: true, force: true })
+
+    const nuxt2 = await loadNuxt({
+      cwd: rootDir,
+      overrides: { ...overrides, buildId: 'long-names-2' },
+    })
+    expect(nuxt2.options.buildId).toBe('long-names-1')
+    await build(nuxt2)
+
+    expect((await readdir(serverChunksDir)).sort()).toStrictEqual(serverChunks)
+    expect(existsSync(join(outputDir, 'server/index.mjs'))).toBe(true)
+  })
+
   it('should hit the cache when only an ignored file changes', async () => {
     const rootDir = join(tmpDir, 'project')
 
@@ -177,6 +213,49 @@ describe('buildCache', { concurrent: false, timeout: 120_000 }, async () => {
 
     const latestJson = JSON.parse(await readFile(join(nuxt2.options.buildDir, 'manifest', 'latest.json'), 'utf-8'))
     expect(latestJson.id).toBe('ignored-1')
+  })
+
+  it('should miss the cache when a file in `shared/` changes', async () => {
+    const rootDir = join(tmpDir, 'project')
+    const outputDir = join(rootDir, '.output')
+    // with a config file and an `app/` directory, `shared/` sits outside `srcDir`
+    await writeFile(join(rootDir, 'nuxt.config.ts'), 'export default {}')
+    await rm(join(rootDir, 'app.vue'))
+    await mkdir(join(rootDir, 'app'), { recursive: true })
+    await writeFile(join(rootDir, 'app/app.vue'), '<template><div>{{ sharedMarker }}</div></template>')
+    await mkdir(join(rootDir, 'shared/utils'), { recursive: true })
+    await writeFile(join(rootDir, 'shared/utils/marker.ts'), 'export const sharedMarker = "shared-marker-v1"')
+
+    const nuxt1 = await loadNuxt({
+      cwd: rootDir,
+      overrides: {
+        buildId: 'shared-1',
+        experimental: { buildCache: true },
+        dev: false,
+        workspaceDir: tmpDir,
+      },
+    })
+    await build(nuxt1)
+
+    await writeFile(join(rootDir, 'shared/utils/marker.ts'), 'export const sharedMarker = "shared-marker-v2"')
+
+    const nuxt2 = await loadNuxt({
+      cwd: rootDir,
+      overrides: {
+        buildId: 'shared-2',
+        experimental: { buildCache: true },
+        dev: false,
+        workspaceDir: tmpDir,
+      },
+    })
+    await build(nuxt2)
+
+    const clientFiles = await readdir(join(outputDir, 'public/_nuxt'))
+    const clientCode = await Promise.all(clientFiles.filter(f => f.endsWith('.js')).map(f => readFile(join(outputDir, 'public/_nuxt', f), 'utf-8')))
+    expect(clientCode.some(code => code.includes('shared-marker-v2'))).toBe(true)
+    expect(clientCode.some(code => code.includes('shared-marker-v1'))).toBe(false)
+    // the buildId is only restored on a cache hit
+    expect(nuxt2.options.buildId).toBe('shared-2')
   })
 
   it('should generate a new buildId when sources change', async () => {

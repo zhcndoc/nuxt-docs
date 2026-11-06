@@ -41,6 +41,7 @@ const commonSettings: NuxtConfig = {
     // Mixed-case keys must still match case-insensitively (vue-router's default).
     '/Secret/Docs/**': { ssr: false },
     '/Legacy/Home': { redirect: '/target' },
+    '/Wild/**': { redirect: '/target/**' },
     // Decoded keys must match the percent-encoded path generated for a unicode page,
     // including when a catch-all rule sets the same key, and when folding an
     // encoded non-ASCII character is required to match.
@@ -76,6 +77,7 @@ interface FixtureMatrixEntry {
   manifest: 'manifest-on' | 'manifest-off'
   payload: 'json' | 'js'
   inlineErrors?: boolean
+  legacyComponentResolution?: boolean
 }
 
 const fixtureMatrix: FixtureMatrixEntry[] = [
@@ -116,8 +118,19 @@ const inlineErrorMatrix: FixtureMatrixEntry[] = [
 
 const inlineErrorInclude = ['test/basic.test.ts', 'test/server-components.test.ts', 'test/vite-server-*.test.ts', 'test/dev-error-*.test.ts']
 
+// re-runs the basic fixture with `experimental.compilerComponentResolution` disabled
+const legacyComponentResolutionMatrix: FixtureMatrixEntry[] = [
+  { env: 'built', builder: 'vite', context: 'default', manifest: 'manifest-on', payload: 'json', legacyComponentResolution: true },
+]
+
+function fixtureProjectInclude (entry: FixtureMatrixEntry) {
+  if (entry.inlineErrors) { return inlineErrorInclude }
+  if (entry.legacyComponentResolution) { return ['test/basic.test.ts'] }
+  return ['test/*.test.ts']
+}
+
 function fixtureProjectName (entry: FixtureMatrixEntry) {
-  return `fixtures:${entry.builder}-${entry.env}-${entry.context}-${entry.manifest}-${entry.payload}${entry.inlineErrors ? '-inline-errors' : ''}`
+  return `fixtures:${entry.builder}-${entry.env}-${entry.context}-${entry.manifest}-${entry.payload}${entry.inlineErrors ? '-inline-errors' : ''}${entry.legacyComponentResolution ? '-legacy-component-resolution' : ''}`
 }
 
 function fixtureProjectEnv (entry: FixtureMatrixEntry) {
@@ -128,13 +141,15 @@ function fixtureProjectEnv (entry: FixtureMatrixEntry) {
     TEST_MANIFEST: entry.manifest,
     TEST_PAYLOAD: entry.payload,
     ...entry.inlineErrors ? { TEST_ERROR_RENDERING: 'inline-errors' } : {},
+    ...entry.legacyComponentResolution ? { TEST_COMPONENT_RESOLUTION: 'legacy' } : {},
   }
 }
 
 const fixtureExclude = [...configDefaults.exclude, 'test/e2e/**', 'e2e/**', 'nuxt/**', '**/test.ts', '**/this-should-not-load.spec.js']
 
 // stands in for the defines and aliases a server builder applies in its own bundle
-function rendererProject (name: string, include: string[], rendererConfig: string) {
+function rendererProject (name: string, include: string[], rendererConfig: string, fixtureDir = './test/fixtures/standalone-renderer') {
+  const artifact = (path: string) => resolve(fixtureDir, '.nuxt', path)
   return {
     define: {
       'import.meta.dev': 'false',
@@ -145,13 +160,13 @@ function rendererProject (name: string, include: string[], rendererConfig: strin
     resolve: {
       alias: {
         'nuxt/internal/renderer-config': resolve(rendererConfig),
-        'nuxt/internal/entry': resolve('./test/fixtures/standalone-renderer/.nuxt/renderer/entry.mjs'),
-        'nuxt/internal/manifest': resolve('./test/fixtures/standalone-renderer/.nuxt/renderer/manifest.mjs'),
-        'nuxt/internal/precomputed': resolve('./test/fixtures/standalone-renderer/.nuxt/renderer/precomputed.mjs'),
-        'nuxt/internal/styles': resolve('./test/fixtures/standalone-renderer/.nuxt/renderer/styles.mjs'),
-        'nuxt/internal/entry-ids': resolve('./test/fixtures/standalone-renderer/.nuxt/renderer/entry-ids.mjs'),
-        'nuxt/internal/entry-chunk': resolve('./test/fixtures/standalone-renderer/.nuxt/renderer/entry-chunk.mjs'),
-        '#build': resolve('./test/fixtures/standalone-renderer/.nuxt'),
+        'nuxt/internal/entry': artifact('renderer/entry.mjs'),
+        'nuxt/internal/manifest': artifact('renderer/manifest.mjs'),
+        'nuxt/internal/precomputed': artifact('renderer/precomputed.mjs'),
+        'nuxt/internal/styles': artifact('renderer/styles.mjs'),
+        'nuxt/internal/entry-ids': artifact('renderer/entry-ids.mjs'),
+        'nuxt/internal/entry-chunk': artifact('renderer/entry-chunk.mjs'),
+        '#build': artifact(''),
       },
     },
     test: {
@@ -168,6 +183,8 @@ const rendererProjects = [
   rendererProject('renderer', ['test/renderer/*.test.ts', '!test/renderer/inline-errors.test.ts'], './test/fixtures/standalone-renderer/.nuxt/renderer/renderer-config.mjs'),
   rendererProject('renderer-inline-errors', ['test/renderer/inline-errors.test.ts'], './test/fixtures/standalone-renderer/renderer-config-inline-errors.mjs'),
 ]
+
+const benchmarkRendererProject = rendererProject('benchmark-renderer', [], './test/fixtures/bench-renderer/.nuxt/renderer/renderer-config.mjs', './test/fixtures/bench-renderer')
 
 export default defineConfig({
   test: {
@@ -191,17 +208,30 @@ export default defineConfig({
         test: {
           name: 'benchmark',
           include: [],
-          hookTimeout: 60_000,
+          globalSetup: ['./test/bench/setup.ts'],
+          testTimeout: 300_000,
+          hookTimeout: 120_000,
           benchmark: {
             include: ['**/*.bench.ts'],
+            exclude: [...defaultExclude, 'test/bench/renderer.bench.ts'],
           },
         },
       },
-      ...[...fixtureMatrix, ...inlineErrorMatrix].map(entry => ({
+      {
+        ...benchmarkRendererProject,
+        plugins: isCI ? [codspeedPlugin()] : [],
+        test: {
+          ...benchmarkRendererProject.test,
+          globalSetup: ['./test/bench/setup-renderer.ts'],
+          testTimeout: 300_000,
+          benchmark: { include: ['test/bench/renderer.bench.ts'] },
+        },
+      },
+      ...[...fixtureMatrix, ...inlineErrorMatrix, ...legacyComponentResolutionMatrix].map(entry => ({
         plugins: [runtimeImportMeta({ dev: '(globalThis.__TEST_DEV__ ?? false)' })],
         test: {
           name: fixtureProjectName(entry),
-          include: entry.inlineErrors ? inlineErrorInclude : ['test/*.test.ts'],
+          include: fixtureProjectInclude(entry),
           exclude: [...fixtureExclude, 'test/bundle.test.ts'],
           globalSetup: ['./test/setup-prepare.ts'],
           setupFiles: ['./test/setup-env.ts'],
@@ -249,6 +279,7 @@ export default defineConfig({
           alias: {
             '#build/nuxt.config.mjs': resolve('./test/mocks/nuxt-config'),
             '#build/router.options.mjs': resolve('./test/mocks/router-options'),
+            '#build/pages': resolve('./test/mocks/pages'),
             '#internal/nuxt.config.mjs': resolve('./test/mocks/nitro-nuxt-config'),
             '#internal/nuxt/paths': resolve('./test/mocks/paths'),
             '#internal/nuxt/error-channel': resolve('./packages/nitro-server/src/runtime/utils/error-channel'),
@@ -261,7 +292,7 @@ export default defineConfig({
           benchmark: { include: [] },
           globalSetup: ['./test/setup-prepare.ts'],
           setupFiles: ['./test/setup-env.ts'],
-          include: ['packages/**/*.{test,spec}.ts'],
+          include: ['packages/**/*.{test,spec}.ts', 'scripts/*.test.ts'],
           testTimeout: isWindows ? 60000 : 10000,
           // Excluded plugin because it should throw an error when accidentally loaded via Nuxt
           exclude: [...fixtureExclude, 'packages/nuxt/test/typed-fetch-budget.test.ts'],

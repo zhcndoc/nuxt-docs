@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest'
@@ -164,7 +164,7 @@ describe('loadNuxt', () => {
         "projectInlineModule",
         "css",
         "projectAutoModule",
-        "@nuxt/devtools",
+        "@nuxt/devtools-onboard",
         "nuxt:pages",
         "nuxt:meta",
         "nuxt:components",
@@ -212,6 +212,46 @@ describe('loadNuxt', () => {
     await nuxt.close()
   })
 
+  describe('when building into a relocated build directory', () => {
+    async function generateTypesWithRelocatedBuildDir (existingServerTsConfig?: string) {
+      const tmpDir = mkdtempSync(join(tmpdir(), 'nuxt-relocated-build-'))
+      onTestFinished(() => rmSync(tmpDir, { recursive: true, force: true }))
+      const typesDir = join(tmpDir, '.nuxt')
+      mkdirSync(typesDir, { recursive: true })
+      if (existingServerTsConfig) {
+        writeFileSync(join(typesDir, 'tsconfig.server.json'), existingServerTsConfig)
+      }
+      const extendedTsConfigs: unknown[] = []
+      const nuxt = await loadNuxt({
+        cwd: repoRoot,
+        ready: true,
+        overrides: {
+          buildDir: join(tmpDir, 'node_modules/.cache/nuxt/.nuxt'),
+          typesDir,
+          nitro: { hooks: { 'types:extend': (types) => { extendedTsConfigs.push(types.tsConfig) } } },
+        },
+      })
+      onTestFinished(() => nuxt.close())
+      await _generateTypes(nuxt)
+      return {
+        serverTsConfig: readFileSync(join(typesDir, 'tsconfig.server.json'), 'utf8'),
+        extendedTsConfigs,
+      }
+    }
+
+    it('does not overwrite an existing nitro tsconfig', async () => {
+      const { serverTsConfig, extendedTsConfigs } = await generateTypesWithRelocatedBuildDir('{}')
+      expect(serverTsConfig).toBe('{}')
+      expect(extendedTsConfigs).not.toHaveLength(0)
+      expect(extendedTsConfigs).not.toContain(undefined)
+    })
+
+    it('writes a missing nitro tsconfig', async () => {
+      const { serverTsConfig } = await generateTypesWithRelocatedBuildDir()
+      expect(JSON.parse(serverTsConfig)).toHaveProperty('compilerOptions.paths')
+    })
+  })
+
   it('does not leak debug mutation proxies into resolved options', async () => {
     const nuxt = await loadNuxt({
       cwd: repoRoot,
@@ -230,6 +270,33 @@ describe('loadNuxt', () => {
     expect(() => structuredClone(nuxt.options.runtimeConfig)).not.toThrow()
 
     await nuxt.close()
+  })
+
+  it('maps `#app-manifest` to a path that does not depend on the build id', async () => {
+    const generate = async (buildId: string) => {
+      const nuxt = await loadNuxt({ cwd: repoRoot, ready: true, overrides: { buildId } })
+      onTestFinished(() => nuxt.close())
+      const { tsConfig, sharedTsConfig, legacyTsConfig } = await _generateTypes(nuxt)
+      return [tsConfig, sharedTsConfig, legacyTsConfig].map(config => config.compilerOptions?.paths?.['#app-manifest'])
+    }
+
+    const first = await generate('first-build')
+    const second = await generate('second-build')
+    for (const paths of first) {
+      expect(paths).toEqual([expect.stringMatching(/\/types\/app-manifest$/)])
+    }
+    expect(second).toEqual(first)
+  })
+
+  it('does not write a stub app manifest when only preparing types', async () => {
+    const buildDir = mkdtempSync(join(tmpdir(), 'nuxt-prepare-manifest-'))
+    onTestFinished(() => rmSync(buildDir, { recursive: true, force: true }))
+    const nuxt = await loadNuxt({ cwd: repoRoot, ready: true, overrides: { _prepare: true, buildDir } })
+    onTestFinished(() => nuxt.close())
+
+    await nuxt.callHook('build:before')
+
+    expect(existsSync(join(buildDir, 'manifest'))).toBe(false)
   })
 
   it('includes #server alias in nitro tsconfig paths', async () => {

@@ -89,7 +89,7 @@ export interface ConfigSchema {
    *
    * Breaking changes for devtools might not reflect on the version of Nuxt.
    *
-   * @see  [Nuxt DevTools](https://devtools.nuxt.com/) for more information.
+   * @see  [Nuxt DevTools](https://nuxt.com/modules/devtools) for more information.
    */
   devtools: boolean | { enabled: boolean, [key: string]: any }
 
@@ -468,10 +468,10 @@ export interface ConfigSchema {
   /**
    * Configures whether and how sourcemaps are generated for server and/or client bundles.
    *
-   * If set to a single boolean, that value applies to both server and client. Additionally, the `'hidden'` option is also available for both server and client.
-   * Available options for both client and server: - `true`: Generates sourcemaps and includes source references in the final bundle. - `false`: Does not generate any sourcemaps. - `'hidden'`: Generates sourcemaps but does not include references in the final bundle.
+   * If set to a single boolean, that value applies to both server and client. Additionally, the `'hidden'` and `'nosource'` options are also available for both server and client.
+   * Available options for both client and server: - `true`: Generates sourcemaps and includes source references in the final bundle. - `false`: Does not generate any sourcemaps. - `'hidden'`: Generates sourcemaps but does not include references in the final bundle. - `'nosource'`: Generates sourcemaps without the original source code (only file names and line mappings).
    */
-  sourcemap: boolean | { server?: boolean | 'hidden', client?: boolean | 'hidden' }
+  sourcemap: boolean | { server?: boolean | 'hidden' | 'nosource', client?: boolean | 'hidden' | 'nosource' }
 
   /**
    * Log level when building logs.
@@ -1033,6 +1033,15 @@ export interface ConfigSchema {
     host: string | undefined
 
     /**
+     * Hostnames the dev server accepts in the `Host` header, in addition to `localhost`, `*.localhost` and IP addresses.
+     *
+     * An entry with a leading `.` also allows its subdomains. Set to `true` to allow any host.
+     *
+     * Includes `devServer.host` and `vite.server.allowedHosts`.
+     */
+    allowedHosts: string[] | true
+
+    /**
      * Listening dev server URL.
      *
      * This should not be set directly as it will always be overridden by the dev server with the full URL (for module and internal use).
@@ -1178,7 +1187,9 @@ export interface ConfigSchema {
     asyncEntry: boolean
 
     /**
-     * Externalize `vue`, `@vue/*` and `vue-router` when building.
+     * Externalize `vue`, `@vue/*` and `vue-router` when building, so that server dependencies importing them share the same copy.
+     *
+     * In production builds, the Vue runtime is bundled and emitted as the `vue` and `@vue/*` packages in the server output.
      *
      * @default true
      * @see [Nuxt Issue #13632](https://github.com/nuxt/nuxt/issues/13632)
@@ -1293,6 +1304,25 @@ export interface ConfigSchema {
     early404: boolean
 
     /**
+     * Warn at build time about template mistakes the Vue compiler cannot detect:
+     *
+     * - a `<NuxtLink>` whose static `to` matches no page route
+     * - `v-on` or `v-model` on a server component
+     * - a function or class instance passed as a prop to a server component, or in the `props`
+     *   of a `<NuxtIsland>`
+     *
+     * Warnings are printed to the terminal and, in development, sent to open error pages and
+     * overlays.
+     *
+     * The route check cannot see routes added at runtime with `router.addRoute()` or paths
+     * that route middleware redirects, and is skipped when a custom `app/router.options` file
+     * may modify `routes`.
+     *
+     * @default true
+     */
+    templateDiagnostics: boolean
+
+    /**
      * Whether to enable the experimental `<NuxtClientFallback>` component for rendering content on the client if there's an error in SSR.
      *
      * @default false
@@ -1305,6 +1335,13 @@ export interface ConfigSchema {
      * @default false
      */
     crossOriginPrefetch: boolean
+
+    /**
+     * Whether to render `<link rel="prefetch">` hints inert and activate them once the app is ready, so they do not compete with the page's own resources while it loads.
+     *
+     * @default true
+     */
+    deferPrefetchHints: boolean
 
     /**
      * Enable View Transition API integration with client-side router.
@@ -1789,6 +1826,14 @@ export interface ConfigSchema {
     entryImportMap: boolean
 
     /**
+     * Whether to add V8 compile hints to the entry, layout and page chunks (and their static imports) in the Vite client build, so supporting browsers compile them eagerly while they download.
+     *
+     * @default true
+     * @see [V8 explicit compile hints](https://v8.dev/blog/explicit-compile-hints)
+     */
+    compileHints: boolean
+
+    /**
      * Extract async data handler functions into separate chunks for better performance and caching.
      *
      * When enabled, handler functions passed to `useAsyncData` and `useLazyAsyncData` will be extracted
@@ -1900,6 +1945,29 @@ export interface ConfigSchema {
      * multiple times on the same Nuxt instance (e.g. in benchmarks).
      */
     clearBuildHooks: boolean
+
+    /**
+     * Resolve auto-imported components in the Vue template compiler.
+     *
+     * Components used in `.vue` templates are imported by a `compilerOptions.nodeTransforms` entry, which also applies
+     * lazy hydration props such as `hydrate-on-visible` and omits the default slot of `<ClientOnly>` and the slots of
+     * client-only components from the server build, including when they are nested in another component's slot.
+     *
+     * `resolveComponent()` calls in scripts and `h()` calls in JSX/TSX are resolved by a separate build transform.
+     *
+     * This works with the Vite, webpack and rspack builders. Set it to `false` to resolve template components with a build transform
+     * on the compiled output.
+     * @default true
+     * @example
+     * ```ts
+     * export default defineNuxtConfig({
+     *   experimental: {
+     *     compilerComponentResolution: false,
+     *   },
+     * })
+     * ```
+     */
+    compilerComponentResolution: boolean
   }
 
   /**
@@ -1969,6 +2037,13 @@ export interface ConfigSchema {
    * @private
    */
   _noScriptsPageSources: Array<string>
+
+  /**
+   * Sources of the pages that are only rendered on the client (`ssr: false` route rules), relative to `srcDir`.
+   *
+   * @private
+   */
+  _spaOnlyPageSources: Array<string>
 
   /**
    * Configuration for Nuxt's server builder.

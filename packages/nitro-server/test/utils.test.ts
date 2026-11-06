@@ -1,18 +1,59 @@
 import { matchesGlob } from 'node:path'
-import { describe, expect, it } from 'vitest'
-import { getLayerNodeModulesExcludePattern, isNuxtDistId, resolveNitroCommand, toFsDriverIgnorePatterns, toTranspileNoExternal } from '../src/utils.ts'
+import { lstat, mkdir, mkdtemp, readdir, readlink, rm, symlink, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join, resolve } from 'pathe'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { getLayerNodeModulesExcludePattern, isNuxtDistId, linkStaticDist, resolveNitroCommand, toFsDriverIgnorePatterns, toTranspileNoExternal } from '../src/utils.ts'
+
+describe('linkStaticDist', () => {
+  let rootDir: string
+  let publicDir: string
+  let dist: string
+
+  beforeEach(async () => {
+    rootDir = await mkdtemp(join(tmpdir(), 'nitro-static-dist-'))
+    publicDir = join(rootDir, '.output/public')
+    dist = join(rootDir, 'dist')
+    await mkdir(publicDir, { recursive: true })
+  })
+
+  afterEach(async () => {
+    await rm(rootDir, { recursive: true, force: true })
+  })
+
+  it('replaces a dangling link', async () => {
+    await symlink(join(rootDir, 'removed'), dist, 'junction')
+
+    await linkStaticDist(rootDir, publicDir)
+
+    expect(resolve(rootDir, await readlink(dist))).toBe(publicDir)
+  })
+
+  it('leaves an existing directory untouched', async () => {
+    await mkdir(dist)
+    await writeFile(join(dist, 'index.html'), '')
+
+    await linkStaticDist(rootDir, publicDir)
+
+    expect((await lstat(dist)).isSymbolicLink()).toBe(false)
+    expect(await readdir(dist)).toEqual(['index.html'])
+  })
+})
 
 describe('getLayerNodeModulesExcludePattern', () => {
   it('falls back to a bare node_modules pattern when no layers live in node_modules', () => {
     const re = getLayerNodeModulesExcludePattern(['/proj/'])
     expect(re.test('/proj/node_modules/anything/x.ts')).toBe(true)
     expect(re.test('/proj/app/x.ts')).toBe(false)
+    expect(re.test('/work/node_modules-repro/server/api/x.ts')).toBe(false)
   })
 
   it('does not exclude files belonging to a flat-installed layer', () => {
     const re = getLayerNodeModulesExcludePattern(['/proj/node_modules/foo/'])
     expect(re.test('/proj/node_modules/foo/server/api/x.ts')).toBe(false)
     expect(re.test('/proj/node_modules/other/x.ts')).toBe(true)
+    expect(re.test('/proj/node_modules/foo-utils/x.ts')).toBe(true)
+    expect(re.test('/proj/my_node_modules/foo-utils/x.ts')).toBe(false)
   })
 
   it('does not exclude files belonging to layers nested inside another layer (npm)', () => {

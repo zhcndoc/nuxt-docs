@@ -79,7 +79,7 @@ const { data } = await useCustomFetch('/public-endpoint', { auth: false })
 </script>
 ```
 
-自定义选项会保留在合并后的选项对象中，因此也会与请求选项一起传给 `$fetch`；`$fetch` 会忽略无法识别的键。
+自定义选项会保留在合并后的选项对象中，因此也会与请求选项一起传递给 `$fetch`；`$fetch` 会忽略它不识别的键。
 
 ## 扩展返回值
 

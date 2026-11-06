@@ -1,18 +1,25 @@
+import { fileURLToPath } from 'node:url'
+import { normalize } from 'pathe'
+import { withoutTrailingSlash } from 'ufo'
 import { describe, expect, it } from 'vitest'
 import type { Nitro, NitroRouteConfig } from 'nitropack/types'
-import type { NuxtPage } from 'nuxt/schema'
+import type { NitroInstance, NuxtPage } from 'nuxt/schema'
 
+import { loadNuxt } from '../src/index.ts'
 import { markPagesCoveredByRouteRule } from '../src/pages/route-coverage.ts'
+
+const pagesFixtureDir = withoutTrailingSlash(normalize(fileURLToPath(new URL('./pages-fixture', import.meta.url))))
 
 function createNitro (rules: Record<string, NitroRouteConfig>) {
   return { options: { routeRules: rules } } as unknown as Nitro
 }
 
-function isCovered (nitro: Nitro, pages: NuxtPage[]) {
+function isCovered (nitro: Nitro, pages: NuxtPage[], options: { sensitive?: boolean } = {}) {
   const marks = new Map<string, boolean>()
   markPagesCoveredByRouteRule(pages, nitro, {
     isCovered: rules => rules.ssr === false,
     mark: (_page, covered, resolvedPath) => { marks.set(resolvedPath, covered) },
+    ...options,
   })
   return marks
 }
@@ -26,10 +33,129 @@ describe('markPagesCoveredByRouteRule', () => {
     expect(isCovered(nitro, [{ path: '/:slug()', file: 'slug.vue' }]).get('/:slug()')).toBe(false)
   })
 
+  it('should not report coverage for an unconstrained page from a constrained route rule', () => {
+    const nitro = createNitro({
+      '/foo/:x([a-z_]+)': { ssr: false },
+    })
+    expect(isCovered(nitro, [{ path: '/foo/:x()', file: 'x.vue' }]).get('/foo/:x()')).toBe(false)
+  })
+
+  it('should report coverage for an unconstrained page from an unconstrained route rule', () => {
+    const nitro = createNitro({
+      '/foo/:x': { ssr: false },
+    })
+    expect(isCovered(nitro, [{ path: '/foo/:x()', file: 'x.vue' }]).get('/foo/:x()')).toBe(true)
+  })
+
+  it('should not report coverage when a constrained route rule carves out part of the region', () => {
+    const nitro = createNitro({
+      '/foo/**': { ssr: false },
+      '/foo/:x([0-9]+)': { ssr: true },
+    })
+    expect(isCovered(nitro, [{ path: '/foo/:x()', file: 'x.vue' }]).get('/foo/:x()')).toBe(false)
+  })
+
+  it('should not report coverage for a constrained page from a constrained route rule', () => {
+    const nitro = createNitro({
+      '/foo/:x([a-z_]+)': { ssr: false },
+    })
+    expect(isCovered(nitro, [{ path: '/foo/:x([a-z_]+)', file: 'x.vue' }]).get('/foo/:x([a-z_]+)')).toBe(false)
+  })
+
   it('should treat an escaped colon as a literal segment rather than a param', () => {
     const nitro = createNitro({
       '/test\\:name': { ssr: false },
     })
     expect(isCovered(nitro, [{ path: '/test\\:name', file: 'test.vue' }]).get('/test\\:name')).toBe(true)
+  })
+
+  it('should not report a dynamic page as covered when a more specific rule differs only by case', () => {
+    const nitro = createNitro({
+      '/Admin/**': { ssr: false },
+      '/Admin/secret': { ssr: true },
+    })
+    expect(isCovered(nitro, [{ path: '/Admin/:id()', file: 'admin.vue' }]).get('/Admin/:id()')).toBe(false)
+  })
+
+  it('should keep a dynamic page uncovered under sensitive: true when rules differ by case', () => {
+    const nitro = createNitro({
+      '/Admin/**': { ssr: false },
+      '/Admin/secret': { ssr: true },
+    })
+    expect(isCovered(nitro, [{ path: '/Admin/:id()', file: 'admin.vue' }], { sensitive: true }).get('/Admin/:id()')).toBe(false)
+  })
+
+  it('should not report a dynamic page as covered when its path is percent-encoded', () => {
+    const nitro = createNitro({
+      '/café/**': { ssr: false },
+      '/café/secret': { ssr: true },
+    })
+    expect(isCovered(nitro, [{ path: '/caf%C3%A9/:id()', file: 'cafe.vue' }]).get('/caf%C3%A9/:id()')).toBe(false)
+  })
+
+  it('should not report a dynamic page as covered for the decoded path', () => {
+    const nitro = createNitro({
+      '/café/**': { ssr: false },
+      '/café/secret': { ssr: true },
+    })
+    expect(isCovered(nitro, [{ path: '/café/:id()', file: 'cafe.vue' }]).get('/café/:id()')).toBe(false)
+  })
+
+  it('should report coverage when app.baseURL is set', async () => {
+    let nitro: NitroInstance | undefined
+    const nuxt = await loadNuxt({
+      cwd: pagesFixtureDir,
+      ready: true,
+      overrides: {
+        app: { baseURL: '/sub/' },
+        routeRules: { '/admin/**': { ssr: false } },
+        modules: [
+          (_options, nuxt) => {
+            nuxt.hook('nitro:init', (n) => { nitro = n })
+          },
+        ],
+      },
+    })
+    try {
+      expect(nitro).toBeDefined()
+      const marks = new Map<string, boolean>()
+      markPagesCoveredByRouteRule([{ path: '/admin', file: 'admin.vue' }], nitro!, {
+        isCovered: rules => rules.ssr === false,
+        mark: (_page, covered, resolvedPath) => { marks.set(resolvedPath, covered) },
+      })
+      expect(marks.get('/admin')).toBe(true)
+    } finally {
+      await nuxt.close()
+    }
+  })
+
+  it('should match pages against percent-encoded route rule keys', async () => {
+    let nitro: Nitro | undefined
+    const nuxt = await loadNuxt({
+      cwd: pagesFixtureDir,
+      ready: false,
+      overrides: {
+        routeRules: {
+          '/café/**': { ssr: false },
+          '/café/secret': { ssr: true },
+        },
+      },
+    })
+    nuxt.hook('nitro:init', (instance) => { nitro = instance as Nitro })
+    try {
+      await nuxt.ready()
+      const marks = isCovered(nitro!, [
+        { path: '/café/about', file: 'about.vue' },
+        { path: '/caf%C3%A9/contact', file: 'contact.vue' },
+        { path: '/café/:id()', file: 'id.vue' },
+      ])
+      expect(Object.fromEntries(marks)).toEqual({
+        '/café/about': true,
+        '/caf%C3%A9/contact': true,
+        '/café/:id()': false,
+      })
+    } finally {
+      await nuxt.close()
+    }
   })
 })

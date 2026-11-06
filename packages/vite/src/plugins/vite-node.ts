@@ -223,8 +223,9 @@ export function ViteNodePlugin (nuxt: Nuxt): VitePlugin | undefined {
   const serverResolvedPath = resolveModulePath('#vite-node-entry', { from: import.meta.url })
   const fetchResolvedPath = resolveModulePath('#vite-node', { from: import.meta.url })
   const sourceMapPluginPath = resolveModulePath('#ssr-sourcemap', { from: import.meta.url })
+  const warmupPluginPath = resolveModulePath('#vite-node-warmup', { from: import.meta.url })
 
-  const externalRuntimeUrls = new Set([runnerResolvedPath, serverResolvedPath, fetchResolvedPath, sourceMapPluginPath].map(p => pathToFileURL(p).href))
+  const externalRuntimeUrls = new Set([runnerResolvedPath, serverResolvedPath, fetchResolvedPath, sourceMapPluginPath, warmupPluginPath].map(p => pathToFileURL(p).href))
   const rollupConfig = (nitro.options.rollupConfig ||= {} as NonNullable<typeof nitro.options.rollupConfig>)
   const existingExternal = rollupConfig.external
   rollupConfig.external = (id, ...args) => {
@@ -253,22 +254,32 @@ export function ViteNodePlugin (nuxt: Nuxt): VitePlugin | undefined {
   nitro.options._config.virtual['#internal/nitro/ssr-sourcemap'] = sourceMapPluginCode
   nitro.options.plugins.push('#internal/nitro/ssr-sourcemap')
 
-  // The SSR dev server runs with `hmr: false`, so Vite never fires
-  // `handleHotUpdate` on it and user-plugin invalidations of SSR modules
-  // (e.g. virtual modules via `server.moduleGraph.invalidateModule`) are
-  // lost. Captured below for the legacy two-server path and mirrored from
-  // the client server's `handleHotUpdate`. See nuxt/nuxt#30169.
+  // a nitro plugin, so that the app is not evaluated before nitro installs `globalThis.$fetch`
+  const warmupPluginCode = `export { default } from ${JSON.stringify(pathToFileURL(warmupPluginPath).href)}`
+  nitro.options.virtual['#internal/nitro/vite-node-warmup'] = warmupPluginCode
+  nitro.options._config.virtual['#internal/nitro/vite-node-warmup'] = warmupPluginCode
+  nitro.options.plugins.push('#internal/nitro/vite-node-warmup')
+
+  // The SSR dev server runs with `hmr: false`, so on the legacy two-server path
+  // invalidations made while handling a hot update (virtual modules, importers
+  // of a renamed component) are mirrored from the client environment's
+  // `hotUpdate`. See nuxt/nuxt#30169.
   let legacySsrServer: ViteDevServer | undefined
 
   return {
     name: 'nuxt:vite-node-server',
     enforce: 'post',
-    handleHotUpdate ({ server: clientServer, timestamp }) {
-      if (!legacySsrServer) { return }
+    hotUpdate ({ timestamp, modules }) {
+      if (!legacySsrServer || this.environment.name !== 'client') { return }
       const ssrGraph = legacySsrServer.moduleGraph
-      for (const mod of clientServer.moduleGraph.idToModuleMap.values()) {
-        if (!mod.id || mod.lastInvalidationTimestamp < timestamp) { continue }
-        const ssrMod = ssrGraph.getModuleById(mod.id)
+      const invalidated = new Set(modules)
+      for (const mod of this.environment.moduleGraph.idToModuleMap.values()) {
+        if (mod.lastInvalidationTimestamp >= timestamp) {
+          invalidated.add(mod)
+        }
+      }
+      for (const mod of invalidated) {
+        const ssrMod = mod.id && ssrGraph.getModuleById(mod.id)
         if (ssrMod) {
           ssrGraph.invalidateModule(ssrMod, undefined, timestamp)
         }

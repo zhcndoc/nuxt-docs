@@ -1,7 +1,13 @@
+import { mkdtemp, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
 import { describe, expect, it, vi } from 'vitest'
-import { resolve } from 'pathe'
+import { join, resolve } from 'pathe'
+import { rollup } from 'rollup'
+import { build } from 'tsdown'
+import tsdownConfig from '../tsdown.config.ts'
 import { resolveModuleExportNames } from '@nuxt/kit/internal'
-import { createEvent } from 'h3'
+import fc from 'fast-check'
+import { createApp, createEvent, createRouter, eventHandler, toPlainHandler } from 'h3'
 import type { H3Event } from 'h3'
 import * as shipped from '../../nuxt/src/server/index.ts'
 import type { RequestEvent } from '../../nuxt/src/server/index.ts'
@@ -11,15 +17,14 @@ const { hooks, localFetch } = vi.hoisted(() => ({
   localFetch: vi.fn((_path: string, _init: RequestInit) => Promise.resolve(new Response('ok'))),
 }))
 
-// the delegate re-exports nitro's own `getRouteRules`/`useRuntimeConfig`, which only resolve
-// inside a built server bundle
+// the delegate reads nitro's `useRuntimeConfig` and a virtual route rules module, which only
+// resolve inside a built server bundle
 vi.mock('nitropack/runtime', () => ({
-  getRouteRules: () => ({}),
   useRuntimeConfig: () => ({ app: { baseURL: '/base/' } }),
   useNitroApp: () => ({ hooks, localFetch }),
 }))
-vi.mock('nitropack/runtime/internal/route-rules', () => ({
-  getRouteRulesForPath: () => ({}),
+vi.mock('#internal/nuxt/route-rules.mjs', () => ({
+  normalizeRouteRulePath: (path: string) => path,
 }))
 
 const delegate = await import('../src/runtime/server.ts')
@@ -36,6 +41,36 @@ describe('the h3-backed `nuxt/server` implementations', () => {
 
     expect(surface.length).toBeGreaterThan(0)
     expect(surface.filter(name => !implemented.includes(name))).toEqual([])
+  })
+
+  it('leaves no unused h3 imports in the built runtime', async () => {
+    const outDir = await mkdtemp(join(tmpdir(), 'nuxt-nitro-runtime-'))
+    try {
+      const runtimeConfig = tsdownConfig.find(config => config.outDir === 'dist/runtime/')!
+      await build({ ...runtimeConfig, cwd: resolve(import.meta.dirname, '..'), outDir, config: false, logLevel: 'silent' })
+
+      const unused: string[] = []
+      const bundle = await rollup({
+        input: 'entry',
+        external: id => !id.startsWith('.') && !id.startsWith('/'),
+        onwarn: (warning) => {
+          if (warning.code === 'UNUSED_EXTERNAL_IMPORT' && warning.exporter === 'h3') {
+            unused.push(...warning.names!)
+          }
+        },
+        plugins: [{
+          name: 'entry',
+          resolveId: id => id === 'entry' ? id : undefined,
+          load: id => id === 'entry' ? `import { defineEventHandler } from ${JSON.stringify(join(outDir, 'server.mjs'))}\nexport default defineEventHandler(() => 'ok')` : undefined,
+        }],
+      })
+      await bundle.generate({ format: 'es' })
+      await bundle.close()
+
+      expect(unused).toEqual([])
+    } finally {
+      await rm(outDir, { recursive: true, force: true })
+    }
   })
 })
 
@@ -99,6 +134,70 @@ describe('the shape of what it reads off an h3 v1 event', () => {
     expect(delegate.getRouterParams(e)).toEqual({ id: 'a b' })
   })
 
+  describe.each(['/', '/base/'])('router params routed by h3 under %s', (base) => {
+    const router = createRouter({ preemptive: true })
+    for (const route of ['/api/auth/**:slug', '/api/users/:id', '/api/users/:id/**:rest', '/api/items/*/x']) {
+      router.use(route, eventHandler(event => ({
+        matched: event.context.params,
+        params: delegate.getRouterParams(event),
+        decoded: delegate.getRouterParams(event, { decode: true }),
+      })))
+    }
+    const app = createApp()
+    app.use(base, router.handler)
+    const handle = toPlainHandler(app)
+
+    async function request (path: string) {
+      const response = await handle({ method: 'GET', path: base.slice(0, -1) + path, headers: {} })
+      expect(response.status).toBe(200)
+      return JSON.parse(response.body as string) as Record<'matched' | 'params' | 'decoded', Record<string, string>>
+    }
+
+    it.for([
+      ['/api/auth/private%3Fignored/public', { slug: 'private' }],
+      ['/api/auth/private%3fignored/public', { slug: 'private' }],
+      ['/api/auth/a/b%3F/c', { slug: 'a/b' }],
+      ['/api/auth/a/%3Fb/c', { slug: 'a' }],
+      ['/api/auth/a%3Fb?c=%3F/d', { slug: 'a' }],
+      ['/api/auth/a%253Fb/c', { slug: 'a%253Fb/c' }],
+      ['/api/auth/a%23b/c', { slug: 'a%23b/c' }],
+      ['/api/auth/a%2Fb/c', { slug: 'a%2Fb/c' }],
+      ['/api/auth/a%2F%3Fb/c', { slug: 'a%2F' }],
+      ['/api/auth/caf%C3%A9/', { slug: 'caf%C3%A9' }],
+      ['/api/auth/a//', { slug: 'a/' }],
+      ['/api/auth/a%20b?x=1', { slug: 'a%20b' }],
+      ['/api/users/a%3Fb', { id: 'a' }],
+      ['/api/users/a%20b/', { id: 'a%20b' }],
+      ['/api/users/a%20b/c%3F/d', { id: 'a%20b', rest: 'c' }],
+      ['/api/users/a%3F/b/c', { id: 'a' }],
+      ['/api/items/a%2Fb/x', { _0: 'a%2Fb' }],
+      ['/api/items/a%23b/x?y', { _0: 'a%23b' }],
+    ] as const)('reads %s as h3 matched it', async ([path, params]) => {
+      const { matched, params: encoded, decoded } = await request(path)
+      expect(encoded).toEqual(params)
+      for (const key in matched) {
+        expect(decoded[key]).toBe(shipped.getRouterParam({ context: { params: matched } }, key, { decode: true }))
+      }
+    })
+
+    it('reads the same params h3 matched for any path', async () => {
+      const segment = fc.array(fc.constantFrom('a', 'é', '%20', '%3F', '%3f', '%23', '%2F', '%25', '%253F', '%2525', '%C3%A9', '?', '#', ''), { maxLength: 4 }).map(parts => parts.join(''))
+      const prefix = fc.constantFrom('/api/auth/', '/api/users/', '/api/items/')
+      await fc.assert(fc.asyncProperty(prefix, fc.array(segment, { minLength: 1, maxLength: 4 }), async (prefix, segments) => {
+        const path = prefix + segments.join('/')
+        const response = await handle({ method: 'GET', path: base.slice(0, -1) + path, headers: {} })
+        if (response.status !== 200) {
+          return
+        }
+        const { matched, params, decoded } = JSON.parse(response.body as string)
+        expect(decoded).toEqual(shipped.getRouterParams({ context: { params: matched } }, { decode: true }))
+        for (const value of Object.values(params)) {
+          expect(path).toContain(value)
+        }
+      }))
+    })
+  })
+
   it('reads the client IP from the socket, and the first forwarded hop only when opted in', () => {
     const e = event('/', { headers: { 'x-forwarded-for': '203.0.113.1, 10.0.0.1' }, ip: '198.51.100.7' })
     expect(delegate.getRequestIP(e)).toBe('198.51.100.7')
@@ -119,12 +218,13 @@ describe('the shape of what it reads off an h3 v1 event', () => {
   it.for([
     ['no header', {}],
     ['forwarded headers', { 'x-forwarded-host': ' nuxt.com:8443 , proxy', 'x-forwarded-proto': 'https, http' }],
+    ['a forwarded protocol', { 'x-forwarded-proto': 'https' }],
     ['an unsupported forwarded protocol', { 'x-forwarded-proto': 'ftp' }],
     ['a forwarded IPv6 host', { 'x-forwarded-host': '[::1]:99999' }],
   ] as const)('reads the host, protocol and URL from %s the same way as the shipped implementation', ([, forwarded]) => {
     const headers = { host: 'internal:3000', ...forwarded }
     const web = webEvent('http://internal:3000/api?a=1', headers)
-    for (const trust of [false, true]) {
+    for (const trust of [undefined, false, true]) {
       const options = { xForwardedHost: trust, xForwardedProto: trust }
       const e = event('/api?a=1', { headers })
       expect([delegate.getRequestURL(e, options).href, delegate.getRequestHost(e, options), delegate.getRequestProtocol(e, options)])
@@ -138,6 +238,11 @@ describe('the shape of what it reads off an h3 v1 event', () => {
     const options = { xForwardedHost: true, xForwardedProto: true }
     expect([delegate.getRequestURL(portable as never, options).href, delegate.getRequestHost(portable as never, options), delegate.getRequestProtocol(portable as never, options)])
       .toEqual(['https://nuxt.com/api?a=1', 'nuxt.com', 'https'])
+  })
+
+  it('ignores forwarded headers in the URL of the event it hands a handler', () => {
+    const portable = toPortableEvent(event('/api?a=1', { headers: { 'x-forwarded-host': 'proxy.com', 'x-forwarded-proto': 'https' } }))
+    expect([portable.url.href, portable.req.url]).toEqual(['http://nuxt.com/api?a=1', 'http://nuxt.com/api?a=1'])
   })
 
   it('parses every cookie the same way as the shipped implementation', () => {

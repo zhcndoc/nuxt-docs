@@ -36,3 +36,68 @@ export function decodeRoutePath (path: string) {
     return path
   }
 }
+
+/**
+ * Case-fold a decoded route path so that two paths fold to the same text exactly when a
+ * case-insensitive vue-router route (a regex with the `i` flag but not `u`) treats them as
+ * equal: each UTF-16 code unit is folded to the lower-case form of its upper-case form.
+ */
+export function foldRouteCase (path: string) {
+  return path.replace(/[A-Z]+|[^\0-\x7F]/g, (char) => {
+    if (char.charCodeAt(0) < 0x80) { return char.toLowerCase() }
+    const upper = char.toUpperCase()
+    if (upper.length !== 1 || upper.charCodeAt(0) < 0x80) { return char }
+    const lower = upper.toLowerCase()
+    return lower.length === 1 && lower.toUpperCase() === upper ? lower : upper
+  })
+}
+
+/**
+ * Collect the route rules `match` returns for a route path and, if its path portion contains
+ * an encoded slash (`%2F`), for the path with each encoded slash as a separator, since a page
+ * route param spanning several segments decodes to the same value either way. Rules keep the
+ * order `match` returns them in, and rules matched only through encoded slashes come last.
+ *
+ * Inlined by source into compiled matchers, so it must not reference anything outside itself.
+ *
+ * @internal
+ */
+export function matchAllRouteRules<T> (match: (path: string) => T[], path: string): T[] {
+  const matches = match(path)
+  if (typeof path !== 'string') { return matches }
+  const split = path.replace(/^[^?]*/, pathname => pathname.replace(/%2f/gi, '/'))
+  if (split === path) { return matches }
+  for (const rules of match(split)) {
+    if (!matches.includes(rules)) { matches.push(rules) }
+  }
+  return matches
+}
+
+/**
+ * Resolve the `.` and `..` segments of a route path, including their percent-encoded
+ * spellings (`%2e`), as a URL parser does. Only the path portion is resolved; a query
+ * string, if present, is left untouched.
+ */
+export function resolveRoutePathDotSegments (path: string) {
+  const queryIndex = path.indexOf('?')
+  const pathname = queryIndex === -1 ? path : path.slice(0, queryIndex)
+  if (!/(?:^|\/)(?:\.|%2e)/i.test(pathname)) { return path }
+  const input = pathname.split('/')
+  const output: string[] = []
+  const root = pathname.startsWith('/') ? 1 : 0
+  for (const [i, segment] of input.entries()) {
+    const dots = /^(?:\.|%2e)(\.|%2e)?$/i.exec(segment)
+    if (!dots) {
+      output.push(segment)
+      continue
+    }
+    if (dots[1] && output.length > root) {
+      output.pop()
+    }
+    if (i === input.length - 1) {
+      output.push('')
+    }
+  }
+  const resolved = output.join('/')
+  return queryIndex === -1 ? resolved : resolved + path.slice(queryIndex)
+}

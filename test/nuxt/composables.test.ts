@@ -4,13 +4,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineEventHandler } from 'h3'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import { hasProtocol } from 'ufo'
+import { NavigationFailureType, isNavigationFailure } from 'vue-router'
 
 import { createClientPage } from '../../packages/nuxt/src/components/runtime/client-component'
 
 import * as composables from '#app/composables'
 import { refreshNuxtData } from '#app/composables/asyncData'
-import { _showErrorUnlessCrawler, clearError, createError, isNuxtError, showError, useError } from '#app/composables/error'
+import { _showErrorUnlessCrawler, clearError, createError, createErrorFromThrown, isNuxtError, showError, useError } from '#app/composables/error'
+import { describeError } from '../../packages/nuxt/src/runtime/server/renderer/error'
 import { useNuxtApp } from '#app/nuxt'
+import * as idleCallback from '#app/compat/idle-callback'
 import { onNuxtReady } from '#app/composables/ready'
 import { setResponseStatus, useRequestEvent, useRequestFetch, useRequestHeaders, useResponseHeader } from '#app/composables/ssr'
 import { clearNuxtState, useState } from '#app/composables/state'
@@ -192,6 +195,32 @@ describe('errors', () => {
     expect(error.value).toBe(undefined)
   })
 
+  describe('createErrorFromThrown', () => {
+    it('should keep the details of a thrown error out of the response', () => {
+      const thrown = Object.assign(new Error('[GET] "http://10.0.0.7/users/1?token=secret": 502 Bad Gateway'), {
+        name: 'FetchError',
+        statusCode: 502,
+        statusMessage: 'Bad Gateway',
+        data: { secret: 'upstream' },
+      })
+      const error = createErrorFromThrown(thrown)
+      expect(error.unhandled).toBe(true)
+      expect(error.fatal).toBe(false)
+      expect(describeError(error)).toMatchObject({ status: 502, statusText: 'Bad Gateway', message: 'Bad Gateway', data: undefined })
+    })
+
+    it('should keep the details of an HTTP error the app raised', () => {
+      const nuxtError = createError({ statusCode: 404, message: 'missing', data: { id: 1 } })
+      expect(createErrorFromThrown(nuxtError)).toBe(nuxtError)
+      expect(nuxtError.unhandled).toBe(false)
+    })
+
+    it('should mark a thrown value that is not an error as unhandled', () => {
+      expect(createErrorFromThrown('boom').unhandled).toBe(true)
+      expect(createErrorFromThrown({ statusCode: 404, message: 'secret' }).unhandled).toBe(true)
+    })
+  })
+
   describe('_showErrorUnlessCrawler', () => {
     afterEach(async () => {
       vi.unstubAllGlobals()
@@ -229,6 +258,92 @@ describe('onNuxtReady', () => {
     onNuxtReady(fn)
     await new Promise(resolve => setTimeout(resolve, 1))
     expect(fn).toHaveBeenCalled()
+  })
+
+  it('should pass the timeout to requestIdleCallback', () => {
+    const nuxtApp = useNuxtApp()
+    const isHydrating = nuxtApp.isHydrating
+    const requestIdleCallbackSpy = vi.spyOn(idleCallback, 'requestIdleCallback').mockImplementation((cb) => { cb({ didTimeout: true, timeRemaining: () => 0 }); return 0 })
+    try {
+      nuxtApp.isHydrating = false
+      const fn = vi.fn()
+      onNuxtReady(fn, { timeout: 500 })
+      expect(requestIdleCallbackSpy).toHaveBeenCalledWith(expect.any(Function), { timeout: 500 })
+      expect(fn).toHaveBeenCalledOnce()
+    } finally {
+      nuxtApp.isHydrating = isHydrating
+      requestIdleCallbackSpy.mockRestore()
+    }
+  })
+
+  it('should pass the timeout to requestIdleCallback after hydration', async () => {
+    const nuxtApp = useNuxtApp()
+    const isHydrating = nuxtApp.isHydrating
+    const requestIdleCallbackSpy = vi.spyOn(idleCallback, 'requestIdleCallback').mockImplementation((cb) => { cb({ didTimeout: true, timeRemaining: () => 0 }); return 0 })
+    try {
+      nuxtApp.isHydrating = true
+      const fn = vi.fn()
+      onNuxtReady(fn, { timeout: 500 })
+      expect(requestIdleCallbackSpy).not.toHaveBeenCalled()
+      await nuxtApp.hooks.callHook('app:suspense:resolve')
+      expect(requestIdleCallbackSpy).toHaveBeenCalledWith(expect.any(Function), { timeout: 500 })
+      expect(fn).toHaveBeenCalledOnce()
+    } finally {
+      nuxtApp.isHydrating = isHydrating
+      requestIdleCallbackSpy.mockRestore()
+    }
+  })
+
+  it('should not schedule the callback if the signal is already aborted', () => {
+    const nuxtApp = useNuxtApp()
+    const isHydrating = nuxtApp.isHydrating
+    const requestIdleCallbackSpy = vi.spyOn(idleCallback, 'requestIdleCallback')
+    try {
+      nuxtApp.isHydrating = false
+      onNuxtReady(() => {}, { signal: AbortSignal.abort() })
+      expect(requestIdleCallbackSpy).not.toHaveBeenCalled()
+    } finally {
+      nuxtApp.isHydrating = isHydrating
+      requestIdleCallbackSpy.mockRestore()
+    }
+  })
+
+  it('should not run the callback if the signal is aborted during hydration', async () => {
+    const nuxtApp = useNuxtApp()
+    const isHydrating = nuxtApp.isHydrating
+    const requestIdleCallbackSpy = vi.spyOn(idleCallback, 'requestIdleCallback').mockImplementation((cb) => { cb({ didTimeout: false, timeRemaining: () => 50 }); return 0 })
+    try {
+      nuxtApp.isHydrating = true
+      const fn = vi.fn()
+      const controller = new AbortController()
+      onNuxtReady(fn, { signal: controller.signal })
+      controller.abort()
+      await nuxtApp.hooks.callHook('app:suspense:resolve')
+      expect(fn).not.toHaveBeenCalled()
+    } finally {
+      nuxtApp.isHydrating = isHydrating
+      requestIdleCallbackSpy.mockRestore()
+    }
+  })
+
+  it('should not run the callback if the signal is aborted while waiting for idle', () => {
+    const nuxtApp = useNuxtApp()
+    const isHydrating = nuxtApp.isHydrating
+    let idle: IdleRequestCallback | undefined
+    const requestIdleCallbackSpy = vi.spyOn(idleCallback, 'requestIdleCallback').mockImplementation((cb) => { idle = cb; return 0 })
+    try {
+      nuxtApp.isHydrating = false
+      const fn = vi.fn()
+      const controller = new AbortController()
+      onNuxtReady(fn, { signal: controller.signal })
+      controller.abort()
+      expect(idle).toBeDefined()
+      idle?.({ didTimeout: false, timeRemaining: () => 50 })
+      expect(fn).not.toHaveBeenCalled()
+    } finally {
+      nuxtApp.isHydrating = isHydrating
+      requestIdleCallbackSpy.mockRestore()
+    }
   })
 })
 
@@ -625,6 +740,9 @@ describe.skipIf(!isTestingAppManifest)('app manifests', () => {
             "/Secret/Docs": {
               "ssr": false,
             },
+            "/Wild": {
+              "redirect": "/target/**",
+            },
             "/isr": {
               "isr": 60,
             },
@@ -688,6 +806,12 @@ describe('case-insensitive route rules', () => {
     }
   })
 
+  it('moves the tail of the path onto a wildcard redirect target for any request casing', () => {
+    for (const path of ['/Wild/A/b', '/wild/A/b', '/WILD/A/b']) {
+      expect(getRouteRules({ path }), path).toMatchObject({ redirect: '/target/A/b' })
+    }
+  })
+
   it('folds a non-ASCII character that arrives percent-encoded', () => {
     for (const path of ['/cafÉ', '/café', `/caf${encodeURIComponent('É')}`, `/caf${encodeURIComponent('é')}`]) {
       expect(getRouteRules({ path }), path).toMatchObject({ redirect: '/accented-target' })
@@ -718,6 +842,21 @@ describe('unicode route rules', () => {
     for (const path of ['/cafÉ', `/caf${encodeURIComponent('É')}`]) {
       expect(getRouteRules({ path }), path).toMatchObject({ redirect: '/accented-target' })
     }
+  })
+})
+
+describe('encoded slash route rules', () => {
+  it('applies rules for the path with encoded slashes as separators', () => {
+    for (const path of ['/pre%2Ftest', '/pre%2ftest', '/PRE%2FTest']) {
+      expect(getRouteRules({ path }), path).toMatchObject({ prerender: true, redirect: '/' })
+    }
+    for (const path of ['/pre/spa%2Fthing', '/pre%2Fspa%2Fthing', '/Secret%2FDocs/index']) {
+      expect(getRouteRules({ path }), path).toMatchObject({ ssr: false })
+    }
+  })
+
+  it('does not treat a double-encoded slash as a separator', () => {
+    expect(getRouteRules({ path: '/pre%252Ftest' })).toEqual({})
   })
 })
 
@@ -821,6 +960,8 @@ describe('routing utilities: `navigateTo`', () => {
   it('navigateTo should disallow navigation to external URLs by default', () => {
     expect(() => navigateTo('https://test.com')).toThrowErrorMatchingInlineSnapshot(`[NUXT_E2001: https://nuxt.com/docs/4.x/errors/e2001]`)
     expect(() => navigateTo('https://test.com', { external: true })).not.toThrow()
+    expect(() => navigateTo('/\t/test.com')).toThrow(expect.objectContaining({ code: 'NUXT_E2001' }))
+    expect(() => navigateTo('/\n\\test.com')).toThrow(expect.objectContaining({ code: 'NUXT_E2001' }))
   })
   it('navigateTo should disallow navigation to data/script URLs', () => {
     const urls = [
@@ -903,6 +1044,7 @@ describe('routing utilities: `navigateTo`', () => {
       '//evil.com',
       'https://evil.com',
       '\\\\evil.com',
+      `${window.location.protocol === 'https:' ? 'http:' : 'https:'}//${window.location.host}/legit/path`,
     ]
     for (const url of urls) {
       expect(() => reloadNuxtApp({ path: url })).toThrow(expect.objectContaining({ code: 'NUXT_E2010' }))
@@ -946,6 +1088,69 @@ describe('routing utilities: `navigateTo`', () => {
     expect(route.fullPath).toMatchInlineSnapshot(`"/28425/p3"`)
     el.unmount()
     router.removeRoute('slug')
+  })
+
+  it('should navigate when called outside middleware while a navigation is pending', async () => {
+    const router = useRouter()
+    let release!: () => void
+    const blocked = new Promise<void>((resolve) => { release = resolve })
+    let enter!: () => void
+    const entered = new Promise<void>((resolve) => { enter = resolve })
+    const removeGuard = router.beforeResolve(async (to) => {
+      if (to.query.section === 'roles') {
+        enter()
+        await blocked
+      }
+    })
+
+    try {
+      const older = navigateTo({ path: '/', query: { section: 'roles' } })
+      await entered
+      await navigateTo({ path: '/', query: { section: 'employment' } })
+      release()
+      await older
+    } finally {
+      removeGuard()
+    }
+
+    expect(router.currentRoute.value.query.section).toBe('employment')
+  })
+
+  it('should redirect from middleware while an earlier navigation is being cancelled', async () => {
+    const router = useRouter()
+    let releaseFirst!: () => void
+    const firstBlocked = new Promise<void>((resolve) => { releaseFirst = resolve })
+    let releaseSecond!: () => void
+    const secondBlocked = new Promise<void>((resolve) => { releaseSecond = resolve })
+    let enterSecond!: () => void
+    const secondEntered = new Promise<void>((resolve) => { enterSecond = resolve })
+    const middleware = defineNuxtRouteMiddleware(async (to) => {
+      if (to.query.race === 'first') {
+        await firstBlocked
+      }
+      if (to.query.race === 'second') {
+        enterSecond()
+        await secondBlocked
+        return navigateTo({ path: '/', query: { race: 'redirected' } })
+      }
+    })
+    addRouteMiddleware(middleware, { global: true })
+
+    try {
+      const first = router.push({ path: '/', query: { race: 'first' } })
+      const second = router.push({ path: '/', query: { race: 'second' } })
+      await secondEntered
+      releaseFirst()
+      await first
+      releaseSecond()
+      await second
+    } finally {
+      const globalMiddleware = useNuxtApp()._middleware.global
+      globalMiddleware.splice(globalMiddleware.indexOf(middleware), 1)
+    }
+
+    expect(router.currentRoute.value.query.race).toBe('redirected')
+    expect(router.currentRoute.value.redirectedFrom?.query.race).toBe('second')
   })
 })
 
@@ -1179,6 +1384,18 @@ describe('routing utilities: `abortNavigation`', () => {
   it('should block navigation if no error is provided', () => {
     expect(abortNavigation()).toMatchInlineSnapshot('false')
   })
+  it('should abort navigation from a router guard in development', async () => {
+    vi.stubGlobal('__TEST_DEV__', true)
+    const router = useRouter()
+    const removeGuard = router.beforeEach(to => to.query.abortGuard ? abortNavigation() : undefined)
+    try {
+      const failure = await router.push('/?abortGuard=1')
+      expect(isNavigationFailure(failure, NavigationFailureType.aborted)).toBe(true)
+    } finally {
+      removeGuard()
+      vi.unstubAllGlobals()
+    }
+  })
 
   describe('aborted navigation', () => {
     const abortMiddleware = defineNuxtRouteMiddleware(to => to.query.abort ? abortNavigation() : undefined)
@@ -1241,6 +1458,57 @@ describe('routing utilities: `setPageLayout`', () => {
     setPageLayout('custom')
     expect(route.meta.layout).toBeUndefined()
     nuxtApp._processingMiddleware = false
+  })
+
+  it('should set layout on the target route if run within a router guard', async () => {
+    const router = useRouter()
+    router.addRoute({
+      name: 'layout-guard-test',
+      path: '/layout-guard-test',
+      component: defineComponent({ template: '<div />' }),
+    })
+    const from = router.currentRoute.value
+    const removeGuard = router.beforeEach((to) => {
+      if (to.path === '/layout-guard-test') {
+        setPageLayout('custom')
+      }
+    })
+    try {
+      await router.push('/layout-guard-test')
+    } finally {
+      removeGuard()
+      router.removeRoute('layout-guard-test')
+    }
+    expect(from.meta.layout).toBeUndefined()
+    expect(router.currentRoute.value.meta.layout).toBe('custom')
+  })
+
+  it.each([
+    ['to the current route', ['/?layoutRedirect=current']],
+    ['through another route to the current route', ['/?layoutRedirect=hop', '/?layoutRedirect=current']],
+  ])('should set layout on page metadata after middleware redirects %s', async (_, targets) => {
+    const router = useRouter()
+    const route = useRoute()
+    await router.push('/')
+    const middleware = defineNuxtRouteMiddleware((to) => {
+      if (to.query.layoutRedirect === 'hop') {
+        return navigateTo('/?layoutRedirect=current')
+      }
+      if (to.query.layoutRedirect === 'current') {
+        return navigateTo('/')
+      }
+    })
+    addRouteMiddleware(middleware, { global: true })
+    try {
+      await router.push(targets[0]!)
+    } finally {
+      const globalMiddleware = useNuxtApp()._middleware.global
+      globalMiddleware.splice(globalMiddleware.indexOf(middleware), 1)
+    }
+    expect(route.fullPath).toBe('/')
+    setPageLayout('custom')
+    expect(route.meta.layout).toBe('custom')
+    route.meta.layout = undefined
   })
 
   it('should preserve layout and props on same-path (query-only) navigation', async () => {
@@ -1479,6 +1747,67 @@ describe('useCookie', () => {
     await nextTick()
 
     expect(document.cookie).toContain('refresh-test=initial')
+  })
+
+  it('should not re-write CookieStore updates when refresh is true', async () => {
+    const name = 'refresh-cookiestore-test'
+    const scope = effectScope()
+    const cookie = scope.run(() => useCookie(name, { maxAge: 3600, refresh: true }))!
+
+    let target: any = document
+    let descriptor: PropertyDescriptor | undefined
+    while (target && !descriptor) {
+      descriptor = Object.getOwnPropertyDescriptor(target, 'cookie')
+      if (!descriptor) { target = Object.getPrototypeOf(target) }
+    }
+
+    const writes: string[] = []
+    Object.defineProperty(document, 'cookie', {
+      configurable: true,
+      get () {
+        return descriptor!.get!.call(document)
+      },
+      set (value: string) {
+        if (value.startsWith(`${name}=`)) { writes.push(value) }
+        descriptor!.set!.call(document, value)
+      },
+    })
+
+    try {
+      cookieStore.dispatchEvent(new window.CookieChangeEvent('change', { changed: [{ name, value: 'received' }], deleted: [] }))
+      expect(cookie.value).toBe('received')
+      await nextTick()
+      await nextTick()
+      expect(writes).toEqual([])
+
+      const value = cookie.value
+      cookie.value = value
+      await nextTick()
+      expect(writes).toHaveLength(1)
+      expect(writes[0]).toContain(`${name}=received`)
+
+      cookie.value = 'disposed'
+      scope.stop()
+      expect(writes).toHaveLength(2)
+      expect(writes[1]).toContain(`${name}=disposed`)
+    } finally {
+      scope.stop()
+      delete (document as any).cookie
+    }
+  })
+
+  it('should write an assignment made straight after a CookieStore update when refresh is true', async () => {
+    const name = 'refresh-cookiestore-assign-test'
+    const scope = effectScope()
+    const cookie = scope.run(() => useCookie(name, { maxAge: 3600, refresh: true }))!
+
+    cookieStore.dispatchEvent(new window.CookieChangeEvent('change', { changed: [{ name, value: 'received' }], deleted: [] }))
+    await nextTick()
+    cookie.value = 'local'
+    for (let i = 0; i < 4; i++) { await nextTick() }
+    expect(document.cookie).toContain(`${name}=local`)
+
+    scope.stop()
   })
 
   it('should not re-write cookie on same-value assignment when refresh is false', async () => {

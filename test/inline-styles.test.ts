@@ -83,6 +83,15 @@ describe.skipIf(!runsOnceInMatrix)('inline styles', () => {
     expect(linked.join('\n')).toContain('--inline-shared-box-token:shared-box')
   })
 
+  // https://github.com/nuxt/nuxt/issues/36741
+  it('drops the stylesheet link for inlined CSS that an `ssr: false` page also imports', async () => {
+    const html = await readFile(join(outputDir, 'public', 'spa-shared', 'index.html'), 'utf-8')
+    expect(html).toContain('--inline-spa-shared-token:spa-shared')
+
+    const cssLinks = [...html.matchAll(/<link [^>]*rel="stylesheet"[^>]*href="([^"]+)"/g)].map(m => m[1]!)
+    expect(cssLinks).toEqual([])
+  })
+
   // https://github.com/nuxt/nuxt/issues/31558
   it('inlines CSS for a non-island child of a server component', async () => {
     const html = await readFile(join(outputDir, 'public', 'index.html'), 'utf-8')
@@ -159,5 +168,14 @@ describe.skipIf(!runsOnceInMatrix)('inline styles', () => {
     const cssLinks = [...html.matchAll(/<link [^>]*rel="stylesheet"[^>]*href="([^"]+)"/g)].map(m => m[1]!)
     const linked = await Promise.all(cssLinks.map(href => readFile(join(outputDir, 'public', href.replace(/^\//, '')), 'utf-8')))
     expect(linked.join('\n')).toContain('--inline-predicate-shared-token:predicate-shared')
+  })
+
+  it('renders component styles after stylesheet links and entry styles before them', async () => {
+    const html = await readFile(join(outputDir, 'public', 'predicate-not-inlined', 'index.html'), 'utf-8')
+    const linkIndex = html.search(/<link [^>]*rel="stylesheet"/)
+    expect(linkIndex).toBeGreaterThan(-1)
+    expect(html.indexOf('--inline-app-token:app')).toBeGreaterThan(-1)
+    expect(html.indexOf('--inline-app-token:app')).toBeLessThan(linkIndex)
+    expect(html.indexOf('--inline-shared-box-token:shared-box')).toBeGreaterThan(linkIndex)
   })
 })

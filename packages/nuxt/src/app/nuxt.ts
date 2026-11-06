@@ -76,6 +76,8 @@ interface _NuxtApp {
   /** @internal */
   '_appliedSetCookies'?: number
   '_cookiesChanged'?: Record<string, boolean>
+  /** @internal */
+  '_cookieWriters'?: Set<() => void>
   /**
    * The id of the Nuxt application.
    * @internal */
@@ -130,7 +132,7 @@ interface _NuxtApp {
   '_processingMiddleware'?: string | boolean
 
   /** @internal */
-  '_middlewareTo'?: Pick<RouteLocationNormalizedLoaded, 'meta'>
+  '_middlewareTo'?: Pick<RouteLocationNormalizedLoaded, 'meta' | 'redirectedFrom'>
 
   /** @internal */
   '_once': {
@@ -138,7 +140,7 @@ interface _NuxtApp {
   }
 
   /** @internal */
-  '_observer'?: { observe: (element: Element, callback: () => void) => () => void }
+  '_observer'?: { observe: (element: Element, callback: () => void, whenReady?: boolean) => () => void }
 
   /** @internal */
   '_appConfig': AppConfig

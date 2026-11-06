@@ -9,6 +9,7 @@
   "type": "module",
   "scripts": {
     "build": "pnpm --filter './packages/**' build",
+    "bench": "node bench/run.ts",
     "build:kit": "pnpm --filter @nuxt/kit build",
     "build:stub": "pnpm dev:prepare",
     "dev": "pnpm play",
@@ -71,10 +72,10 @@
     "@vitest/coverage-v8": "catalog:dev",
     "@vue/test-utils": "catalog:dev",
     "acorn": "catalog:dev",
-    "autoprefixer": "10.6.1",
+    "autoprefixer": "10.6.2",
     "case-police": "catalog:dev",
     "consola": "catalog:build",
-    "cssnano": "9.8.0",
+    "cssnano": "9.9.0",
     "defu": "catalog:build",
     "devalue": "catalog:app-runtime",
     "eslint": "catalog:dev",
@@ -94,7 +95,7 @@
     "my-bad": "catalog:nitro-runtime",
     "nano-staged": "catalog:dev",
     "nitro": "catalog:nitro-runtime",
-    "nitropack": "2.13.4",
+    "nitropack": "2.13.6",
     "nuxt": "workspace:*",
     "nuxt-content-twoslash": "catalog:dev",
     "ofetch": "catalog:app-runtime",
@@ -120,7 +121,7 @@
     "vue-tsc": "catalog:dev",
     "webpack": "catalog:webpack"
   },
-  "packageManager": "pnpm@12.11.2",
+  "packageManager": "pnpm@12.16.1",
   "simple-git-hooks": {
     "pre-commit": "pnpm nano-staged"
   },

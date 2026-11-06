@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { performance } from 'node:perf_hooks'
-import { createBuilder, createServer, mergeConfig } from 'vite'
+import { createBuilder, createServer, mergeConfig, resolveConfig } from 'vite'
 import type * as vite from 'vite'
 import { basename, dirname, join, resolve } from 'pathe'
 import type { Nuxt, NuxtBuilder, ViteConfig } from '@nuxt/schema'
@@ -18,7 +18,7 @@ import { clientEnvironment } from './shared/client.ts'
 import { resolveCSSOptions } from './css.ts'
 import { createViteLogger, logLevelMap } from './utils/logger.ts'
 import { DevErrorsPlugin, createDevErrorReporter, getDevErrorReporter, reportTransformError, setDevErrorReporter } from './dev-errors.ts'
-import { sanitizeFilePath } from './utils/index.ts'
+import { getAncestorModulesDirs, removeNestedDirs, sanitizeFilePath } from './utils/index.ts'
 import { OptimizeDepsHintPlugin, optimizerCallbacks, userOptimizeDepsInclude } from './plugins/optimize-deps-hint.ts'
 
 import { SSRStylesPlugin } from './plugins/ssr-styles.ts'
@@ -33,6 +33,7 @@ import { RuntimePathsPlugin } from './plugins/runtime-paths.ts'
 import { TypeCheckPlugin } from './plugins/type-check.ts'
 import { ModulePreloadPolyfillPlugin } from './plugins/module-preload-polyfill.ts'
 import { StableEntryPlugin } from './plugins/stable-entry.ts'
+import { CompileHintsPlugin } from './plugins/compile-hints.ts'
 import { VitePluginCheckerPlugin } from './plugins/vite-plugin-checker.ts'
 import { AnalyzePlugin } from './plugins/analyze.ts'
 import { DevServerPlugin } from './plugins/dev-server.ts'
@@ -59,10 +60,11 @@ export const bundle: NuxtBuilder['bundle'] = async (nuxt) => {
     nitro.options.alias['#vite-node'] = resolve(distDir, 'vite-node')
   }
 
-  let allowDirs = [
+  const allowDirs = removeNestedDirs([
     nuxt.options.appDir,
     nuxt.options.workspaceDir,
     ...nuxt.options.modulesDir,
+    ...getAncestorModulesDirs(nuxt.options.rootDir),
     ...getLayerDirectories(nuxt).map(d => d.root),
     ...Object.values(nuxt.apps).flatMap(app => [
       ...app.components.map(c => dirname(c.filePath)),
@@ -72,13 +74,19 @@ export const bundle: NuxtBuilder['bundle'] = async (nuxt) => {
       dirname(nuxt.apps.default!.rootComponent!),
       dirname(nuxt.apps.default!.errorComponent!),
     ]),
-  ].filter(d => d && existsSync(d))
-
-  allowDirs = allowDirs.filter(d =>
-    !allowDirs.some(other => other !== d && d.startsWith(other + '/')),
-  )
+  ]).filter(d => existsSync(d))
 
   const { $client, $server, ...viteConfig } = nuxt.options.vite
+
+  let fsDeny: string[] | undefined
+  if (nuxt.options.dev) {
+    // a configured `server.fs.deny` replaces Vite's defaults
+    const defaultDeny = viteConfig.server?.fs?.deny ? [] : await resolveDefaultFsDeny(nuxt.options.rootDir)
+    fsDeny = [...defaultDeny, '**/app-secret']
+    if (nitro) {
+      fsDeny.push(`${escapeGlob(nitro.options.output.serverDir)}/**`)
+    }
+  }
 
   const mockEmpty = resolveModulePath('mocked-exports/empty', { from: import.meta.url })
 
@@ -234,30 +242,39 @@ export const bundle: NuxtBuilder['bundle'] = async (nuxt) => {
         SSRStylesPlugin(nuxt),
         ServerEntryPlugin(nuxt, serverEntry),
         EnvironmentsPlugin(nuxt),
-        // Add type-checking
-        VitePluginCheckerPlugin(nuxt),
-        // tell rollup's nitro build about the original sources of the generated vite server build
-        SourcemapPreserverPlugin(nuxt),
-        // client-only plugins
-        DevStyleSSRPlugin({
-          srcDir: nuxt.options.srcDir,
-          buildAssetsURL: joinURL(nuxt.options.app.baseURL, nuxt.options.app.buildAssetsDir),
-        }),
-        RuntimePathsPlugin(),
-        // Type checking client panel
-        TypeCheckPlugin(nuxt),
-        ModulePreloadPolyfillPlugin(),
-        // ensure changes in chunks do not invalidate whole build
-        StableEntryPlugin(nuxt),
-        AnalyzePlugin(nuxt),
-        OptimizeDepsHintPlugin(nuxt),
+        ...nuxt.options.experimental.viteEnvironmentApi
+          ? [
+              // Add type-checking
+              VitePluginCheckerPlugin(nuxt),
+
+              // tell rollup's nitro build about the original sources of the generated vite server build
+              SourcemapPreserverPlugin(nuxt),
+
+              // client-only plugins
+              DevStyleSSRPlugin({
+                srcDir: nuxt.options.srcDir,
+                buildAssetsURL: joinURL(nuxt.options.app.baseURL, nuxt.options.app.buildAssetsDir),
+              }),
+              RuntimePathsPlugin(),
+              // Type checking client panel
+              TypeCheckPlugin(nuxt),
+              ModulePreloadPolyfillPlugin(),
+              // ensure changes in chunks do not invalidate whole build
+              StableEntryPlugin(nuxt),
+              CompileHintsPlugin(nuxt),
+              AnalyzePlugin(nuxt),
+              OptimizeDepsHintPlugin(nuxt),
+            ]
+          : [],
       ],
       appType: 'custom',
       server: {
         middlewareMode: true,
+        allowedHosts: nuxt.options.devServer.allowedHosts,
         watch: { ...nuxt.options.watchers.chokidar, ignored: [isIgnored, /[\\/]node_modules[\\/]/] },
         fs: {
-          allow: [...new Set(allowDirs)],
+          allow: allowDirs,
+          deny: fsDeny,
         },
       },
     } satisfies ViteConfig,
@@ -269,6 +286,10 @@ export const bundle: NuxtBuilder['bundle'] = async (nuxt) => {
       },
     },
   )
+
+  if (Array.isArray(config.server?.allowedHosts)) {
+    config.server.allowedHosts = [...new Set(config.server.allowedHosts)]
+  }
 
   // In build mode we explicitly override any vite options that vite is relying on
   // to detect whether to inject production or development code (such as HMR code)
@@ -439,6 +460,17 @@ function startWarmup (nuxt: Nuxt, server: vite.ViteDevServer, crawls: WarmupCraw
   } else {
     nuxt.hooks.hookOnce('build:done', () => { void run() })
   }
+}
+
+const GLOB_SPECIAL_CHARS_RE = /[\\*?[\]{}()!+@|]/g
+
+function escapeGlob (path: string) {
+  return path.replace(GLOB_SPECIAL_CHARS_RE, '\\$&')
+}
+
+async function resolveDefaultFsDeny (root: string) {
+  const resolved = await resolveConfig({ root, configFile: false, envFile: false, logLevel: 'silent' }, 'serve')
+  return resolved.server.fs.deny
 }
 
 async function withLogs (fn: () => Promise<unknown>, message: string, enabled = true) {
