@@ -63,7 +63,7 @@ export function useLazyAsyncData<DataT, ErrorT> (
 
 `useLazyAsyncData` 接受与 [`useAsyncData`](/docs/api/composables/use-async-data) 相同的参数，并自动将 `lazy` 选项设为 `true`。
 
-:read-more{to="/docs/api/composables/use-async-data#parameters"}
+:read-more{to="/docs/api/composables/use-async-data#params"}
 
 ## 返回值
 

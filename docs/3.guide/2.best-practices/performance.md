@@ -226,7 +226,7 @@ onLoaded((gtag) => {
 
 ### Nuxt DevTools
 
-[Nuxt DevTools](https://devtools.nuxt.com/) 为你提供 Nuxt 应用的透明性和洞察，帮助定位性能瓶颈并无缝管理应用配置。
+通过 [Nuxt DevTools](/modules/devtools)，你可以深入了解 Nuxt 应用，发现性能问题并轻松管理应用配置。
 
 ![Nuxt DevTools 示例](https://user-images.githubusercontent.com/11247099/217670806-fb39aeff-3881-44e5-b9c8-6c757f5925fc.png)
 

@@ -143,7 +143,7 @@ interface PageMeta {
 
   - **类型**: `boolean | (to: RouteLocationNormalized, from: RouteLocationNormalized) => boolean`
 
-    设置 Nuxt 是否在渲染页面前滚动到顶部。导航独立于渲染，因此即使页面没有重新渲染（例如使用固定的 [`key`](/docs/api/utils/define-page-meta#key) 时），滚动行为也始终会触发。在这种情况下，设置 `scrollToTop: false` 可禁用滚动。如果你想覆盖 Nuxt 的默认滚动行为，可以在 `~/app/router.options.ts` 中进行设置（更多信息请参见[自定义路由](/docs/guide/recipes/custom-routing#using-routeroptions)）。
+    设置 Nuxt 是否在渲染页面前滚动到顶部。导航独立于渲染，因此即使页面没有重新渲染（例如使用固定的 [`key`](/docs/api/utils/define-page-meta#key) 时），滚动行为也始终会触发。在这种情况下，设置 `scrollToTop: false` 可禁用滚动。如果你想覆盖 Nuxt 的默认滚动行为，可以在 `~/app/router.options.ts` 中进行设置（更多信息请参见[自定义路由](/docs/guide/recipes/custom-routing#using-approuteroptions)）。
 
   **`[key: string]`**
 

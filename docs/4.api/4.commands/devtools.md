@@ -33,6 +33,6 @@ npx nuxt devtools <COMMAND> [ROOTDIR] [--cwd=<directory>]
 | `--cwd=<directory>` |        | 指定工作目录，优先于 ROOTDIR 参数（默认：`.`）        |
 <!--/devtools-opts-->
 
-::read-more{icon="i-simple-icons-nuxtdotjs" to="https://devtools.nuxt.com" target="\_blank"}
+::read-more{icon="i-simple-icons-nuxtdotjs" to="/modules/devtools"}
 阅读更多关于 **Nuxt DevTools** 的内容。
 ::
