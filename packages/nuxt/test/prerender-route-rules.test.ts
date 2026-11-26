@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises'
 import { join, normalize } from 'pathe'
 import { withoutTrailingSlash } from 'ufo'
 import { describe, expect, it } from 'vitest'
+import type { NuxtApp } from 'nuxt/schema'
 import { loadNuxt } from '../src/index.ts'
 
 const pagesFixtureDir = withoutTrailingSlash(normalize(fileURLToPath(new URL('./pages-fixture', import.meta.url))))
@@ -39,6 +40,37 @@ describe('prerendering pages covered by route rules', () => {
     }
   })
 
+  it('passes page patterns to Nitro `ssrRoutes` and `_noScriptsPagePatterns`', async () => {
+    const nuxt = await loadNuxt({ cwd: pagesFixtureDir, ready: true })
+
+    try {
+      nuxt.apps.default = {
+        pages: [
+          { path: '/package-code/:org?/:name()/v/:version()/:filePath(.*)?' },
+          { path: '/docs/:slug(.*)*' },
+          { path: '/files/:id([^/]*)*/raw' },
+        ],
+      } as NuxtApp
+
+      const nitro = (nuxt as any)._nitro
+      nitro.options.ssrRoutes = ['/existing']
+      await nuxt.callHook('nitro:build:before', nitro)
+
+      expect(nitro.options.ssrRoutes).toStrictEqual([
+        '/existing',
+        '/package-code/:org?/:name/v/:version/:filePath(.*)',
+        '/docs/**:slug',
+        '/files/**:id',
+      ])
+      expect(nitro.options._noScriptsPagePatterns).toStrictEqual([
+        '/package-code/:org?/:name/v/:version/:filePath(.*)',
+        '/docs/*',
+      ])
+    } finally {
+      await nuxt.close()
+    }
+  })
+
   it('omits routes already covered by a `prerender` route rule from the app manifest', async () => {
     const nuxt = await loadNuxt({
       cwd: pagesFixtureDir,
@@ -57,7 +89,7 @@ describe('prerendering pages covered by route rules', () => {
         { route: `/about${payloadSuffix}` },
       ]
 
-      await nitro.hooks.callHook('rollup:before', nitro)
+      await nitro.hooks.callHook('rollup:before', nitro, { plugins: [] })
 
       const buildId = nuxt.options.runtimeConfig.app.buildId
       const manifestPath = join(nuxt.options.buildDir, 'manifest/meta', `${buildId}.json`)

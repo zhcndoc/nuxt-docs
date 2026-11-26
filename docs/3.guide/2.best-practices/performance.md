@@ -48,7 +48,7 @@ export default defineNuxtConfig({
 
 为加快客户端导航，Nuxt 会为请求所解析的 JavaScript 和 CSS 分块添加资源提示。`<link rel="preload">`（或 `modulepreload`）标记页面自身需要的分块；`<link rel="prefetch">` 则标记入口和已渲染组件延迟导入的分块，以便用户之后导航到相关页面时，这些分块已准备就绪。
 
-HTML 一经解析，预加载提示就会生效。预取提示会以 `data-href` 替代 `href` 输出，因此浏览器会忽略它们，直到 Nuxt 在应用就绪后将其激活（参见 [`onNuxtReady`](/docs/api/utils/on-nuxt-ready)）。这样，在页面加载期间它们就不会与页面自身的资源竞争。你可以通过 [`experimental.deferPrefetchHints`](/docs/guide/going-further/experimental-features#deferprefetchhints) 关闭此行为。如果连接启用了流量节省模式，或使用 2G 网络，则不会激活这些提示。由 [`noScripts`](/docs/guide/going-further/features#noscripts) 提供的路由没有客户端来激活它们，因此其非脚本预取提示会以 `href` 输出。
+预加载提示会在 HTML 解析后立即生效。预取提示会渲染在 `<template>` 元素中，因此浏览器会忽略它们，直到应用就绪后由 Nuxt 激活（参阅 [`onNuxtReady`](/docs/api/utils/on-nuxt-ready)）。这些提示也不会出现在 `Link` 响应标头和 103 Early Hints 中，因此加载页面时不会与页面自身资源争抢。你可以通过 [`experimental.deferPrefetchHints`](/docs/guide/going-further/experimental-features#deferprefetchhints) 关闭此功能。启用了流量节省模式或使用 2G 网络时，这些提示不会被激活。使用 [`noScripts`](/docs/guide/going-further/features#noscripts) 提供服务的路由没有客户端可用于激活提示，因此其非脚本预取提示不会延迟。
 
 大型应用的预取集合可能会超过页面实际所需的范围。公开页面和登录后的应用通常会共用一个入口分块，因此预渲染的公开页面可能会预取只有登录后应用才会使用的分块，浪费带宽加载访客永远不会用到的分块。
 

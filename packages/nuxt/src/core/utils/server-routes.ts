@@ -81,8 +81,9 @@ function handlerType (handlerFile: string, typesDir: string) {
 }
 
 /** The type of a handler's resolved response, as the client receives it. */
-function responseType (handlerFile: string, typesDir: string) {
-  return `Serialize<Awaited<ReturnType<${handlerType(handlerFile, typesDir)}>>>`
+function responseType (handlerFile: string, typesDir: string, requestTypes?: ServerRequestTypes) {
+  const handler = handlerType(handlerFile, typesDir)
+  return requestTypes?.response ? `Serialize<${requestTypes.response}<${handler}>>` : `Serialize<Awaited<ReturnType<${handler}>>>`
 }
 
 function methodKey (method: string) {
@@ -104,7 +105,7 @@ export function buildServerRoutes (routes: ServerRouteInfo[], typesDir: string, 
       // a single handler describes the request; several answering one method cannot agree on one
       const handler = handlers.length === 1 ? handlerType(handlers[0]!, typesDir) : undefined
       metadata[methodKey(method) as 'ALL'] = {
-        responseType: handlers.map(file => responseType(file, typesDir)).join(' | '),
+        responseType: handlers.map(file => responseType(file, typesDir, requestTypes)).join(' | '),
         ...handler && requestTypes?.body ? { bodyType: `${requestTypes.body}<${handler}>` } : {},
         ...handler && requestTypes?.query ? { queryType: `${requestTypes.query}<${handler}>` } : {},
         ...handler && requestTypes?.headers ? { headersType: `${requestTypes.headers}<${handler}>` } : {},
@@ -174,14 +175,16 @@ export function emitServerRoutesModule (opts: {
   routes: Route[]
   /** Pages, as `GET` routes, where they are part of the route set. */
   pages?: Route[]
-  /** How the builder's types read a handler's validated request shapes. */
+  /** How the builder's types read a handler's validated request shapes and response. */
   requestTypes?: ServerRequestTypes
   /** Whether a path the route set does not describe is an error. */
   strict: boolean
   /** Whether `$fetch` and `useFetch` are typed from the generated route set. */
   typeFromRoutes?: boolean
+  /** Whether `params` is still accepted as an alias for `query` at the call site. */
+  paramsAlias?: boolean
 }): string {
-  const extractors = [opts.requestTypes?.body, opts.requestTypes?.query, opts.requestTypes?.headers].filter(Boolean)
+  const extractors = [...new Set([opts.requestTypes?.body, opts.requestTypes?.query, opts.requestTypes?.headers, opts.requestTypes?.response].filter(Boolean))]
   const typeFromRoutes = opts.typeFromRoutes ?? true
 
   return [
@@ -209,6 +212,8 @@ export function emitServerRoutesModule (opts: {
     `export type StrictFetchPaths = ${typeFromRoutes && opts.strict}`,
     // which engine types `$fetch` and `useFetch`, resolved here for the same reason
     `export type RouteTypesEngine = '${typeFromRoutes ? 'generated' : 'internal-api'}'`,
+    // whether `params` remains a query alias, resolved here because it can diverge from the engine
+    `export type ParamsAlias = ${opts.paramsAlias ?? false}`,
   ].join('\n')
 }
 

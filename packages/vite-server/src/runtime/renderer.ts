@@ -1,8 +1,9 @@
 import { joinURL, withQuery } from 'ufo'
 import { appendVary, describeError, isExpectedError, isJsonRequest } from 'nuxt/internal/renderer/error'
 import type { DescribedError } from 'nuxt/internal/renderer/error'
+import { encodeDocument } from 'nuxt/internal/renderer/encode'
 import { mergeHeaders } from 'nuxt/internal/renderer/headers'
-import { useServerHooks } from 'nuxt/server'
+import { claimServerHooks } from 'nuxt/internal/server-default'
 import type { NuxtRendererOptions } from 'nuxt/internal/renderer/runtime'
 import { buildAssetsURL, publicAssetsURL } from '#internal/nuxt/paths'
 
@@ -52,28 +53,34 @@ export function createRendererOptions (runtimeConfig: NuxtRendererOptions['runti
   // loaded up front, as a runtime may drop a request's pending work once it has responded
   const devErrors = import.meta.dev ? import('./dev-error.ts') : undefined
 
+  const hooks = claimServerHooks()
+
   return {
     runtimeConfig,
     buildAssetsURL,
     publicAssetsURL,
     getRouteRules: event => ({ ssr: true, ...matchRouteRules(event.url.pathname) }),
-    hooks: useServerHooks,
+    hooks: () => hooks,
     createResponse: (body, init) => new Response(body, init),
+    createDocumentResponse: (chunks, init) => new Response(encodeDocument(chunks), init),
     createError: init => new NuxtServerError(init),
     prerender,
     onRenderSuccess: devErrors
-      ? () => {
-          devErrors.then(({ clearErrorReport }) => clearErrorReport()).catch(() => {})
+      ? (event) => {
+          devErrors.then(({ clearErrorReport }) => clearErrorReport(event.url)).catch(() => {})
         }
       : undefined,
     captureError: (error) => {
       // in development the live error channel reports and prints the error itself
-      if (!import.meta.dev) {
+      if (!import.meta.dev && ((error as { status?: number } | null)?.status || 500) >= 500) {
         console.error(error)
       }
     },
     onDevError: devErrors
       ? (error, event, options) => devErrors.then(({ observeDevError }) => observeDevError(error, event.req, options))
+      : undefined,
+    renderDevBadge: devErrors
+      ? (event, nonce) => devErrors.then(({ renderDevBadge }) => renderDevBadge(event.req, nonce))
       : undefined,
   }
 }
@@ -87,17 +94,20 @@ const PRERENDER_HINTS_HEADER = 'x-nuxt-prerender'
 /**
  * A web-standard handler over the renderer: it renders the request, and renders the app's
  * error page for a request the render refused. In development it also serves the live
- * error channel and publishes what it failed on to it.
+ * error channel and publishes what it failed on to it. `context` seeds the context of the
+ * request event.
  */
-export function createFetchHandler (renderer: NuxtRenderer, matchRouteRules: MatchRouteRules): (request: Request) => Promise<Response> {
-  return async function fetch (request: Request): Promise<Response> {
+export function createFetchHandler (renderer: NuxtRenderer, matchRouteRules: MatchRouteRules): (request: Request, context?: Record<string, unknown>) => Promise<Response> {
+  return async function fetch (request: Request, context?: Record<string, unknown>): Promise<Response> {
     if (import.meta.dev) {
       const devErrors = await import('./dev-error.ts')
       if (devErrors.isErrorChannelRequest(new URL(request.url).pathname)) {
+        request.signal.throwIfAborted()
         return devErrors.fetchErrorChannel(request)
       }
     }
-    const event = createRequestEvent(request)
+    request.signal.throwIfAborted()
+    const event = createRequestEvent(request, context)
     const rules = matchRouteRules(event.url.pathname)
     if (rules.redirect) {
       return redirectResponse(event, rules.redirect, rules.headers)
@@ -110,7 +120,8 @@ export function createFetchHandler (renderer: NuxtRenderer, matchRouteRules: Mat
       }
       return response
     } catch (error) {
-      const response = await renderError(renderer, request, error, event)
+      request.signal.throwIfAborted()
+      const response = await renderError(renderer, request, error, event, context)
       applyHeaders(response, rules.headers)
       if (import.meta.prerender) {
         applyPrerenderHints(event, response)
@@ -162,13 +173,16 @@ function resolveRedirectTarget (to: string, tail: string): string {
   return to.slice(0, index) + (query !== -1 && index > query ? value.replace(QUERY_UNSAFE_RE, char => '%' + char.charCodeAt(0).toString(16).toUpperCase()) : value) + to.slice(index + 2)
 }
 
-/** The part of `path` past the segments `base` matched, which may differ in spelling from `base`. */
+/**
+ * The part of `path` past the segments `base` matched, which may differ in spelling from `base`.
+ * A run of slashes or encoded slashes (`%2F`) separates two segments.
+ */
 function redirectTail (path: string, base: string | undefined): string {
   if (!base) { return path }
   if (VARIABLE_WIDTH_RE.test(base)) {
     return path.startsWith(base) ? path.slice(base.length) : path
   }
-  return path.split('/').slice(base.split('/').length).map(segment => '/' + segment).join('')
+  return base.split('/').slice(1).reduce(rest => rest.replace(/^(?:\/|%2f)+(?:(?!%2f)[^/])*/i, ''), path)
 }
 
 /** A meta-refresh document, so a prerendered redirect is followed when served as a static file. */
@@ -197,7 +211,7 @@ function applyPrerenderHints (event: ReturnType<typeof createRequestEvent>, resp
   response.headers.append(PRERENDER_HINTS_HEADER, paths.map(path => encodeURIComponent(path)).join(', '))
 }
 
-async function renderError (renderer: NuxtRenderer, request: Request, error: unknown, event: ReturnType<typeof createRequestEvent>): Promise<Response> {
+async function renderError (renderer: NuxtRenderer, request: Request, error: unknown, event: ReturnType<typeof createRequestEvent>, context?: Record<string, unknown>): Promise<Response> {
   const described = describeError(error)
   const { status, statusText, message } = described
   const url = new URL(request.url)
@@ -218,7 +232,7 @@ async function renderError (renderer: NuxtRenderer, request: Request, error: unk
   }
 
   // the renderer reads the error off the query, as the error page's props
-  const data = (error as { data?: unknown })?.data
+  const data = described.data
   const stack = (error as { stack?: string })?.stack
   const errorEvent = createRequestEvent(new Request(withQuery(new URL('/__nuxt_error', url).href, {
     status: String(status),
@@ -229,7 +243,7 @@ async function renderError (renderer: NuxtRenderer, request: Request, error: unk
     url: url.pathname + url.search + url.hash,
     ...data === undefined ? {} : { data: typeof data === 'string' ? data : JSON.stringify(data) },
     ...import.meta.dev && stack ? { stack } : {},
-  }), { headers: request.headers }))
+  }), { headers: request.headers }), context)
   // while prerendering the two renders share one state, so routes the error page asks for
   // are reported alongside those the failed render collected before it threw
   const state = (import.meta.prerender ? (event.context as { nuxt?: Record<string, unknown> }).nuxt : undefined) || {}

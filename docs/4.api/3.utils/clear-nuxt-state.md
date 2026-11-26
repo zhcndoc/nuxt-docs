@@ -23,4 +23,4 @@ export function clearNuxtState (keys?: string | string[] | ((key: string) => boo
 
 - `keys`：在 [`useState`](/docs/api/composables/use-state) 中使用的一个或多个键，用于删除其缓存状态。如果未提供键，则会使**所有状态**失效。
 - `opts`：用于配置清除行为的选项对象。
-  - `reset` :badge[v4.4]{color="info" size="xs" class="align-middle"}`：设为 `true` 时，会将状态重置为 [`useState`](/docs/api/composables/use-state) 的 `init` 函数提供的初始值，而不是将其设为 `undefined`。未指定时，默认采用 Nuxt 配置中 `experimental.defaults.useState.resetOnClear` 的值（在 `compatibilityVersion: 5` 时为 `true`）。
+  - `reset` :badge[v4.4]{color="info" size="xs" class="align-middle"}：设为 `true` 时，会将状态重置为 [`useState`](/docs/api/composables/use-state) 的 `init` 函数提供的初始值，而不是将其设为 `undefined`。组件提供的 `init` 函数仅在组件挂载期间使用；插件或路由中间件提供的函数则会在应用整个生命周期内保留。如果没有可用的 `init` 函数，状态会被设为 `undefined`。未指定时，默认采用 Nuxt 配置中 `experimental.defaults.useState.resetOnClear` 的值（在 `compatibilityVersion: 5` 时为 `true`）。

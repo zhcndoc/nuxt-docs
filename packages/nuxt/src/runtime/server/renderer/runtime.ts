@@ -28,6 +28,8 @@ export function appEvent (event: RendererEvent): NuxtRequestEvent {
  */
 export interface RenderedResponse {
   body?: unknown
+  /** The rendered document as ordered chunks, sent through `createDocumentResponse` instead of `body`. */
+  chunks?: string[]
   statusCode?: number
   statusMessage?: string
   headers?: Record<string, string>
@@ -72,8 +74,18 @@ export interface NuxtRendererOptions {
   getRouteRules: (event: RendererEvent) => RendererRouteRules
   /** Hooks the surrounding server runtime exposes to modules. */
   hooks: () => RendererHooks
+  /**
+   * The event renderer plugins receive in place of the one passed to the server runtime hooks,
+   * for a runtime whose own event is not a {@link RequestEvent}.
+   */
+  pluginEvent?: (event: NuxtRequestEvent) => RequestEvent
   /** Response constructor, so a runtime can provide a faster implementation than the platform's `Response`. */
   createResponse: (body: BodyInit | null, init?: ResponseInit) => Response
+  /**
+   * Response constructor for a rendered document given as ordered chunks, so a runtime can
+   * encode them without concatenating. Without it the document is joined and passed to `createResponse`.
+   */
+  createDocumentResponse?: (chunks: string[], init?: ResponseInit) => Response
   /** Error carrying an HTTP status, thrown for requests the renderer refuses. */
   createError: (init: { status: number, statusText?: string, data?: unknown, headers?: Record<string, string> }) => Error
   /** Send `103 Early Hints`, when the runtime supports them. */
@@ -93,12 +105,17 @@ export interface NuxtRendererOptions {
    * or when the builder has no channel open.
    */
   onDevError?: (error: unknown, event: RendererEvent, options?: DevErrorObserveOptions) => Promise<DevErrorReport | undefined>
+  /**
+   * Dev-only: render the badge added to the head of every page, which shows the live error channel's
+   * errors and warnings. Its scripts carry `nonce`, the CSP nonce of the page, when it has one.
+   */
+  renderDevBadge?: (event: RendererEvent, nonce?: string) => Promise<string | undefined>
   /** Prerender-only capabilities, absent from a runtime build. */
   prerender?: {
     payloadCache: PayloadCache
     sharedDataCache?: NuxtSSRContext['~sharedPrerenderCache']
     /** Wrap a render so the runtime can track the URLs in flight. */
-    wrapRender?: <T>(event: RendererEvent, render: () => Promise<T>) => Promise<T>
+    wrapRender?: (event: RendererEvent, render: () => Promise<Response>) => Promise<Response>
   }
 }
 
@@ -115,6 +132,8 @@ export interface NuxtRequestState {
   '~devClientCss'?: string[]
   /** Dev-only: serialized cause of the error being rendered. */
   '~error-cause'?: unknown
+  /** Headers the failed render had set, for the server runtime to send with its error response. */
+  '~response-headers'?: Headers
 }
 
 export function getRequestState (event: RendererEvent): NuxtRequestState | undefined {

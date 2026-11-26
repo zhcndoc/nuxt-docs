@@ -13,8 +13,8 @@ surround: false
   ::card{icon="i-lucide-arrow-left-right" title="组合式函数" to="/docs/api/composables/use-app-config"}
   了解 Nuxt 用于数据获取、head 管理等的组合式函数。
   ::
-  ::card{icon="i-lucide-square-function" title="工具" to="/docs/api/utils/dollarfetch"}
-  了解 Nuxt 用于导航、错误处理等的工具函数。
+  ::card{icon="i-lucide-square-function" title="Utils" to="/docs/api/utils/$fetch"}
+  了解 Nuxt 用于导航、错误处理等功能的工具函数。
   ::
   ::card{icon="i-lucide-square-terminal" title="命令" to="/docs/api/commands/add"}
   Nuxt CLI 命令列表，可用于初始化、分析、构建和预览应用程序。

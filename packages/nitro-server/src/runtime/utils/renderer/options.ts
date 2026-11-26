@@ -14,6 +14,8 @@ import { buildAssetsURL, publicAssetsURL } from '../paths'
 import { getRouteRules } from '../route-rules'
 import { payloadCache, prerenderRenderingURLs, sharedPrerenderCache } from '../cache'
 import { NodeRenderResponse } from '../response'
+import { toPortableEvent } from '../event'
+import { prerenderDiagnostics } from 'nuxt/internal/renderer/diagnostics'
 
 // @ts-expect-error private property consumed by vite-generated url helpers
 globalThis.__buildAssetsURL = buildAssetsURL
@@ -27,8 +29,10 @@ export const rendererOptions: NuxtRendererOptions = {
   publicAssetsURL,
   getRouteRules: event => getRouteRules(appEvent(event)) satisfies RendererRouteRules,
   hooks: () => useNitroApp().hooks as unknown as RendererHooks,
+  pluginEvent: event => toPortableEvent(event as unknown as H3Event),
   // the response never leaves this bundle, so the fields the renderer sets are enough
   createResponse: (body, init) => new NodeRenderResponse(body, init) as unknown as Response,
+  createDocumentResponse: (chunks, init) => Object.assign(new NodeRenderResponse(null, init), { chunks }) as unknown as Response,
   // h3 v1 reads the message of an error from `message`/`statusMessage`, and recognises an
   // error of its own by the marker its constructor carries, so this cannot construct one
   createError: init => createError({
@@ -39,8 +43,8 @@ export const rendererOptions: NuxtRendererOptions = {
   }),
   writeEarlyHints: (event, hints) => writeEarlyHints(appEvent(event), hints.link),
   onRenderSuccess: import.meta.dev
-    ? () => {
-        import('#internal/nuxt/error-channel').then(({ clearErrorReport }) => clearErrorReport()).catch(() => {})
+    ? (event) => {
+        import('#internal/nuxt/error-channel').then(({ clearErrorReport }) => clearErrorReport(event.url)).catch(() => {})
       }
     : undefined,
   prerender: import.meta.prerender
@@ -53,11 +57,9 @@ export const rendererOptions: NuxtRendererOptions = {
           // a `useFetch`/`$fetch` against the URL currently rendering deadlocks the
           // build: https://github.com/nuxt/nuxt/issues/33871
           if (stack?.includes(renderingURL)) {
-            const chain = [...stack, renderingURL].filter(url => !url.startsWith('/__nuxt_error')).map(url => `"${url}"`).join(' -> ')
-            throw createError({
-              statusCode: 508,
-              statusMessage: `Loop detected while prerendering "${renderingURL}" (${chain}). Check for \`useFetch\`/\`$fetch\` calls targeting a URL that is currently being rendered.`,
-            })
+            const chain = [...stack, renderingURL].filter(url => !url.startsWith('/__nuxt_error')).map(url => `\`${url}\``).join(' -> ')
+            prerenderDiagnostics.NUXT_E8018({ url: renderingURL, chain })
+            return Promise.resolve(new NodeRenderResponse(null, { status: 508, statusText: 'Loop Detected' }) as unknown as Response)
           }
           return prerenderRenderingURLs!.run([...(stack || []), renderingURL], render)
         },
@@ -78,6 +80,7 @@ if (NUXT_INLINE_ERROR_RENDERING) {
 
 if (import.meta.dev) {
   rendererOptions.onDevError = (error, event, options) => import('#internal/nuxt/error-channel').then(({ observeDevError }) => observeDevError(error, appEvent(event) as H3Event, options))
+  rendererOptions.renderDevBadge = (event, nonce) => import('#internal/nuxt/error-channel').then(({ renderDevBadge }) => renderDevBadge(appEvent(event) as H3Event, nonce))
 }
 
 /**

@@ -25,8 +25,11 @@ describe.skipIf(process.env.SKIP_BUNDLE_SIZE === 'true' || process.env.ECOSYSTEM
     const [clientStats, clientStatsInlined] = await Promise.all((['.output', '.output-inline'])
       .map(outputDir => analyzeSizes(['**/*.js'], join(rootDir, outputDir, 'public'), rootDir)))
 
-    expect.soft(roundToKilobytes(clientStats!.totalBytes)).toMatchInlineSnapshot(`"126k"`)
-    expect.soft(roundToKilobytes(clientStatsInlined!.totalBytes)).toMatchInlineSnapshot(`"126k"`)
+    expect.soft(roundToKilobytes(clientStats!.totalBytes)).toMatchInlineSnapshot(`"103k"`)
+    expect.soft(roundToKilobytes(clientStatsInlined!.totalBytes)).toMatchInlineSnapshot(`"103k"`)
+
+    const entry = await fsp.readFile(join(rootDir, '.output/public', clientStats!.files.find(f => f.startsWith('_nuxt/entry'))!), 'utf8')
+    expect(entry).not.toContain('[ofetch] global.fetch is not supported')
 
     const files = new Set([...clientStats!.files, ...clientStatsInlined!.files].map(f => f.replace(/\..*\.js/, '.js')))
 
@@ -40,7 +43,7 @@ describe.skipIf(process.env.SKIP_BUNDLE_SIZE === 'true' || process.env.ECOSYSTEM
   it('does not ship payload revival machinery in a spa build', async () => {
     const clientStats = await analyzeSizes(['**/*.js'], join(spaRootDir, '.output/public'), spaRootDir)
 
-    expect.soft(roundToKilobytes(clientStats!.totalBytes)).toMatchInlineSnapshot(`"121k"`)
+    expect.soft(roundToKilobytes(clientStats!.totalBytes)).toMatchInlineSnapshot(`"97.4k"`)
 
     const contents = await Promise.all(
       (await glob(['**/*.js'], { cwd: join(spaRootDir, '.output/public') }))
@@ -63,10 +66,25 @@ describe.skipIf(process.env.SKIP_BUNDLE_SIZE === 'true' || process.env.ECOSYSTEM
     expect(client).toContain('Hello World!')
   })
 
+  it.each([
+    ['ssr', rootDir],
+    ['spa', spaRootDir],
+  ])('moves the static head of the app component to the server renderer (%s)', async (_, dir) => {
+    const server = (await Promise.all(
+      (await glob(['**/*.mjs'], { cwd: join(dir, '.output/server') }))
+        .map(file => fsp.readFile(join(dir, '.output/server', file), 'utf8')),
+    )).join('\n')
+    const client = await readClientBundle(join(dir, '.output/public'))
+
+    expect(server).toContain('A static description')
+    expect(client).not.toContain('A static description')
+    expect(client).not.toContain('tags:afterResolve')
+  })
+
   it('default client bundle size (pages)', async () => {
     const clientStats = await analyzeSizes(['**/*.js'], join(pagesRootDir, '.output/public'), pagesRootDir)
 
-    expect.soft(roundToKilobytes(clientStats!.totalBytes)).toMatchInlineSnapshot(`"193k"`)
+    expect.soft(roundToKilobytes(clientStats!.totalBytes)).toMatchInlineSnapshot(`"195k"`)
 
     const files = clientStats!.files.map(f => f.replace(/\..*\.js/, '.js'))
 
@@ -77,21 +95,26 @@ describe.skipIf(process.env.SKIP_BUNDLE_SIZE === 'true' || process.env.ECOSYSTEM
         "_nuxt/default.js",
         "_nuxt/entry.js",
         "_nuxt/pages.js",
-        "_nuxt/runtime-core.js",
         "_nuxt/server-component.js",
         "_nuxt/utils.js",
       ]
     `)
   })
 
+  it('does not ship payload prefetch machinery when payload extraction is disabled', async () => {
+    const client = await readClientBundle(join(pagesRootDir, '.output/public'))
+
+    expect(client).not.toContain('NUXT_E7003')
+  })
+
   it('default server bundle size', async () => {
     const serverDir = join(rootDir, '.output/server')
 
     const serverStats = await analyzeSizes(['**/*.mjs', '!node_modules'], serverDir, rootDir)
-    expect.soft(roundToKilobytes(serverStats.totalBytes)).toMatchInlineSnapshot(`"288k"`)
+    expect.soft(roundToKilobytes(serverStats.totalBytes)).toMatchInlineSnapshot(`"301k"`)
 
     const modules = await analyzeSizes(['node_modules/**/*'], serverDir, rootDir)
-    expect.soft(roundToKilobytes(modules.totalBytes)).toMatchInlineSnapshot(`"325k"`)
+    expect.soft(roundToKilobytes(modules.totalBytes)).toMatchInlineSnapshot(`"329k"`)
 
     const packages = modules.files
       .filter(m => m.endsWith('package.json'))
@@ -128,7 +151,6 @@ describe.skipIf(process.env.SKIP_BUNDLE_SIZE === 'true' || process.env.ECOSYSTEM
     expect([...imports].sort()).toMatchInlineSnapshot(`
       [
         "chunks/_/vue.mjs",
-        "node:process",
       ]
     `)
   })
@@ -137,7 +159,7 @@ describe.skipIf(process.env.SKIP_BUNDLE_SIZE === 'true' || process.env.ECOSYSTEM
     const serverDir = join(rootDir, '.output-inline/server')
 
     const serverStats = await analyzeSizes(['**/*.mjs', '!node_modules'], serverDir, rootDir)
-    expect.soft(roundToKilobytes(serverStats.totalBytes)).toMatchInlineSnapshot(`"229k"`)
+    expect.soft(roundToKilobytes(serverStats.totalBytes)).toMatchInlineSnapshot(`"239k"`)
 
     const modules = await analyzeSizes(['node_modules/**/*'], serverDir, rootDir)
     expect.soft(roundToKilobytes(modules.totalBytes)).toMatchInlineSnapshot(`"262k"`)
@@ -160,10 +182,10 @@ describe.skipIf(process.env.SKIP_BUNDLE_SIZE === 'true' || process.env.ECOSYSTEM
     const serverDir = join(pagesRootDir, '.output/server')
 
     const serverStats = await analyzeSizes(['**/*.mjs', '!node_modules'], serverDir, pagesRootDir)
-    expect.soft(roundToKilobytes(serverStats.totalBytes)).toMatchInlineSnapshot(`"315k"`)
+    expect.soft(roundToKilobytes(serverStats.totalBytes)).toMatchInlineSnapshot(`"328k"`)
 
     const modules = await analyzeSizes(['node_modules/**/*'], serverDir, pagesRootDir)
-    expect.soft(roundToKilobytes(modules.totalBytes)).toMatchInlineSnapshot(`"449k"`)
+    expect.soft(roundToKilobytes(modules.totalBytes)).toMatchInlineSnapshot(`"457k"`)
 
     const packages = modules.files
       .filter(m => m.endsWith('package.json'))
@@ -207,6 +229,49 @@ describe.skipIf(process.env.SKIP_BUNDLE_SIZE === 'true' || process.env.ECOSYSTEM
   })
 })
 
+describe.skipIf(process.env.SKIP_BUNDLE_SIZE === 'true' || process.env.ECOSYSTEM_CI)('minimal nuxt application without head usage', () => {
+  const rootDir = fileURLToPath(new URL('./fixtures/minimal-no-head', import.meta.url))
+
+  beforeAll(async () => {
+    await exec('pnpm', ['nuxt', 'build', rootDir])
+  }, 120 * 1000)
+
+  it('loads unhead with the default error pages instead of the client entry', async () => {
+    const clientDir = join(rootDir, '.output/public')
+    const chunks = new Map(await Promise.all(
+      (await glob(['**/*.js'], { cwd: clientDir }))
+        .map(async file => [file, await fsp.readFile(join(clientDir, file), 'utf8')] as const),
+    ))
+
+    // the entry and every chunk it imports statically are loaded before an error page can render
+    const entries = [...chunks.keys()].filter(file => /(?:^|\/)entry\.js$/.test(file))
+    expect(entries).not.toHaveLength(0)
+
+    const eager = new Set<string>()
+    const queue = [...entries]
+    while (queue.length) {
+      const file = queue.pop()!
+      if (eager.has(file)) { continue }
+      eager.add(file)
+      for (const [, source] of chunks.get(file)!.matchAll(/\b(?:from|import)\s*["']\.\/([^"']+\.js)["']/g)) {
+        queue.push(join(dirname(file), source!))
+      }
+    }
+
+    const eagerlyLoadedWithHead = [...eager].filter(file => chunks.get(file)!.includes('tags:afterResolve'))
+    const lazilyLoadedWithHead = [...chunks.keys()].filter(file => !eager.has(file) && chunks.get(file)!.includes('tags:afterResolve'))
+
+    expect(eagerlyLoadedWithHead).toEqual([])
+    expect(lazilyLoadedWithHead).not.toHaveLength(0)
+
+    const server = (await Promise.all(
+      (await glob(['**/*.mjs'], { cwd: join(rootDir, '.output/server') }))
+        .map(file => fsp.readFile(join(rootDir, '.output/server', file), 'utf8')),
+    )).join('\n')
+    expect(server).toContain('tags:afterResolve')
+  })
+})
+
 describe.skipIf(process.env.SKIP_BUNDLE_SIZE === 'true' || process.env.ECOSYSTEM_CI)('noScripts route rules', () => {
   const rootDir = fileURLToPath(new URL('./fixtures/no-scripts', import.meta.url))
 
@@ -242,17 +307,16 @@ describe.skipIf(process.env.SKIP_BUNDLE_SIZE === 'true' || process.env.ECOSYSTEM
 
 describe.skipIf(process.env.SKIP_BUNDLE_SIZE === 'true' || process.env.ECOSYSTEM_CI)('server path fallback', () => {
   const rootDir = fileURLToPath(new URL('./fixtures/server-path-fallback', import.meta.url))
-  const disabledRootDir = fileURLToPath(new URL('./fixtures/server-path-fallback-disabled', import.meta.url))
   let enabled: string
   let disabled: string
 
   beforeAll(async () => {
     await Promise.all([
       exec('pnpm', ['nuxt', 'build', rootDir]),
-      exec('pnpm', ['nuxt', 'build', disabledRootDir]),
+      exec('pnpm', ['nuxt', 'build', rootDir, '--envName', 'fallback-disabled']),
     ])
     enabled = await readClientBundle(join(rootDir, '.output/public'))
-    disabled = await readClientBundle(join(disabledRootDir, '.output/public'))
+    disabled = await readClientBundle(join(rootDir, '.output-fallback-disabled/public'))
   }, 240 * 1000)
 
   it('ships the fallback when enabled', () => {
@@ -262,6 +326,10 @@ describe.skipIf(process.env.SKIP_BUNDLE_SIZE === 'true' || process.env.ECOSYSTEM
 
   it('ships nothing when disabled', () => {
     expect(disabled.match(/location\.assign/g)).toHaveLength(1)
+  })
+
+  it('does not ship `defineAsyncComponent` with the default error page', () => {
+    expect(enabled).not.toContain('Async component timed out')
   })
 })
 

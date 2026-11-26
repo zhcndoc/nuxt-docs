@@ -1,7 +1,8 @@
-import { setResponseStatus as _setResponseStatus, getRequestHeader, getRequestHeaders, getResponseHeader, removeResponseHeader, setResponseHeader } from '@nuxt/nitro-server/h3'
-import { computed, getCurrentInstance, ref } from 'vue'
+import { setResponseStatus as _setResponseStatus, getRequestHeaders, getResponseHeader, removeResponseHeader, setResponseHeader } from '@nuxt/nitro-server/h3'
+import { computed, customRef, getCurrentInstance, ref } from 'vue'
 import type { TypedFetch } from '../types/fetch'
-import type { NuxtRequestEvent } from '@nuxt/schema'
+import type { NuxtRequestEvent, RequestEvent } from '@nuxt/schema'
+import type { $Fetch as OFetch } from 'ofetch'
 import { $fetch as _$fetch } from '#build/fetch'
 
 import type { NuxtApp } from '../nuxt'
@@ -22,13 +23,21 @@ export function useRequestEvent (nuxtApp?: NuxtApp): NuxtRequestEvent | undefine
   return nuxtApp.ssrContext?.event
 }
 
+/**
+ * `event` as a web-standard request event (as `@nuxt/vite-server` provides), or `undefined` for an h3 event.
+ * @internal
+ */
+export function asWebRequestEvent (event: NuxtRequestEvent): RequestEvent | undefined {
+  return 'node' in event ? undefined : event as unknown as RequestEvent
+}
+
 /** @since 3.0.0 */
 export function useRequestHeaders<K extends string = string> (include: K[]): { [key in Lowercase<K>]?: string }
 export function useRequestHeaders (): Readonly<Record<string, string>>
 export function useRequestHeaders (include?: any[]): Readonly<Record<string, string | undefined>> {
   if (import.meta.client) { return {} }
   const event = useRequestEvent()
-  const _headers = event ? getRequestHeaders(event) : {}
+  const _headers = event ? readRequestHeaders(event) : {}
   if (!include || !event) { return _headers }
   const headers = Object.create(null)
   for (const _key of include) {
@@ -45,7 +54,74 @@ export function useRequestHeaders (include?: any[]): Readonly<Record<string, str
 export function useRequestHeader (header: string): string | null | undefined {
   if (import.meta.client) { return undefined }
   const event = useRequestEvent()
-  return event ? getRequestHeader(event, header) : undefined
+  return event ? readRequestHeaders(event)[header.toLowerCase()] : undefined
+}
+
+function readRequestHeaders (event: NuxtRequestEvent): Record<string, string | undefined> {
+  const webEvent = asWebRequestEvent(event)
+  return webEvent ? Object.fromEntries(webEvent.req.headers) : getRequestHeaders(event)
+}
+
+// hop-by-hop headers, and headers describing the page request's body or the response it accepts
+const UNFORWARDED_HEADERS = new Set([
+  'accept',
+  'accept-encoding',
+  'connection',
+  'content-length',
+  'content-md5',
+  'content-type',
+  'expect',
+  'host',
+  'if-match',
+  'if-modified-since',
+  'if-none-match',
+  'if-range',
+  'if-unmodified-since',
+  'keep-alive',
+  'proxy-authenticate',
+  'proxy-authorization',
+  'range',
+  'te',
+  'trailer',
+  'transfer-encoding',
+  'upgrade',
+])
+
+function forwardRequestHeaders (event: NuxtRequestEvent, request: unknown, options?: RequestInit): RequestInit {
+  const isLocal = typeof request === 'string' && request[0] === '/'
+  const headers = new Headers(options?.headers)
+  // a web-standard request event (`@nuxt/vite-server`) carries its headers on `req`
+  for (const [name, value] of event.headers || (event as unknown as { req: Request }).req.headers) {
+    if ((!UNFORWARDED_HEADERS.has(name) || (name === 'host' && isLocal)) && !headers.has(name)) {
+      headers.set(name, value)
+    }
+  }
+  const context = (options as { context?: unknown } | undefined)?.context || event.context
+  return { ...options, headers, context } as RequestInit
+}
+
+/**
+ * Fetch `request` in-process with the headers and context of `event`.
+ * @internal
+ */
+export function fetchWithRequestHeaders (event: NuxtRequestEvent, request: string): Promise<Response> {
+  return ($fetch as unknown as OFetch).native(request, forwardRequestHeaders(event, request))
+}
+
+// the builder's `fetch` takes the request context as an internal third argument
+type InProcessFetch = (request: unknown, options: unknown, context: Record<string, unknown>) => Promise<Response>
+
+const requestFetchers = new WeakMap<NuxtRequestEvent, TypedFetch>()
+
+function createRequestFetch (event: NuxtRequestEvent): TypedFetch {
+  const base = $fetch as unknown as OFetch
+  return base.create({}, {
+    fetch: (request, options) => {
+      const init = forwardRequestHeaders(event, request, options)
+      const context = (init as { context?: Record<string, unknown> }).context
+      return (base.native as unknown as InProcessFetch)(request, init, { ...context, nuxt: undefined })
+    },
+  }) as unknown as TypedFetch
 }
 
 /** @since 3.2.0 */
@@ -53,7 +129,16 @@ export function useRequestFetch (): TypedFetch {
   if (import.meta.client) {
     return $fetch
   }
-  return (useRequestEvent()?.$fetch as unknown as TypedFetch | undefined) || $fetch
+  const event = useRequestEvent()
+  if (!event) {
+    return $fetch
+  }
+  let fetcher = requestFetchers.get(event)
+  if (!fetcher) {
+    fetcher = createRequestFetch(event)
+    requestFetchers.set(event, fetcher)
+  }
+  return fetcher
 }
 
 /** @since 3.0.0 */
@@ -63,12 +148,21 @@ export function setResponseStatus (code: number, message?: string): void
 export function setResponseStatus (arg1: NuxtRequestEvent | number | undefined, arg2?: number | string, arg3?: string): void {
   if (import.meta.client) { return }
   if (arg1 && typeof arg1 !== 'number') {
-    return _setResponseStatus(arg1, arg2 as number | undefined, arg3)
+    return writeResponseStatus(arg1, arg2 as number | undefined, arg3)
   }
   const event = useRequestEvent()
   if (event) {
-    return _setResponseStatus(event, arg1, arg2 as string | undefined)
+    return writeResponseStatus(event, arg1, arg2 as string | undefined)
   }
+}
+
+function writeResponseStatus (event: NuxtRequestEvent, code?: number, message?: string): void {
+  const webEvent = asWebRequestEvent(event)
+  if (!webEvent) {
+    return _setResponseStatus(event, code, message)
+  }
+  webEvent.res.status = code
+  webEvent.res.statusText = message
 }
 
 /** @since 3.14.0 */
@@ -84,19 +178,41 @@ export function useResponseHeader (header: string): import('vue').WritableComput
   }
 
   const event = useRequestEvent()!
+  const webEvent = asWebRequestEvent(event)
 
-  return computed({
+  if (webEvent) {
+    const headers = webEvent.res.headers
+    return customRef((track, trigger) => ({
+      get () {
+        track()
+        return headers.get(header) ?? undefined
+      },
+      set (newValue) {
+        headers.delete(header)
+        if (newValue) {
+          for (const value of toArray(newValue)) {
+            headers.append(header, String(value))
+          }
+        }
+        trigger()
+      },
+    }))
+  }
+
+  return customRef((track, trigger) => ({
     get () {
+      track()
       return getResponseHeader(event, header)
     },
     set (newValue) {
       if (!newValue) {
-        return removeResponseHeader(event, header)
+        removeResponseHeader(event, header)
+      } else {
+        setResponseHeader(event, header, newValue)
       }
-
-      return setResponseHeader(event, header, newValue)
+      trigger()
     },
-  })
+  }))
 }
 
 /** @since 3.8.0 */
@@ -123,7 +239,7 @@ const PREHYDRATE_ATTR_KEY = 'data-prehydrate-id'
  * The callback will run before Nuxt runtime initializes so it should not rely on the Nuxt or Vue context.
  * @since 3.12.0
  */
-export function onPrehydrate (callback: (el: HTMLElement) => void): void
+export function onPrehydrate (callback: (el: HTMLElement) => void): string | undefined
 export function onPrehydrate (callback: string | ((el: HTMLElement) => void), key?: string): undefined | string {
   if (import.meta.client) { return }
 

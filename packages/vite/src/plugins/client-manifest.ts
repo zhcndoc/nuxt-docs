@@ -9,7 +9,7 @@ import { serialize } from 'seroval'
 import type { Manifest as RendererManifest } from 'vue-bundle-renderer'
 import type { Plugin, Manifest as ViteClientManifest } from 'vite'
 import { setBuildOutput } from '@nuxt/kit'
-import { bundlerDiagnostics, setServerBuild, useServerBuild } from '@nuxt/kit/internal'
+import { bundlerDiagnostics, setServerBuild, useServerBuild, waitForClientBuild } from '@nuxt/kit/internal'
 import type { Nuxt } from '@nuxt/schema'
 import { resolveClientEntry, resolveClientManifestFile } from '../utils/config.ts'
 
@@ -18,6 +18,7 @@ export function ClientManifestPlugin (nuxt: Nuxt): Plugin {
   let key: string
   let disableCssCodeSplit: boolean
   let manifestFile: string
+  let manifestFileName: string
 
   let precomputedCode = 'export default undefined'
   // Default empty manifest so the build output is loadable before the real one is populated.
@@ -31,6 +32,10 @@ export function ClientManifestPlugin (nuxt: Nuxt): Plugin {
   const serverBundlesApp = !useServerBuild(nuxt).buildsSeparately
 
   let clientBundleGenerated = false
+
+  // captured in-memory from the client bundle where the server build bundles the app, as a
+  // deploy target may build the server before the client manifest is written to disk
+  let rawClientManifest: ViteClientManifest | undefined
 
   let finalized: Promise<void> | undefined
   const finalize = () => (finalized ??= finalizeBuildManifest())
@@ -76,9 +81,14 @@ export function ClientManifestPlugin (nuxt: Nuxt): Plugin {
     applyToEnvironment: environment => environment.name === 'ssr' || environment.name === 'client',
     generateBundle: {
       order: 'post',
-      handler () {
+      handler (_options, bundle) {
         if (nuxt.options.dev || this.environment?.name !== 'client') { return }
         clientBundleGenerated = true
+        if (!serverBundlesApp) { return }
+        const asset = bundle[manifestFileName]
+        if (asset?.type === 'asset') {
+          rawClientManifest = JSON.parse(asset.source.toString()) as ViteClientManifest
+        }
       },
     },
     configResolved (config) {
@@ -87,7 +97,8 @@ export function ClientManifestPlugin (nuxt: Nuxt): Plugin {
       disableCssCodeSplit = config.build?.cssCodeSplit === false
       if (!nuxt.options.dev) {
         const clientBuild = config.environments.client?.build ?? config.build
-        manifestFile = resolve(clientBuild.outDir, resolveClientManifestFile(clientBuild.manifest))
+        manifestFileName = resolveClientManifestFile(clientBuild.manifest)
+        manifestFile = resolve(clientBuild.outDir, manifestFileName)
         setServerBuild({
           input: {
             clientDir: () => clientBuild.outDir,
@@ -107,13 +118,16 @@ export function ClientManifestPlugin (nuxt: Nuxt): Plugin {
   }
 
   async function finalizeBuildManifest (): Promise<void> {
+    await waitForClientBuild(nuxt)
     if (!nuxt.options.dev && !clientBundleGenerated) {
       // The client build never produced a bundle (for example, a build aborted
       // before it ran), so there is no manifest to finalise.
       return
     }
 
-    const clientManifest = nuxt.options.dev ? buildDevClientManifest() : JSON.parse(readManifestFromDisk()) as ViteClientManifest
+    const clientManifest = nuxt.options.dev
+      ? buildDevClientManifest()
+      : rawClientManifest ?? JSON.parse(readManifestFromDisk()) as ViteClientManifest
     const manifestEntries = Object.values(clientManifest)
 
     const buildAssetsDir = withTrailingSlash(withoutLeadingSlash(nuxt.options.app.buildAssetsDir))
@@ -152,7 +166,7 @@ export function ClientManifestPlugin (nuxt: Nuxt): Plugin {
       return readFileSync(manifestFile, 'utf-8')
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-        throw bundlerDiagnostics.NUXT_B7021({ manifestFile })
+        throw bundlerDiagnostics.NUXT_B7021({ manifestFile }, { method: 'error' })
       }
       throw error
     }

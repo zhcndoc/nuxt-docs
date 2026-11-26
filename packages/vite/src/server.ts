@@ -1,7 +1,6 @@
 import { resolve } from 'pathe'
 import * as vite from 'vite'
 import vuePlugin from '@vitejs/plugin-vue'
-import viteJsxPlugin from '@vitejs/plugin-vue-jsx'
 import { logger, recoverThrottledChanges, resolvePath } from '@nuxt/kit'
 import { joinURL } from 'ufo'
 import type { Nuxt, ViteConfig } from '@nuxt/schema'
@@ -12,6 +11,7 @@ import { createViteLogger } from './utils/logger.ts'
 import { getDevErrorReporter, reportTransformError } from './dev-errors.ts'
 import { writeManifest } from './manifest.ts'
 import { SourcemapPreserverPlugin } from './plugins/sourcemap-preserver.ts'
+import { VueJsxPlugin } from './plugins/vue-jsx.ts'
 import { TemplateHMRPlugin } from './plugins/template-hmr.ts'
 import { ssr, ssrEnvironment } from './shared/server.ts'
 
@@ -80,15 +80,13 @@ export async function buildServer (nuxt: Nuxt, ctx: ViteBuildContext) {
 
   serverConfig.plugins!.unshift(
     vuePlugin(serverConfig.vue),
-    viteJsxPlugin(serverConfig.vueJsx),
+    VueJsxPlugin(serverConfig.vueJsx, nuxt.options.experimental.decorators),
   )
 
   await nuxt.callHook('vite:configResolved', serverConfig, { isClient: false, isServer: true })
 
   // Production build
   if (!nuxt.options.dev) {
-    const start = Date.now()
-    logger.info('Building server...')
     logger.restoreAll()
     try {
       await vite.build(serverConfig)
@@ -98,7 +96,6 @@ export async function buildServer (nuxt: Nuxt, ctx: ViteBuildContext) {
     // Write production client manifest
     await writeManifest(ctx)
     await nuxt.callHook('vite:compiled')
-    logger.success(`Server built in ${Date.now() - start}ms`)
     return
   }
 

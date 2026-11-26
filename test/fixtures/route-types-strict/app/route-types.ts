@@ -1,3 +1,4 @@
+import type { FetchOptions } from '#app'
 import { expectTypeOf } from 'vitest'
 
 /**
@@ -75,4 +76,42 @@ export function strictComposable () {
 
   // @ts-expect-error the route validates a body, so it cannot be omitted
   useFetch('/api/validated', { method: 'POST', query: { page: '1' } })
+}
+
+interface SearchResponse { data?: { organization?: { team?: { members: { nodes: Array<{ login: string }> } } } } }
+
+/** A call that names its response type, or a wrapper that does, accepts any method. */
+export async function namedResponseMethodProbe<T> (url: string, body: Record<string, unknown>) {
+  await $fetch<T>(url, { method: 'POST', body })
+  await $fetch.raw<T>(url, { method: 'POST', body })
+  expectTypeOf(await $fetch<unknown>('https://example.com', { method: 'PUT' })).toEqualTypeOf<unknown>()
+  expectTypeOf(await $fetch<SearchResponse>('https://api.github.com/graphql', { method: 'POST', headers: { Authorization: 'x' }, body: { query: 'q' } })).toEqualTypeOf<SearchResponse>()
+
+  // a call that infers its request is still resolved against GET
+  // @ts-expect-error no GET route matches '/api/validated'
+  await $fetch('/api/validated')
+  expectTypeOf(await $fetch('/api/validated', { method: 'POST', body: { title: 'a', count: 1 }, query: { page: '1' } })).toEqualTypeOf<{ created: boolean }>()
+}
+
+/** A URL the app does not serve is fetched with options typed for any request. */
+export async function externalFetchProbe<T> (url: string, options: FetchOptions = {}) {
+  const post: FetchOptions = { method: 'POST', body: { a: 1 }, query: { a: 1 }, headers: { a: 'b' } }
+  await $fetch(new Request('https://example.com'))
+  await $fetch.raw(new Request('https://example.com'))
+  await $fetch<T>(url, post)
+  return await $fetch<T>(url, options)
+}
+
+const api = $fetch.create({ headers: { 'x-client': 'app' } })
+
+/** An instance created from `$fetch` is typed by the routes it is called with. */
+export async function createdFetchProbe () {
+  expectTypeOf(await api('/api/hello')).toEqualTypeOf<{ hello: boolean }>()
+  expectTypeOf(await api('/api/validated', { method: 'POST', body: { title: 'a', count: 1 }, query: { page: '1' } })).toEqualTypeOf<{ created: boolean }>()
+  // @ts-expect-error the route validates a body, so it cannot be omitted
+  await api('/api/validated', { method: 'POST', query: { page: '1' } })
+  // @ts-expect-error `count` is not a string
+  await api('/api/validated', { method: 'POST', body: { title: 'a', count: '1' }, query: { page: '1' } })
+  // @ts-expect-error no GET route matches '/api/helo'
+  await api('/api/helo')
 }

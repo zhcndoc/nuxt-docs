@@ -34,12 +34,12 @@ import type { ModuleMeta, NuxtModule } from './module.ts'
 import type { NuxtDebugOptions } from './debug.ts'
 import type { Nuxt, NuxtPlugin, NuxtTemplate } from './nuxt.ts'
 import type { SerializableHtmlAttributes } from './head.ts'
-import type { NuxtAppConfig, NuxtOptions, RuntimeConfig, Serializable, SharedAppConfig, ViewTransitionOptions, ViteOptions } from './config.ts'
+import type { NuxtAppConfig, NuxtOptions, RsbuildOptions, RuntimeConfig, Serializable, SharedAppConfig, ViewTransitionOptions, ViteOptions } from './config.ts'
 import type { NuxtIgnoreOptions } from './ignore.ts'
 import type { ImportsOptions } from './imports.ts'
 import type { ComponentsOptions } from './components.ts'
 import type { KeyedFunction, KeyedFunctionFactory, NuxtCompilerOptions } from './compiler.ts'
-import type { DevServerHandler, NitroConfig, PrerenderOptions, ResolveNuxtNitroConfig, RouteRuleConfig, ServerHandler, ServerPlugin, TracingChannelOptions } from './nitro.ts'
+import type { DevServerHandler, NitroConfig, PrerenderOptions, RendererPluginEntry, ResolveNuxtNitroConfig, RouteRuleConfig, ServerHandler, ServerPlugin, TracingChannelOptions } from './nitro.ts'
 
 export interface ConfigSchema {
   /**
@@ -463,7 +463,7 @@ export interface ConfigSchema {
    * The builder to use for bundling the Vue part of your application.
    *
    */
-  builder: 'vite' | 'webpack' | 'rspack' | { bundle: (nuxt: Nuxt) => Promise<void> }
+  builder: 'vite' | 'webpack' | 'rsbuild' | 'rspack' | { bundle: (nuxt: Nuxt) => Promise<void> }
 
   /**
    * Configures whether and how sourcemaps are generated for server and/or client bundles.
@@ -516,6 +516,8 @@ export interface ConfigSchema {
      * Nuxt allows visualizing your bundles and how to optimize them.
      *
      * Set to `true` to enable bundle analysis, or pass an object with options: [for webpack](https://github.com/webpack/webpack-bundle-analyzer#options-for-plugin) or [for vite](https://github.com/btd/rollup-plugin-visualizer#options).
+     *
+     * With the Rsbuild builder, Nuxt writes an [Rsdoctor](https://rsdoctor.rs) report to `filename` unless `enabled` is `false`, and ignores the other options.
      *
      * @example
      * ```js
@@ -1056,8 +1058,9 @@ export interface ConfigSchema {
     /**
      * Base path of the live error channel served in development.
      *
-     * Error pages and overlays subscribe to it to update in place, dismiss
-     * themselves when the problem is fixed, and open a frame in the editor.
+     * Every page subscribes to it to show errors and warnings as they arrive,
+     * dismiss them when the problem is fixed, and open a frame in the editor.
+     * It also serves the overlay's scripts.
      *
      * @experimental
      */
@@ -1299,9 +1302,24 @@ export interface ConfigSchema {
      * `hashMode`, with a root-level catch-all page, and when a custom `app/router.options`
      * file may modify `routes`.
      *
+     * Enabled by `experimental.staticRoutes` unless set explicitly.
+     *
      * @default false
      */
     early404: boolean
+
+    /**
+     * Treat the page routes as fixed once the app is built.
+     *
+     * With this option the route table cannot change at runtime: `router.addRoute()`,
+     * `router.removeRoute()` and `router.clearRoutes()` throw, and are removed from the type
+     * of the router returned by `useRouter()`. In exchange the server builds the route matcher
+     * once per distinct `routes` array instead of once per request, and `experimental.early404`
+     * is enabled.
+     *
+     * @default false
+     */
+    staticRoutes: boolean
 
     /**
      * Warn at build time about template mistakes the Vue compiler cannot detect:
@@ -1311,8 +1329,8 @@ export interface ConfigSchema {
      * - a function or class instance passed as a prop to a server component, or in the `props`
      *   of a `<NuxtIsland>`
      *
-     * Warnings are printed to the terminal and, in development, sent to open error pages and
-     * overlays.
+     * Warnings are printed to the terminal and, in development, shown on every open page until
+     * fixed.
      *
      * The route check cannot see routes added at runtime with `router.addRoute()` or paths
      * that route middleware redirects, and is skipped when a custom `app/router.options` file
@@ -1323,11 +1341,42 @@ export interface ConfigSchema {
     templateDiagnostics: boolean
 
     /**
+     * Offer the app's actions to AI agents in the browser through [WebMCP](https://webmachinelearning.github.io/webmcp/).
+     *
+     * Functions bound in a template and tagged with `@tool` in their JSDoc become tools, as do
+     * tools defined with `defineAgentTool()` and activated with `useAgentTool()`. Tools register
+     * only in browsers that support WebMCP.
+     *
+     * - `navigate`: register a `navigate` tool listing the app's pages. Defaults to `true`.
+     * - `schema`: where `nuxt dev` writes the tools registered while you browse, relative to
+     *   `rootDir`, or `false` to skip it. Defaults to `<buildDir>/webmcp/schema.json`. Only the
+     *   Vite builder writes this file.
+     *
+     * @see [WebMCP](https://nuxt.com/docs/guide/ai/webmcp)
+     * @default false
+     */
+    webmcp: boolean | { navigate?: boolean, schema?: string | false }
+
+    /**
      * Whether to enable the experimental `<NuxtClientFallback>` component for rendering content on the client if there's an error in SSR.
      *
+     * @deprecated Use `<NuxtErrorBoundary retry-on-client>` instead, which catches server-side errors
+     * (see `experimental.ssrErrorBoundary`) and re-renders its default slot on the client.
      * @default false
      */
     clientFallback: boolean
+
+    /**
+     * Allow `<NuxtErrorBoundary>` to catch errors thrown while server-rendering its default slot.
+     *
+     * When enabled, the boundary renders its `#error` slot on the server (with the caught error
+     * serialised into the payload so the client hydrates in the same state) instead of the error
+     * escaping to the top-level `error.vue` page. When disabled, the boundary only catches
+     * client-side errors, and a server-rendered page whose content throws still shows the error page.
+     *
+     * @default true (with `future.compatibilityVersion: 5`)
+     */
+    ssrErrorBoundary: boolean
 
     /**
      * Enable cross-origin prefetch using the Speculation Rules API.
@@ -1555,6 +1604,24 @@ export interface ConfigSchema {
          * @default true with compatibilityVersion >= 5
          */
         resetOnClear: boolean
+      }
+
+      /**
+       * Options that apply to `navigateTo`.
+       * @default { noopener: false }
+       * @default { noopener: true } with compatibilityVersion >= 5
+       */
+      navigateTo: {
+        /**
+         * When `true`, `navigateTo(url, { open })` passes `noopener` to `window.open` unless
+         * `open.windowFeatures.noopener` is set explicitly.
+         *
+         * This prevents the opened document from accessing your app through `window.opener`.
+         *
+         * @default false
+         * @default true with compatibilityVersion >= 5
+         */
+        noopener: boolean
       }
 
       useFetch: {
@@ -1789,6 +1856,20 @@ export interface ConfigSchema {
     stripNeverHydratedData: boolean
 
     /**
+     * Always install `globalThis.$fetch` on the client, from the app entry.
+     *
+     * By default, a production client build only installs the global (and includes `ofetch`) when a module reads it: an unimported `$fetch`, or `globalThis.$fetch`, `window.$fetch` or `self.$fetch`. Enable this option if the global is read in a way the build cannot detect:
+     * - dynamic property access, such as `globalThis[name]`
+     * - scripts loaded at runtime, inline scripts, or scripts in `public/`
+     * - CommonJS modules
+     * - the browser console
+     *
+     * The server always installs the global.
+     * @default false
+     */
+    globalFetch: boolean
+
+    /**
      * Whether to run `useFetch` when the key changes, even if it is set to `immediate: false` and it has not been triggered yet.
      *
      * `useFetch` and `useAsyncData` will always run when the key changes if `immediate: true` or if it has been already triggered.
@@ -1832,6 +1913,22 @@ export interface ConfigSchema {
      * @see [V8 explicit compile hints](https://v8.dev/blog/explicit-compile-hints)
      */
     compileHints: boolean
+
+    /**
+     * Whether to bundle the static dependencies of the layout into a single chunk in the Vite client build, when the app has exactly one layout.
+     *
+     * @default true
+     */
+    layoutChunk: boolean
+
+    /**
+     * Whether to build the client and server environments concurrently in a Vite production build.
+     *
+     * This only applies when `experimental.viteEnvironmentApi` is enabled.
+     *
+     * @default true
+     */
+    parallelBuild: boolean
 
     /**
      * Extract async data handler functions into separate chunks for better performance and caching.
@@ -2067,7 +2164,7 @@ export interface ConfigSchema {
    *
    * @experimental This is an experimental feature and API may change in the future.
    *
-   * @see [Nitro route rules documentation](https://nitro.build/config#routerules)
+   * @see [Nitro route rules documentation](https://v2.nitro.build/config#routerules)
    */
   routeRules: Record<string, RouteRuleConfig> | undefined
 
@@ -2084,7 +2181,7 @@ export interface ConfigSchema {
    * Server handlers registered with the configured `server.builder`.
    *
    * Each handler accepts the following options:
-   * - handler: The path to the file defining the handler. - route: The route under which the handler is available. This follows the conventions of [rou3](https://github.com/h3js/rou3). - method: The HTTP method of requests that should be handled. - middleware: Specifies whether it is a middleware handler. - lazy: Specifies whether to use lazy loading to import the handler.
+   * - handler: The path to the file defining the handler. - route: The route under which the handler is available. This follows the conventions of [rou3](https://github.com/h3js/rou3), except for a middleware handler on Nitro 2, where it is a literal path prefix (`/admin` covers every path below it, and `/**` is not a wildcard). - method: The HTTP method of requests that should be handled. - middleware: Specifies whether it is a middleware handler. - lazy: Specifies whether to use lazy loading to import the handler.
    *
    * @see [`server/` directory documentation](https://nuxt.com/docs/4.x/directory-structure/server)
    *
@@ -2113,6 +2210,14 @@ export interface ConfigSchema {
    * @private
    */
   _serverPlugins: ServerPlugin[]
+
+  /**
+   * Plugins registered with the SSR renderer through `addRendererPlugin()`, which each
+   * renderer calls once, before it renders, with its hooks.
+   *
+   * @private
+   */
+  _rendererPlugins: RendererPluginEntry[]
 
   /**
    * Enable [diagnostics-channel](https://nodejs.org/api/diagnostics_channel.html)
@@ -2169,7 +2274,7 @@ export interface ConfigSchema {
      * By default Nuxt infers this based on your `builder` option (defaulting to 'vite') but you can either turn off builder environment types (with `false`) to handle this fully yourself, or opt for a 'shared' option.
      * The 'shared' option is advised for module authors, who will want to support multiple possible builders.
      */
-    builder: 'vite' | 'webpack' | 'rspack' | 'shared' | false | undefined | null
+    builder: 'vite' | 'webpack' | 'rsbuild' | 'rspack' | 'shared' | false | undefined | null
 
     /**
      * Modules to generate deep aliases for within `compilerOptions.paths`. This does not yet support subpaths. It may be necessary when using Nuxt within a pnpm monorepo with `shamefully-hoist=false`.
@@ -2182,13 +2287,15 @@ export interface ConfigSchema {
     includeWorkspace: boolean
 
     /**
-     * Enable build-time type checking.
+     * Enable type checking.
      *
-     * If set to true, this will type check in development. You can restrict this to build-time type checking by setting it to `build`. Requires to install `typescript` and `vue-tsc` as dev dependencies.
+     * If set to true, this will type check in development and at build time.
+     * Set to `build` to type check only when building, or `dev` to type check only in the dev server.
+     * Requires installing `typescript` and `vue-tsc` as dev dependencies.
      *
      * @see [Nuxt TypeScript docs](https://nuxt.com/docs/4.x/guide/concepts/typescript)
      */
-    typeCheck: boolean | 'build'
+    typeCheck: boolean | 'build' | 'dev'
 
     /**
      * Extend the generated tsconfig files with shared options.
@@ -2250,6 +2357,16 @@ export interface ConfigSchema {
    * Please note that not all vite options are supported in Nuxt.
    */
   vite: ViteOptions
+
+  /**
+   * Configuration that will be merged into the Rsbuild configuration generated by Nuxt, when using the Rsbuild builder.
+   *
+   * The client and server builds can be configured separately with `environments.client` and `environments.ssr`.
+   *
+   * @see [Rsbuild configuration docs](https://rsbuild.rs/config/) for more information.
+   * Please note that not all Rsbuild options are supported in Nuxt.
+   */
+  rsbuild: RsbuildOptions
 
   webpack: {
   /**

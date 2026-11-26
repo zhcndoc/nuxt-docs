@@ -1,10 +1,10 @@
 import { createUnplugin } from 'unplugin'
-import type { Unimport } from 'unimport'
+import type { Import, Unimport } from 'unimport'
 import type { EnvironmentModuleGraph, EnvironmentModuleNode } from 'vite'
 import { normalize } from 'pathe'
 import { tryUseNuxt } from '@nuxt/kit'
 
-import { isJS, isVue } from '../core/utils/index.ts'
+import { isJS, isVue, vitestCacheKey } from '../core/utils/index.ts'
 import { installNuxtModule } from '../core/features.ts'
 import type { ImportsOptions } from 'nuxt/schema'
 
@@ -20,6 +20,19 @@ interface TransformPluginOptions {
    * one we scan for imports.
    */
   refreshImports?: (file: string) => void | Promise<void>
+  /**
+   * Returns a counter that increases whenever the imports available for injection change, as
+   * computed with `getImportsSignature`.
+   */
+  getImportsVersion?: () => number
+  getImportsHash?: () => string
+}
+
+/** Serialises the fields of `imports` that affect the code injected into consumers. */
+export function getImportsSignature (imports: Import[]) {
+  return imports
+    .map(i => JSON.stringify([i.from, i.name, i.as, i.type, i.typeFrom, i.priority, i.disabled, i.declarationType, i.with]))
+    .join('\n')
 }
 
 function invalidateImporters (moduleGraph: EnvironmentModuleGraph, modules: Iterable<EnvironmentModuleNode> | undefined) {
@@ -30,31 +43,34 @@ function invalidateImporters (moduleGraph: EnvironmentModuleGraph, modules: Iter
   }
 }
 
-export const TransformPlugin = ({ ctx, options, sourcemap, refreshImports }: TransformPluginOptions) => createUnplugin(() => {
+function matches (patterns: RegExp[] | undefined, id: string) {
+  return !!patterns?.some((pattern) => {
+    // a global or sticky pattern otherwise resumes from the end of its previous match
+    pattern.lastIndex = 0
+    return pattern.test(id)
+  })
+}
+
+function isTransformed (options: Partial<ImportsOptions>, id: string) {
+  if (matches(options.transform?.include, id)) {
+    return true
+  }
+  if (matches(options.transform?.exclude, id)) {
+    return false
+  }
+  return isVue(id, { type: ['script', 'template'] }) || isJS(id)
+}
+
+export const TransformPlugin = ({ ctx, options, sourcemap, refreshImports, getImportsVersion, getImportsHash }: TransformPluginOptions) => createUnplugin(() => {
+  const invalidatedAt = new WeakMap<object, Map<string, number>>()
+
   return {
     name: 'nuxt:imports-transform',
     enforce: 'post',
-    transformInclude (id) {
-      // Included
-      if (options.transform?.include?.some(pattern => pattern.test(id))) {
-        return true
-      }
-      // Excluded
-      if (options.transform?.exclude?.some(pattern => pattern.test(id))) {
-        return false
-      }
-
-      // Vue files
-      if (isVue(id, { type: ['script', 'template'] })) {
-        return true
-      }
-
-      // JavaScript files
-      return isJS(id)
-    },
+    transformInclude: id => isTransformed(options, id),
     async transform (code, id) {
       id = normalize(id)
-      const isNodeModule = NODE_MODULES_RE.test(id) && !options.transform?.include?.some(pattern => pattern.test(id))
+      const isNodeModule = NODE_MODULES_RE.test(id) && !matches(options.transform?.include, id)
       // For modules in node_modules, we only transform `#imports` but not doing imports
       if (isNodeModule && !IMPORTS_RE.test(code)) {
         return
@@ -75,15 +91,30 @@ export const TransformPlugin = ({ ctx, options, sourcemap, refreshImports }: Tra
       }
     },
     vite: {
+      ...vitestCacheKey(({ id }) => isTransformed(options, id) ? getImportsHash?.() : undefined),
       hotUpdate: {
         order: 'pre',
         async handler ({ file, modules }) {
           // The exports a file provides can change with its contents, so it has to be rescanned
           // before its consumers are transformed again - otherwise they keep the imports it used
           // to provide, and the module they resolve to no longer has them.
-          const pending = refreshImports?.(normalize(file))
+          const path = normalize(file)
+          const pending = refreshImports?.(path)
           if (!pending) { return }
           await pending
+
+          // Vite soft-invalidates importers, which reuses their transform output, so they only
+          // need a fresh transform once the available imports have changed.
+          const version = getImportsVersion?.()
+          if (version !== undefined) {
+            let seen = invalidatedAt.get(this.environment)
+            if (!seen) {
+              seen = new Map()
+              invalidatedAt.set(this.environment, seen)
+            }
+            if ((seen.get(path) ?? 0) === version) { return }
+            seen.set(path, version)
+          }
 
           // The injected imports live in the consumers' transform output, which is only
           // regenerated if their modules are invalidated as well.

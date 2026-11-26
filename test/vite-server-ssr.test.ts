@@ -1,27 +1,20 @@
-import { fileURLToPath } from 'node:url'
 import { readFile } from 'node:fs/promises'
 import { glob } from 'tinyglobby'
 import { parse } from 'acorn'
 import { join } from 'pathe'
 import { beforeAll, describe, expect, it } from 'vitest'
-import { buildNuxt, loadNuxt } from '@nuxt/kit'
-import { isWindows } from 'std-env'
-import { $fetch, fetch, setup } from '@nuxt/test-utils/e2e'
+import { $fetch, fetch } from '@nuxt/test-utils/e2e'
 
 import { isDev, runsOnceInMatrix, runsOncePerEnvInMatrix } from './matrix'
+import { buildInProcess, fixturePath, parseData, setupFixture } from './utils'
 
-const rootDir = fileURLToPath(new URL('./fixtures/vite-server-ssr', import.meta.url))
+const rootDir = fixturePath('vite-server-ssr')
 
-if (runsOncePerEnvInMatrix && isDev) {
-  await setup({
-    rootDir,
-    dev: true,
-    server: true,
-    setupTimeout: (isWindows ? 360 : 120) * 1000,
-  })
-}
+const runsDev = runsOncePerEnvInMatrix && isDev
 
-describe.skipIf(!runsOncePerEnvInMatrix || !isDev)('pure vite dev server with ssr', () => {
+await setupFixture('vite-server-ssr', runsDev)
+
+describe.skipIf(!runsDev)('pure vite dev server with ssr', () => {
   it('renders the app on the server', async () => {
     const html = await $fetch<string>('/')
 
@@ -43,11 +36,43 @@ describe.skipIf(!runsOncePerEnvInMatrix || !isDev)('pure vite dev server with ss
     expect(await $fetch<string>('/static.txt')).toContain('static-asset')
   })
 
+  it('fetches a path of the app in-process while rendering', async () => {
+    expect(await $fetch<string>('/fetched')).toContain('<p id="fetched">fetched the about page</p>')
+  })
+
+  it('reads the request and writes the response from the app', async () => {
+    const response = await fetch('/request?q=1', { headers: { 'accept': 'text/html', 'x-forwarded-host': 'proxy.example', 'x-forwarded-proto': 'https', 'x-echo': 'echoed' } })
+
+    expect(response.status).toBe(203)
+    expect(response.statusText).toBe('Read the request')
+    expect(response.headers.get('x-echo')).toBe('echoed')
+    expect(await response.text()).toContain('<p id="request">http: /request https: proxy.example echoed</p>')
+  })
+
+  it('reads and writes cookies from the app', async () => {
+    const response = await fetch('/cookies', { headers: { accept: 'text/html', cookie: 'visits=1; session=abc; theme=dark' } })
+
+    expect(response.headers.getSetCookie()).toEqual(['visits=2; Path=/', 'session=; Max-Age=0; Path=/'])
+    expect(await response.text()).toContain('<p id="cookies">2 dark</p>')
+  })
+
   it('renders the error page for a route no page matches', async () => {
     const response = await fetch('/not-a-page', { headers: { accept: 'text/html' } })
 
     expect(response.status).toBe(404)
     expect(await response.text()).toContain('id="__nuxt"')
+  })
+
+  it('runs renderer plugins for every document it renders', async () => {
+    expect((await $fetch<string>('/')).match(/<meta name="renderer-plugin">/g)).toHaveLength(1)
+    expect(await $fetch<string>('/spa')).toContain('<meta name="renderer-plugin">')
+
+    const error = await fetch('/not-a-page', { headers: { accept: 'text/html' } })
+    expect(await error.text()).toContain('<meta name="renderer-plugin">')
+  })
+
+  it('calls `render:document` once every `render:html` hook has run', async () => {
+    expect(await $fetch<string>('/')).toContain('<meta name="renderer-document" content="true"></head>')
   })
 
   it('answers a JSON client with the error as JSON', async () => {
@@ -63,28 +88,25 @@ describe.skipIf(!runsOnceInMatrix)('pure vite server build', () => {
   const buildDir = join(rootDir, 'node_modules/.cache/nuxt/.nuxt-build')
   const outputDir = join(rootDir, 'node_modules/.cache/nuxt/.output-build')
   let html: string
-  let render: (path: string) => Promise<Response>
+  let render: (path: string, init?: RequestInit) => Promise<Response>
+  const targets: Array<string | undefined> = []
 
   beforeAll(async () => {
-    const nuxt = await loadNuxt({
-      cwd: rootDir,
-      ready: true,
-      overrides: { buildDir, nitro: { output: { dir: outputDir } } },
-    })
-    try {
-      await buildNuxt(nuxt)
-      expect((nuxt as { _nitro?: unknown })._nitro).toBeUndefined()
-    } finally {
-      await nuxt.close()
-    }
+    const nuxt = await buildInProcess(rootDir, { buildDir, nitro: { output: { dir: outputDir } } }, nuxt => targets.push(nuxt.serverBuild.target?.()))
+    targets.push(nuxt.serverBuild.target?.())
+    expect((nuxt as { _nitro?: unknown })._nitro).toBeUndefined()
 
     // the entry only listens when it is the main module
     const server = await import(join(outputDir, 'server/index.mjs')) as {
       default: { fetch: (request: Request) => Promise<Response> }
     }
-    render = path => server.default.fetch(new Request(new URL(path, 'http://localhost')))
+    render = (path, init) => server.default.fetch(new Request(new URL(path, 'http://localhost'), init))
     html = await (await render('/')).text()
   }, 240 * 1000)
+
+  it('reports `node` as the deploy target once the build has resolved its config', () => {
+    expect(targets).toEqual([undefined, 'node'])
+  })
 
   it('renders the app', () => {
     expect(html).toContain('<h1>vite-server-ssr</h1>')
@@ -94,7 +116,7 @@ describe.skipIf(!runsOnceInMatrix)('pure vite server build', () => {
 
   it('resolves data on the server and serialises it into the payload', () => {
     expect(html).toContain('<p id="async-data">from useAsyncData</p>')
-    expect(html).toContain('"rendered":5},"from useAsyncData"')
+    expect(parseData(html).script.data.greeting.rendered).toBe('from useAsyncData')
     expect(html).toContain('data-ssr="true"')
   })
 
@@ -110,6 +132,30 @@ describe.skipIf(!runsOnceInMatrix)('pure vite server build', () => {
 
   it('renders each route it serves', async () => {
     expect(await (await render('/about')).text()).toContain('<p id="about"> about page </p>')
+  })
+
+  it('fetches a path of the app in-process while rendering', async () => {
+    expect(await (await render('/fetched')).text()).toContain('<p id="fetched">fetched the about page</p>')
+  })
+
+  it('reads the request and writes the response from the app', async () => {
+    const response = await render('/request?q=1', { headers: { 'x-forwarded-host': 'proxy.example', 'x-forwarded-proto': 'https', 'x-echo': 'echoed' } })
+
+    expect(response.status).toBe(203)
+    expect(response.statusText).toBe('Read the request')
+    expect(response.headers.get('x-echo')).toBe('echoed')
+    expect(await response.text()).toContain('<p id="request">http: /request https: proxy.example echoed</p>')
+  })
+
+  it('reads and writes cookies from the app', async () => {
+    const response = await render('/cookies', { headers: { cookie: 'visits=1; session=abc; theme=dark' } })
+
+    expect(response.headers.getSetCookie()).toEqual(['visits=2; Path=/', 'session=; Max-Age=0; Path=/'])
+    expect(await response.text()).toContain('<p id="cookies">2 dark</p>')
+  })
+
+  it('seeds an in-process fetch with the context of the request that made it', async () => {
+    expect(await (await render('/fetched-context')).text()).toContain('<p id="fetched-context">seeded with daniel and isolated</p>')
   })
 
   it('renders asset URLs without process-wide helpers', async () => {
@@ -140,6 +186,20 @@ describe.skipIf(!runsOnceInMatrix)('pure vite server build', () => {
 
     expect(shell).not.toContain('id="spa"')
     expect(shell).toContain('data-ssr="false"')
+  })
+
+  it('runs renderer plugins for every document it renders', async () => {
+    expect(html.match(/<meta name="renderer-plugin">/g)).toHaveLength(1)
+    expect(await (await render('/spa')).text()).toContain('<meta name="renderer-plugin">')
+    expect(await (await render('/not-a-page')).text()).toContain('<meta name="renderer-plugin">')
+  })
+
+  it('sends the response headers renderer plugins set', async () => {
+    expect((await render('/')).headers.get('x-renderer-plugin')).toBe('true')
+  })
+
+  it('calls `render:document` once every `render:html` hook has run', () => {
+    expect(html).toContain('<meta name="renderer-document" content="true"></head>')
   })
 
   it('renders a route ruled `noScripts` without scripts', async () => {
@@ -196,5 +256,9 @@ describe.skipIf(!runsOnceInMatrix)('pure vite server build', () => {
 
     expect(specifiers.size).toBeGreaterThan(0)
     expect([...specifiers].filter(specifier => !specifier.startsWith('node:') && !specifier.startsWith('.'))).toEqual([])
+  })
+
+  it('bundles `#shared` imports instead of leaving them as bare paths', () => {
+    expect(html).toContain('<p id="shared-import">imported from #shared</p>')
   })
 })

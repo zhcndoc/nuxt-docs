@@ -1,4 +1,5 @@
 import { createConsoleReporter, defineDiagnostics } from 'nostics'
+import type { ConsoleMethod, DiagnosticReporter } from 'nostics'
 
 /**
  * B5xxx (schema-resolved configuration)
@@ -10,9 +11,16 @@ import { createConsoleReporter, defineDiagnostics } from 'nostics'
 const docsBase = (code: string): string =>
   `https://nuxt.com/docs/4.x/errors/${code.replace('NUXT_', '').toLowerCase()}`
 
+const consoleReporter = /* #__PURE__ */ createConsoleReporter()
+
+const reporter: DiagnosticReporter<{ method?: ConsoleMethod }> = (diagnostic, options) => {
+  consoleReporter(diagnostic, options)
+  Object.defineProperty(diagnostic, Symbol.for('nuxt.diagnostic.reported'), { value: true })
+}
+
 export const schemaDiagnostics = /* #__PURE__ */ defineDiagnostics({
   docsBase,
-  reporters: [/* #__PURE__ */ (createConsoleReporter())] as const,
+  reporters: [reporter] as const,
   codes: {
     NUXT_B5012: {
       why: (p: { value: string }) => `Invalid \`logLevel\` option: \`${p.value}\`.`,
@@ -42,6 +50,11 @@ export const schemaDiagnostics = /* #__PURE__ */ defineDiagnostics({
     NUXT_B5027: {
       why: '`experimental.nitroViteEnvironment` is only compatible with `@nuxt/vite-builder`, so it has been disabled.',
       fix: 'Set `builder: "vite"` in your `nuxt.config`, or remove the option.',
+      docs: false,
+    },
+    NUXT_B5039: {
+      why: '`experimental.nitroViteEnvironment` is not supported in Nuxt 4, so it has been disabled. The server is built with Nitro\'s own bundler.',
+      fix: 'Remove `experimental.nitroViteEnvironment` from your `nuxt.config`.',
       docs: false,
     },
   },

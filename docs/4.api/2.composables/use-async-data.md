@@ -130,6 +130,7 @@ const { data, error } = await useAsyncData(
 处理函数的中止信号将在以下情况下被中止：
 
 - 使用 `dedupe: 'cancel'` 发起了新的请求
+- 使用 `dedupe: 'cancel'` 的新执行从 `getCachedData` 获取数据
 - 调用了 `clear` 函数
 - 超过了 `options.timeout` 指定的时间
 
@@ -199,7 +200,7 @@ type AsyncDataRequestStatus = 'idle' | 'pending' | 'success' | 'error'
 
 :read-more{to="/docs/getting-started/data-fetching"}
 
-## 参数
+## 参数 {#parameters}
 
 - `key`：一个唯一键，用于确保在各个请求之间能够正确地对数据获取进行去重。如果你不提供 key，将会为你生成一个基于 `useAsyncData` 实例所在文件名和行号唯一的 key。
 - `handler`：一个异步函数，必须返回一个真值（例如，不应返回 `undefined` 或 `null`），否则请求可能会在客户端被重复执行。
@@ -305,6 +306,8 @@ const { data: users2 } = useAsyncData('users', (_nuxtApp, { signal }) => $fetch(
 | `status`  | `Ref<'idle' \| 'pending' \| 'success' \| 'error'>`  | 异步函数调用的状态。可用于区分 `idle`、`pending`、`success` 和 `error`。                                                        |
 | `pending` | `Ref<boolean>`                                      | 请求进行期间为 `true`。启用 [`experimental.pendingWhenIdle`](/docs/guide/going-further/experimental-features#pendingwhenidle) 后，当 `status` 为 `idle` 且没有可用的缓存数据时，该值也为 `true`。 |
 | `clear`   | `() => void`                                        | 将 `data` 重置为 `undefined`（或提供的 `options.default()` 值），将 `error` 重置为 `undefined`，将 `status` 设为 `idle`，并取消任何待处理的调用。    |
+
+在生产环境中，既不是 HTTP 错误（例如通过 [`createError`](/docs/api/utils/create-error) 创建的错误），也不是带有响应状态的 `$fetch` 失败的服务端错误，会以通用 `500` 错误的形式进入 `error`，因此其消息和数据不会发送到浏览器。
 
 ::tip
 如果你没有 `await` 返回值，那么可以安全地解构 `Promise` 上的函数（`then`、`catch` 和 `finally`）。

@@ -1,0 +1,111 @@
+import { HTTPError, writeEarlyHints } from 'nitro/h3'
+import type { H3Event } from 'nitro/h3'
+import { useNitroApp, useNitroHooks } from 'nitro/app'
+import { useRuntimeConfig } from 'nitro/runtime-config'
+import { FastResponse } from 'srvx'
+import type { NuxtSSRContext } from '#app/types'
+import { createRendererInstance } from 'nuxt/internal/renderer/instance'
+import type { NuxtRendererInstance } from 'nuxt/internal/renderer/instance'
+import { appEvent } from 'nuxt/internal/renderer/runtime'
+import type { NuxtRendererOptions, RendererEvent, RendererHooks, RendererRouteRules } from 'nuxt/internal/renderer/runtime'
+
+import '../../context'
+
+import { NUXT_SHARED_DATA } from '#internal/nuxt/nitro-config.mjs'
+import { buildAssetsURL, publicAssetsURL } from '#internal/nuxt/paths'
+import { withRouteRuleDefaults } from '#internal/nuxt/host'
+import { getRouteRules } from '../route-rules'
+import { markStreamedResponse, rememberRenderBody, toRenderBody } from '../../compat/render-response'
+import { legacyCompat } from '#nuxt-compat/flags'
+import { payloadCache, prerenderRenderingURLs, sharedPrerenderCache } from '../cache'
+import { markRenderedErrorPage } from '../error-page'
+import { prerenderDiagnostics } from 'nuxt/internal/renderer/diagnostics'
+
+// @ts-expect-error private property consumed by vite-generated url helpers
+globalThis.__buildAssetsURL = buildAssetsURL
+// @ts-expect-error private property consumed by vite-generated url helpers
+globalThis.__publicAssetsURL = publicAssetsURL
+
+function createDocumentResponse (document: string | string[], init?: ResponseInit): Response {
+  const rendered = toRenderBody(document)
+  const response = new FastResponse(rendered.bytes, init)
+  if (legacyCompat) {
+    rememberRenderBody(response, rendered)
+  }
+  return response
+}
+
+/** Nitro's prerenderer logs a captured, handled 5xx error of a prerender request itself. */
+function isLoggedByPrerenderer (error: unknown, event: RendererEvent): boolean {
+  const { status, unhandled } = (error || {}) as { status?: number, unhandled?: boolean }
+  return !unhandled && !!status && status >= 500 && !!event.req.headers.get('x-nitro-prerender')
+}
+
+/** The capabilities Nitro provides to the Nuxt renderer. */
+export const rendererOptions: NuxtRendererOptions = {
+  runtimeConfig: () => useRuntimeConfig() as NuxtSSRContext['runtimeConfig'],
+  buildAssetsURL,
+  publicAssetsURL,
+  getRouteRules: event => withRouteRuleDefaults(getRouteRules(event)) satisfies RendererRouteRules,
+  hooks: useNitroHooks as () => RendererHooks,
+  createResponse: (body, init) => {
+    if (typeof body === 'string') {
+      return createDocumentResponse(body, init)
+    }
+    const response = new FastResponse(body, init)
+    if (legacyCompat && body instanceof ReadableStream) {
+      markStreamedResponse(response)
+    }
+    return response
+  },
+  createDocumentResponse,
+  createError: init => new HTTPError(init),
+  writeEarlyHints: (event, hints) => writeEarlyHints(appEvent(event), hints),
+  renderIsland: event => import('#internal/nuxt/island-renderer.mjs').then(r => r.default.fetch(event.req)),
+  onRenderSuccess: import.meta.dev
+    ? (event) => {
+        import('#internal/nuxt/error-channel').then(({ clearErrorReport }) => clearErrorReport(appEvent(event).url)).catch(() => {})
+      }
+    : undefined,
+  captureError: (error, { event, tags }) => {
+    // the renderer captures the error it renders its error page for without a tag, and one `error.vue` throws with `error-page`
+    if (!tags?.length || tags.includes('error-page')) {
+      markRenderedErrorPage(event.context)
+    }
+    // in development the live error channel reports and prints the error itself
+    if (!import.meta.dev && ((error as { status?: number } | null)?.status || 500) >= 500 && !(import.meta.prerender && isLoggedByPrerenderer(error, event))) {
+      console.error(`[request error] [${event.req.method}] ${event.url.pathname}\n`, error)
+    }
+    useNitroApp().captureError?.(error as Error, { event: appEvent(event) as H3Event, tags: ['ssr', ...tags ?? []] })
+  },
+  onDevError: import.meta.dev
+    ? (error, event, options) => import('#internal/nuxt/error-channel').then(({ observeDevError }) => observeDevError(error, appEvent(event) as H3Event, options))
+    : undefined,
+  renderDevBadge: import.meta.dev
+    ? (event, nonce) => import('#internal/nuxt/error-channel').then(({ renderDevBadge }) => renderDevBadge(appEvent(event) as H3Event, nonce))
+    : undefined,
+  prerender: import.meta.prerender
+    ? {
+        payloadCache: payloadCache!,
+        sharedDataCache: NUXT_SHARED_DATA ? sharedPrerenderCache! : undefined,
+        wrapRender: (event, render) => {
+          const renderingURL = event.url.pathname + event.url.search
+          const stack = prerenderRenderingURLs!.getStore()
+          // a `useFetch`/`$fetch` against the URL currently rendering deadlocks the
+          // build: https://github.com/nuxt/nuxt/issues/33871
+          if (stack?.includes(renderingURL)) {
+            const chain = [...stack, renderingURL].filter(url => !url.startsWith('/__nuxt_error')).map(url => `\`${url}\``).join(' -> ')
+            prerenderDiagnostics.NUXT_E8018({ url: renderingURL, chain })
+            return Promise.resolve(new FastResponse(null, { status: 508, statusText: 'Loop Detected' }))
+          }
+          return prerenderRenderingURLs!.run([...(stack || []), renderingURL], render)
+        },
+      }
+    : undefined,
+}
+
+/**
+ * The renderer the page and island handlers share, so that both render against a single
+ * load of the server bundle and its manifest.
+ */
+export const rendererInstance: NuxtRendererInstance = createRendererInstance(rendererOptions)

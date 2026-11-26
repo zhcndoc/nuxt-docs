@@ -1,4 +1,4 @@
-import { defineResolvers } from '../utils/definition.ts'
+import { booleanOr, defineResolvers, oneOf } from '../utils/definition.ts'
 import { schemaDiagnostics } from '../diagnostics.ts'
 
 export default defineResolvers({
@@ -77,9 +77,7 @@ export default defineResolvers({
     },
     runtimeBaseURL: false,
     decorators: false,
-    asyncEntry: {
-      $resolve: val => typeof val === 'boolean' ? val : false,
-    },
+    asyncEntry: booleanOr(false),
 
     // TODO: Remove when nitro has support for mocking traced dependencies
     // https://github.com/nitrojs/nitro/issues/1118
@@ -180,6 +178,8 @@ export default defineResolvers({
      * `hashMode`, with a root-level catch-all page, and when a custom `app/router.options`
      * file may modify `routes`.
      */
+    staticRoutes: false,
+
     early404: false,
 
     /**
@@ -190,8 +190,8 @@ export default defineResolvers({
      * - a function or class instance passed as a prop to a server component, or in the `props`
      *   of a `<NuxtIsland>`
      *
-     * Warnings are printed to the terminal and, in development, sent to open error pages and
-     * overlays.
+     * Warnings are printed to the terminal and, in development, shown on every open page until
+     * fixed.
      *
      * The route check cannot see routes added at runtime with `router.addRoute()` or paths
      * that route middleware redirects, and is skipped when a custom `app/router.options` file
@@ -199,7 +199,24 @@ export default defineResolvers({
      */
     templateDiagnostics: true,
 
+    webmcp: false,
+
+    /** @deprecated use `<NuxtErrorBoundary retry-on-client>` instead */
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
     clientFallback: false,
+    /**
+     * Allow `<NuxtErrorBoundary>` to catch errors thrown while server-rendering its default slot.
+     *
+     * When enabled, the boundary renders its `#error` slot on the server (with the caught error
+     * serialised into the payload so the client hydrates in the same state) instead of the error
+     * escaping to the top-level `error.vue` page. When disabled, the boundary only catches
+     * client-side errors, and a server-rendered page whose content throws still shows the error page.
+     */
+    ssrErrorBoundary: {
+      async $resolve (val, get) {
+        return typeof val === 'boolean' ? val : (await get('future.compatibilityVersion')) >= 5
+      },
+    },
     crossOriginPrefetch: false,
     deferPrefetchHints: true,
 
@@ -230,9 +247,7 @@ export default defineResolvers({
         return (await get('future.compatibilityVersion')) >= 5
       },
     },
-    serverPathFallback: {
-      $resolve: val => typeof val === 'boolean' ? val : true,
-    },
+    serverPathFallback: booleanOr(true),
     appManifest: true,
     checkOutdatedBuildInterval: 1000 * 60 * 60,
     watcher: {
@@ -266,11 +281,7 @@ export default defineResolvers({
         return typeof val === 'boolean' ? val : (await get('future.compatibilityVersion')) >= 5
       },
     },
-    sharedPrerenderData: {
-      $resolve (val) {
-        return typeof val === 'boolean' ? val : true
-      },
-    },
+    sharedPrerenderData: booleanOr(true),
     cookieStore: true,
     defaults: {
       nuxtLink: {
@@ -290,6 +301,13 @@ export default defineResolvers({
           },
         },
       },
+      navigateTo: {
+        noopener: {
+          $resolve: async (val, get) => {
+            return typeof val === 'boolean' ? val : (await get('future.compatibilityVersion')) >= 5
+          },
+        },
+      },
       useFetch: {},
     },
     clientNodeCompat: false,
@@ -300,23 +318,13 @@ export default defineResolvers({
       },
     },
     buildCache: false,
-    normalizeComponentNames: {
-      $resolve: (val) => {
-        return typeof val === 'boolean' ? val : true
-      },
-    },
+    normalizeComponentNames: booleanOr(true),
     normalizePageNames: {
       $resolve: async (val, get) => {
         return typeof val === 'boolean' ? val : (await get('future.compatibilityVersion')) >= 5
       },
     },
-    spaLoadingTemplateLocation: {
-      $resolve: (val) => {
-        const validOptions = new Set(['body', 'within'] as const)
-        type SpaLoadingTemplateLocation = typeof validOptions extends Set<infer Option> ? Option : never
-        return typeof val === 'string' && validOptions.has(val as SpaLoadingTemplateLocation) ? val as SpaLoadingTemplateLocation : 'body'
-      },
-    },
+    spaLoadingTemplateLocation: oneOf(['body', 'within'], 'body'),
     browserDevtoolsTiming: {
       $resolve: (val, get) => typeof val === 'boolean' ? val : get('dev'),
     },
@@ -326,52 +334,23 @@ export default defineResolvers({
         return typeof val === 'boolean' ? val : Boolean(await get('debug'))
       },
     },
-    lazyHydration: {
-      $resolve: (val) => {
-        return typeof val === 'boolean' ? val : true
-      },
-    },
+    lazyHydration: booleanOr(true),
     templateImportResolution: true,
-    purgeCachedData: {
-      $resolve: (val) => {
-        return typeof val === 'boolean' ? val : true
-      },
-    },
-    prefetchPreloadTags: {
-      $resolve: (val) => {
-        return typeof val === 'boolean' ? val : false
-      },
-    },
-    granularCachedData: {
-      $resolve: (val) => {
-        return typeof val === 'boolean' ? val : true
-      },
-    },
+    purgeCachedData: booleanOr(true),
+    prefetchPreloadTags: booleanOr(false),
+    granularCachedData: booleanOr(true),
     stripNeverHydratedData: false,
-    alwaysRunFetchOnKeyChange: {
-      $resolve: (val) => {
-        return typeof val === 'boolean' ? val : false
-      },
-    },
-    parseErrorData: {
-      $resolve: (val) => {
-        return typeof val === 'boolean' ? val : true
-      },
-    },
+    globalFetch: false,
+    alwaysRunFetchOnKeyChange: booleanOr(false),
+    parseErrorData: booleanOr(true),
     enforceModuleCompatibility: false,
-    pendingWhenIdle: {
-      $resolve: (val) => {
-        return typeof val === 'boolean' ? val : false
-      },
-    },
+    pendingWhenIdle: booleanOr(false),
     entryImportMap: true,
     compileHints: true,
-    extractAsyncDataHandlers: {
-      $resolve: (val) => {
-        return typeof val === 'boolean' ? val : false
-      },
-    },
-    nitroAutoImports: {
+    layoutChunk: true,
+    parallelBuild: true,
+    extractAsyncDataHandlers: booleanOr(false),
+    viteEnvironmentApi: {
       $resolve: async (val, get) => {
         return typeof val === 'boolean' ? val : (await get('future.compatibilityVersion')) < 5
       },
@@ -396,13 +375,14 @@ export default defineResolvers({
       },
     },
     nitroViteEnvironment: {
-      $resolve: () => false,
-    },
-    typescriptPlugin: {
       $resolve: (val) => {
-        return typeof val === 'boolean' ? val : false
+        if (val === true) {
+          schemaDiagnostics.NUXT_B5039()
+        }
+        return false
       },
     },
+    typescriptPlugin: booleanOr(false),
     ssrStreaming: {
       $resolve (val) {
         // Indexing crawlers only; `chrome-lighthouse` is intentionally absent

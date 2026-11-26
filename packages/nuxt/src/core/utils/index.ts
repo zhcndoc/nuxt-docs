@@ -1,5 +1,27 @@
+import { resolve } from 'pathe'
+import type { Nuxt } from '@nuxt/schema'
+
 export { getNameFromPath, hasSuffix, resolveComponentNameSegments } from './names.ts'
-export { JS_ID_RE, VUE_ID_FILTER, VUE_NON_SCRIPT_BLOCK_RE, VUE_SCRIPT_ID_FILTER, VUE_SCRIPT_TEMPLATE_ID_FILTER, VUE_TEMPLATE_ID_FILTER, getLoader, isJS, isVue, parseModuleId } from './plugins.ts'
+export { JS_ID_RE, VUE_FILE_RE, VUE_ID_FILTER, VUE_NON_SCRIPT_BLOCK_RE, VUE_SCRIPT_ID_FILTER, VUE_SCRIPT_TEMPLATE_ID_FILTER, VUE_TEMPLATE_ID_FILTER, getLoader, isJS, isVue, parseModuleId, vitestCacheKey } from './plugins.ts'
+
+/**
+ * Create a reporter that runs `report` once per `key` and `source`, so a diagnostic about a module
+ * prints once however many bundles transform it, and again if the module changes. In development,
+ * a change to the file on disk clears what was reported for it.
+ */
+export function createReportOnce (nuxt?: Nuxt) {
+  const reported = new Map<string, string>()
+  if (nuxt?.options.dev) {
+    nuxt.hook('builder:watch', (_event, path) => {
+      reported.delete(resolve(nuxt.options.srcDir, path))
+    })
+  }
+  return (key: string, source: string, report: () => void) => {
+    if (reported.get(key) === source) { return }
+    reported.set(key, source)
+    report()
+  }
+}
 
 export function uniqueBy<T, K extends keyof T> (arr: T[], key: K) {
   if (arr.length < 2) {
@@ -54,9 +76,10 @@ export function foldRouteCase (path: string) {
 
 /**
  * Collect the route rules `match` returns for a route path and, if its path portion contains
- * an encoded slash (`%2F`), for the path with each encoded slash as a separator, since a page
- * route param spanning several segments decodes to the same value either way. Rules keep the
- * order `match` returns them in, and rules matched only through encoded slashes come last.
+ * an encoded slash (`%2F`) or a run of slashes, for the path with each encoded slash as a
+ * separator and for both paths with each run of slashes collapsed to one, since a page route
+ * param spanning several segments decodes to the same value either way. Rules keep the order
+ * `match` returns them in, and rules matched only through these readings come last.
  *
  * Inlined by source into compiled matchers, so it must not reference anything outside itself.
  *
@@ -65,10 +88,13 @@ export function foldRouteCase (path: string) {
 export function matchAllRouteRules<T> (match: (path: string) => T[], path: string): T[] {
   const matches = match(path)
   if (typeof path !== 'string') { return matches }
+  const collapse = (reading: string) => reading.replace(/^[^?]*/, pathname => pathname.replace(/\/{2,}/g, '/'))
   const split = path.replace(/^[^?]*/, pathname => pathname.replace(/%2f/gi, '/'))
-  if (split === path) { return matches }
-  for (const rules of match(split)) {
-    if (!matches.includes(rules)) { matches.push(rules) }
+  for (const reading of new Set([collapse(path), split, collapse(split)])) {
+    if (reading === path) { continue }
+    for (const rules of match(reading)) {
+      if (!matches.includes(rules)) { matches.push(rules) }
+    }
   }
   return matches
 }

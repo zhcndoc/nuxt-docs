@@ -25,21 +25,19 @@ links:
 ## 类型
 
 ```ts [Signature]
-export function onPrehydrate (callback: (el: HTMLElement) => void): void
-export function onPrehydrate (callback: string | ((el: HTMLElement) => void), key?: string): undefined | string
+export function onPrehydrate (callback: (el: HTMLElement) => void): string | undefined
 ```
 
 ## 参数
 
 | Parameter | Type | Required | Description |
 | ---- | --- | --- | --- |
-| `callback` | `((el: HTMLElement) => void) \| string` | 是 | 在 Nuxt 执行 hydration 之前要运行的函数（或字符串化的函数）。它将被字符串化并内联到 HTML 中。不应有外部依赖或引用回调外的变量。在 Nuxt 运行时初始化之前运行，因此不应依赖 Nuxt 或 Vue 的上下文。 |
-| `key` | `string` | 否 | （高级）用于标识 prehydrate 脚本的唯一键，适用于像多个根节点这样的高级场景。 |
+| `callback` | `(el: HTMLElement) => void` | 是 | 在 Nuxt 执行 hydration 之前运行的函数。它会被字符串化并内联到 HTML 中，不应有外部依赖或引用回调之外的变量。该函数会在 Nuxt 运行时初始化之前运行，因此不应依赖 Nuxt 或 Vue 上下文。|
 
 ## 返回值
 
-- 当仅传入回调函数时返回 `undefined`。
-- 当传入回调和 key 时返回一个字符串（prehydrate id），可用于在高级用例中设置或访问 `data-prehydrate-id` 属性。
+- 回调不接受 `el` 参数时，返回 `undefined`。
+- 回调接受 `el` 参数时，返回字符串（prehydrate id），可用于高级场景中设置或访问 `data-prehydrate-id` 属性。
 
 ## 示例
 

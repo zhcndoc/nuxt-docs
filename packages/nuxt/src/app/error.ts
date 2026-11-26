@@ -55,16 +55,19 @@ export const createError = <DataT = unknown>(error: string | Error | Partial<Nux
   })
 
   // #34165 - TODO: remove in Nuxt 5 when statusCode/statusMessage are removed
-  Object.defineProperty(nuxtError, 'status', {
-    // eslint-disable-next-line @typescript-eslint/no-deprecated
-    get: () => nuxtError.statusCode,
-    configurable: true,
-  })
-  Object.defineProperty(nuxtError, 'statusText', {
-    // eslint-disable-next-line @typescript-eslint/no-deprecated
-    get: () => nuxtError.statusMessage,
-    configurable: true,
-  })
+  // h3 v2 errors carry `status` themselves, and derive `statusCode` from it
+  if (typeof (nuxtError as { status?: unknown }).status !== 'number') {
+    Object.defineProperty(nuxtError, 'status', {
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
+      get: () => nuxtError.statusCode,
+      configurable: true,
+    })
+    Object.defineProperty(nuxtError, 'statusText', {
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
+      get: () => nuxtError.statusMessage,
+      configurable: true,
+    })
+  }
 
   return nuxtError
 }
@@ -109,4 +112,19 @@ export function createErrorFromThrown (thrown: unknown, context?: ThrownContext)
     }
   }
   return error
+}
+
+/**
+ * Whether an error thrown on the server should be masked from the client.
+ *
+ * Only errors deliberately raised with an HTTP status and `$fetch` errors with a
+ * response status share their status, message and data.
+ *
+ * @internal
+ */
+export function isUntrustedError (error: unknown): boolean {
+  if (error instanceof Error && error.name === 'FetchError' && typeof (error as { status?: unknown }).status === 'number') {
+    return false
+  }
+  return !!createErrorFromThrown(error).unhandled
 }

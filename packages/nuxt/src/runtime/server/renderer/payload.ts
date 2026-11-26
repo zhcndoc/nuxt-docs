@@ -1,5 +1,6 @@
 import devalue from '@nuxt/devalue'
 import { stringify, uneval } from 'devalue'
+import { isReactive, isShallow, reactive, shallowReactive, toRaw } from 'vue'
 import type { Script } from '@unhead/vue'
 
 import type { NuxtPayload, NuxtSSRContext } from '#app/types'
@@ -11,7 +12,7 @@ import { NUXT_JSON_PAYLOADS, NUXT_NO_SSR, appId, multiApp } from 'nuxt/internal/
 export function renderPayloadResponse (ssrContext: NuxtSSRContext, event: RendererEvent): CachedResponse {
   return {
     body: NUXT_JSON_PAYLOADS
-      ? encodeForwardSlashes(stringify(splitPayload(ssrContext).payload, ssrContext['~payloadReducers']))
+      ? encodeForwardSlashes(stringify(sortContainers(splitPayload(ssrContext).payload), ssrContext['~payloadReducers']))
       : `export default ${devalue(splitPayload(ssrContext).payload)}`,
     statusCode: event.res.status,
     statusMessage: event.res.statusText,
@@ -23,7 +24,7 @@ export function renderPayloadResponse (ssrContext: NuxtSSRContext, event: Render
 }
 
 export function renderPayloadJsonScript (opts: { ssrContext: NuxtSSRContext, data?: any, src?: string }): Script[] {
-  const contents = opts.data ? encodeForwardSlashes(stringify(opts.data, opts.ssrContext['~payloadReducers'])) : ''
+  const contents = opts.data ? encodeForwardSlashes(stringify(sortContainers(omitEmptyContainers(opts.data)), opts.ssrContext['~payloadReducers'])) : ''
   if (import.meta.dev) {
     warnOnLargePayload(opts.ssrContext, opts.data, contents.length)
   }
@@ -48,6 +49,45 @@ export function renderPayloadJsonScript (opts: { ssrContext: NuxtSSRContext, dat
         : `window.__NUXT__={};window.__NUXT__.config=${config}`,
     },
   ]
+}
+
+const PAYLOAD_CONTAINERS = ['data', 'state', 'once', '_errors'] as const
+
+/** The client creates these containers itself, so empty ones are left out of the document. */
+function omitEmptyContainers (data: Record<string, unknown>): Record<string, unknown> {
+  let result = data
+  for (const key of PAYLOAD_CONTAINERS) {
+    const value = data[key]
+    if (value && typeof value === 'object' && (value instanceof Set ? value.size === 0 : Object.keys(value).length === 0)) {
+      if (result === data) { result = { ...data } }
+      delete result[key]
+    }
+  }
+  return result
+}
+
+/** Keys are added in the order async work settles, so they are sorted to keep the output stable. */
+function sortContainers (data: Record<string, unknown>): Record<string, unknown> {
+  const result = { ...data }
+  for (const key of PAYLOAD_CONTAINERS) {
+    const value = data[key]
+    if (value instanceof Set) {
+      result[key] = new Set([...value].sort())
+    } else if (value && typeof value === 'object') {
+      result[key] = withSortedKeys(value)
+    }
+  }
+  return result
+}
+
+function withSortedKeys (container: object): object {
+  const raw = toRaw(container) as Record<string, unknown>
+  const sorted: Record<string, unknown> = {}
+  for (const key of Object.keys(raw).sort()) {
+    sorted[key] = raw[key]
+  }
+  if (!isReactive(container)) { return sorted }
+  return isShallow(container) ? shallowReactive(sorted) : reactive(sorted)
 }
 
 /**
@@ -98,6 +138,7 @@ export function renderPayloadScript (opts: { ssrContext: NuxtSSRContext, routeOp
 }
 
 const PAYLOAD_SIZE_WARNING_BYTES = 100 * 1024
+const PAYLOAD_WARNING_CACHE_SIZE = 100
 const warnedPayloadURLs = new Set<string>()
 
 function formatPayloadSize (bytes: number): string {
@@ -120,6 +161,9 @@ function warnOnLargePayload (ssrContext: NuxtSSRContext, data: Partial<NuxtPaylo
   if (size <= PAYLOAD_SIZE_WARNING_BYTES || warnedPayloadURLs.has(ssrContext.url)) {
     return
   }
+  if (warnedPayloadURLs.size >= PAYLOAD_WARNING_CACHE_SIZE) {
+    warnedPayloadURLs.delete(warnedPayloadURLs.values().next().value!)
+  }
   warnedPayloadURLs.add(ssrContext.url)
   const keys = getPayloadKeySizes(data?.data, ssrContext['~payloadReducers'])
     .slice(0, 5)
@@ -134,12 +178,13 @@ interface SplitPayload {
     data?: NuxtPayload['data']
     prerenderedAt?: NuxtPayload['prerenderedAt']
     prefetchLinks?: NuxtPayload['prefetchLinks']
+    buildId?: NuxtPayload['buildId']
   }
 }
 
 export function splitPayload (ssrContext: NuxtSSRContext): SplitPayload {
   const { data, prerenderedAt, prefetchLinks, ...initial } = ssrContext.payload
-  const payload: SplitPayload['payload'] = { data, prerenderedAt }
+  const payload: SplitPayload['payload'] = { data, prerenderedAt, buildId: ssrContext.runtimeConfig.app.buildId }
   if (prefetchLinks?.length) {
     payload.prefetchLinks = prefetchLinks
   }

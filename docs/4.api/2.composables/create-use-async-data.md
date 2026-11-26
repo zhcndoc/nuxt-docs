@@ -39,13 +39,24 @@ const { data: mountains } = await useCachedData(
 ## 类型
 
 ```ts [Signature]
-function createUseAsyncData (
-  options?: Partial<AsyncDataOptions> & { addons?: UseAsyncDataAddon[] },
-): typeof useAsyncData
+function createUseAsyncData<
+  FResT,
+  FDataT = FResT,
+  FPickKeys extends KeysOf<FDataT> = KeysOf<FDataT>,
+  FDefaultT = undefined,
+  const FAddons extends ReadonlyArray<UseAsyncDataAddon<any, any>> = [],
+> (
+  options?: Partial<AsyncDataOptions<FResT, FDataT, FPickKeys, FDefaultT>> & { addons?: FAddons },
+): UseAsyncData<FResT, FDataT, FPickKeys, FDefaultT, MergedAddonsOptions<FAddons>, MergedAddonsExtensions<FAddons>>
 
-function createUseAsyncData (
-  options: (callerOptions: AsyncDataOptions) => Partial<AsyncDataOptions>,
-): typeof useAsyncData
+function createUseAsyncData<
+  FResT,
+  FDataT = FResT,
+  FPickKeys extends KeysOf<FDataT> = KeysOf<FDataT>,
+  FDefaultT = undefined,
+> (
+  options: (callerOptions: AsyncDataOptions<unknown>) => Partial<AsyncDataOptions<FResT, FDataT, FPickKeys, FDefaultT>>,
+): UseAsyncData<FResT, FDataT, FPickKeys, FDefaultT>
 ```
 
 ## 选项
@@ -58,11 +69,13 @@ function createUseAsyncData (
 
 ## Addons
 
-除 `useAsyncData` 选项外，`createUseAsyncData` 还接受 `addons` 数组。Addon 是使用 [`defineUseAsyncDataAddon`](/docs/api/utils/define-use-async-data-addon) 定义的可复用行为单元。它们可以声明调用时的自定义选项、在 handler 外运行中间件、扩展返回对象，并为组合式函数添加自定义逻辑。
+除 `useAsyncData` 选项外，`createUseAsyncData` 还接受 `addons` 数组 :badge[v4.6]{color="info" size="xs" class="align-middle"}。Addon 是使用 [`defineUseAsyncDataAddon`](/docs/api/utils/define-use-async-data-addon) 定义的可复用行为单元。它们可以声明调用时的自定义选项、在 handler 外运行中间件、扩展返回对象，并为组合式函数添加自定义逻辑。
 
 例如，下面的 addon 会在窗口重新获得焦点时刷新数据，并通过自定义的 `refreshOnFocus` 选项控制；调用方可以逐次选择是否启用：
 
 ```ts [app/composables/useCustomAsyncData.ts]
+import { useWindowFocus } from '@vueuse/core'
+
 const refreshOnFocus = defineUseAsyncDataAddon({
   // 为自定义 useAsyncData 实例扩展调用选项
   setup: (options: UseAsyncDataAddonOptions<{ refreshOnFocus?: boolean }>) => {
@@ -130,5 +143,3 @@ export const useStrictData = createUseAsyncData(callerOptions => ({
 ```
 
 :read-more{to="/docs/guide/recipes/custom-usefetch"}
-
-:read-more{to="/docs/api/composables/use-async-data"}

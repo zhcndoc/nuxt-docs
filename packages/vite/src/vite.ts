@@ -1,27 +1,30 @@
 import { existsSync } from 'node:fs'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { performance } from 'node:perf_hooks'
+import { pathToFileURL } from 'node:url'
 import { createBuilder, createServer, mergeConfig, resolveConfig } from 'vite'
 import type * as vite from 'vite'
-import { basename, dirname, join, resolve } from 'pathe'
+import { basename, dirname, isAbsolute, join, relative, resolve } from 'pathe'
 import type { Nuxt, NuxtBuilder, ViteConfig } from '@nuxt/schema'
 import { createIsIgnored, getLayerDirectories, logger, recoverThrottledChanges, resolvePath, tryUseNitro } from '@nuxt/kit'
 import type { PreRenderedAsset } from 'rolldown'
-import viteJsxPlugin from '@vitejs/plugin-vue-jsx'
 import vuePlugin from '@vitejs/plugin-vue'
-import { joinURL, withTrailingSlash, withoutLeadingSlash } from 'ufo'
+import { joinURL, withTrailingSlash, withoutLeadingSlash, withoutTrailingSlash } from 'ufo'
 import { filename } from 'pathe/utils'
 import { resolveModulePath } from 'exsolve'
+import { resolveVuePackages, useServerBuild } from '@nuxt/kit/internal'
 
 import { ssr, ssrEnvironment } from './shared/server.ts'
 import { clientEnvironment } from './shared/client.ts'
 import { resolveCSSOptions } from './css.ts'
 import { createViteLogger, logLevelMap } from './utils/logger.ts'
-import { DevErrorsPlugin, createDevErrorReporter, getDevErrorReporter, reportTransformError, setDevErrorReporter } from './dev-errors.ts'
-import { getAncestorModulesDirs, removeNestedDirs, sanitizeFilePath } from './utils/index.ts'
+import { DevErrorsDevToolsPlugin, DevErrorsPlugin, DevRequestErrorsPlugin, createDevErrorReporter, getDevErrorReporter, reportTransformError, setDevErrorReporter } from './dev-errors.ts'
+import { createSourcemapIgnoreList, getAncestorModulesDirs, removeNestedDirs, sanitizeFilePath } from './utils/index.ts'
 import { OptimizeDepsHintPlugin, optimizerCallbacks, userOptimizeDepsInclude } from './plugins/optimize-deps-hint.ts'
 
 import { SSRStylesPlugin } from './plugins/ssr-styles.ts'
+import { buildConcurrently, needsBuild } from './parallel-build.ts'
+import { VueJsxPlugin } from './plugins/vue-jsx.ts'
 import { PublicDirsPlugin } from './plugins/public-dirs.ts'
 import { ReplacePlugin } from './plugins/replace.ts'
 import { OptimizeDepsPlugin } from './plugins/optimize-deps.ts'
@@ -30,10 +33,10 @@ import { SourcemapPreserverPlugin } from './plugins/sourcemap-preserver.ts'
 import { DevStyleSSRPlugin } from './plugins/dev-style-ssr.ts'
 import { DecoratorsPlugin } from './plugins/decorators.ts'
 import { RuntimePathsPlugin } from './plugins/runtime-paths.ts'
-import { TypeCheckPlugin } from './plugins/type-check.ts'
-import { ModulePreloadPolyfillPlugin } from './plugins/module-preload-polyfill.ts'
+import { ModulePreloadPolyfillPlugin } from './plugins/client-entry-import.ts'
 import { StableEntryPlugin } from './plugins/stable-entry.ts'
 import { CompileHintsPlugin } from './plugins/compile-hints.ts'
+import { ClientChunksPlugin } from './plugins/client-chunks.ts'
 import { VitePluginCheckerPlugin } from './plugins/vite-plugin-checker.ts'
 import { AnalyzePlugin } from './plugins/analyze.ts'
 import { DevServerPlugin } from './plugins/dev-server.ts'
@@ -46,8 +49,8 @@ import { ResolveDeepImportsPlugin } from './plugins/resolve-deep-imports.ts'
 import { ResolveExternalsPlugin } from './plugins/resolved-externals.ts'
 import { InlinedVuePlugin } from './plugins/inlined-vue.ts'
 import { PerfPlugin } from './plugins/perf.ts'
+import { BuildReportPlugin } from './plugins/build-report.ts'
 import { isNavigationRequest, warmupViteServer } from './utils/warmup.ts'
-import { useServerBuild } from '@nuxt/kit/internal'
 
 export const bundle: NuxtBuilder['bundle'] = async (nuxt) => {
   const useAsyncEntry = nuxt.options.experimental.asyncEntry || nuxt.options.dev
@@ -82,13 +85,18 @@ export const bundle: NuxtBuilder['bundle'] = async (nuxt) => {
   if (nuxt.options.dev) {
     // a configured `server.fs.deny` replaces Vite's defaults
     const defaultDeny = viteConfig.server?.fs?.deny ? [] : await resolveDefaultFsDeny(nuxt.options.rootDir)
-    fsDeny = [...defaultDeny, '**/app-secret']
-    if (nitro) {
-      fsDeny.push(`${escapeGlob(nitro.options.output.serverDir)}/**`)
-    }
+    fsDeny = [...defaultDeny, '**/app-secret', ...getServerOutputDeny(nuxt, nitro?.options.output)]
   }
 
   const mockEmpty = resolveModulePath('mocked-exports/empty', { from: import.meta.url })
+
+  const vueDir = resolveVuePackages(nuxt).dirs.vue
+  const compilerSfc = !viteConfig.vue?.compiler && vueDir
+    ? resolveModulePath('vue/compiler-sfc', { from: vueDir + '/', try: true })
+    : undefined
+  if (compilerSfc) {
+    viteConfig.vue = { ...viteConfig.vue, compiler: await import(pathToFileURL(compilerSfc).href) }
+  }
 
   const helper = nuxt.options.nitro.imports !== false ? '' : 'globalThis.'
 
@@ -100,12 +108,16 @@ export const bundle: NuxtBuilder['bundle'] = async (nuxt) => {
     ? undefined
     : (chunk: PreRenderedAsset) => withoutLeadingSlash(join(nuxt.options.app.buildAssetsDir, `${sanitizeFilePath(filename(chunk.names[0]!))}.[hash].[ext]`))
 
+  // production bundles are reported through the `build:environment:*` hooks, so Vite only
+  // prints warnings and errors unless the project sets a level itself
+  const reportsBuild = !nuxt.options.dev && nuxt.options.logLevel !== 'silent' && !viteConfig.logLevel
+
   const config: vite.InlineConfig = mergeConfig(
     {
       base: nuxt.options.dev
         ? joinURL(nuxt.options.app.baseURL.replace(/^\.\//, '/') || '/', nuxt.options.app.buildAssetsDir)
         : undefined,
-      logLevel: logLevelMap[nuxt.options.logLevel] ?? logLevelMap.info,
+      logLevel: reportsBuild ? 'warn' : logLevelMap[nuxt.options.logLevel] ?? logLevelMap.info,
       experimental: {
         renderBuiltUrl: (filename, { type, hostType, ssr }) => {
           if (hostType !== 'js') {
@@ -131,20 +143,21 @@ export const bundle: NuxtBuilder['bundle'] = async (nuxt) => {
         ? {
             builder: {
               async buildApp (builder) {
+                const { client, ssr } = builder.environments
+                if (!nuxt.options.dev && nuxt.options.experimental.parallelBuild && client && ssr && needsBuild(client) && needsBuild(ssr)) {
+                  await buildConcurrently(nuxt, builder, client, ssr)
+                }
+
                 // run serially to preserve the order of client, server builds
                 const environments = Object.values(builder.environments)
                 for (const environment of environments) {
-                  // a server builder may bring its own orchestration and build environments
-                  // from its own `buildApp` hook, which is ordered `pre` and so runs first
-                  if (environment.isBuilt) { continue }
+                  if (!needsBuild(environment)) { continue }
                   logger.restoreAll()
-                  nuxt._perf?.startPhase(`vite:${environment.name}`)
                   try {
                     await builder.build(environment)
                   } finally {
                     logger.wrapAll()
                   }
-                  nuxt._perf?.endPhase(`vite:${environment.name}`)
                   await nuxt.callHook('vite:compiled')
                 }
               },
@@ -190,11 +203,10 @@ export const bundle: NuxtBuilder['bundle'] = async (nuxt) => {
       },
       build: {
         copyPublicDir: false,
+        reportCompressedSize: reportsBuild ? false : undefined,
         rolldownOptions: {
           output: {
-            sourcemapIgnoreList: (relativeSourcePath) => {
-              return relativeSourcePath.includes('node_modules') || relativeSourcePath.includes(nuxt.options.buildDir)
-            },
+            sourcemapIgnoreList: createSourcemapIgnoreList(nuxt.options.buildDir),
             sanitizeFileName: sanitizeFilePath,
             assetFileNames,
           },
@@ -215,6 +227,7 @@ export const bundle: NuxtBuilder['bundle'] = async (nuxt) => {
       plugins: [
         // per-plugin timing when profiling is enabled
         PerfPlugin(nuxt),
+        BuildReportPlugin(nuxt),
         // add resolver for modules used in virtual files
         ResolveDeepImportsPlugin(nuxt),
         ResolveExternalsPlugin(nuxt),
@@ -222,7 +235,7 @@ export const bundle: NuxtBuilder['bundle'] = async (nuxt) => {
           ? [
               InlinedVuePlugin(nuxt),
               vuePlugin(viteConfig.vue),
-              viteJsxPlugin(viteConfig.vueJsx),
+              VueJsxPlugin(viteConfig.vueJsx, nuxt.options.experimental.decorators),
               ClientManifestPlugin(nuxt),
               // After ClientManifestPlugin so its dev `clientManifest` override wins.
               ViteNodePlugin(nuxt),
@@ -256,12 +269,11 @@ export const bundle: NuxtBuilder['bundle'] = async (nuxt) => {
                 buildAssetsURL: joinURL(nuxt.options.app.baseURL, nuxt.options.app.buildAssetsDir),
               }),
               RuntimePathsPlugin(),
-              // Type checking client panel
-              TypeCheckPlugin(nuxt),
               ModulePreloadPolyfillPlugin(),
               // ensure changes in chunks do not invalidate whole build
               StableEntryPlugin(nuxt),
               CompileHintsPlugin(nuxt),
+              ClientChunksPlugin(nuxt),
               AnalyzePlugin(nuxt),
               OptimizeDepsHintPlugin(nuxt),
             ]
@@ -278,13 +290,14 @@ export const bundle: NuxtBuilder['bundle'] = async (nuxt) => {
         },
       },
     } satisfies ViteConfig,
-    {
-      ...viteConfig,
-      environments: {
-        ssr: $server,
-        client: $client,
-      },
-    },
+    nuxt.options.experimental.viteEnvironmentApi
+      ? mergeConfig(viteConfig, {
+          environments: {
+            ssr: $server,
+            client: $client,
+          },
+        })
+      : viteConfig,
   )
 
   if (Array.isArray(config.server?.allowedHosts)) {
@@ -324,7 +337,13 @@ async function handleEnvironments (nuxt: Nuxt, config: vite.InlineConfig, entry:
   })
   config.configFile = false
   if (devErrors) {
-    config.plugins!.push(DevErrorsPlugin(devErrors))
+    const { CheckerBridgePlugin } = await import('./checker-bridge.ts')
+    config.plugins!.push(DevErrorsPlugin(devErrors), DevRequestErrorsPlugin(devErrors), await DevErrorsDevToolsPlugin(nuxt, devErrors), CheckerBridgePlugin(devErrors))
+    const vue = (config.plugins as unknown[]).flat(Infinity).find((plugin): plugin is vite.Plugin => !!plugin && typeof plugin === 'object' && 'name' in plugin && plugin.name === 'vite:vue')
+    if (vue) {
+      const { VueCompilerWarningsPlugin } = await import('./vue-compiler-warnings.ts')
+      config.plugins!.push(VueCompilerWarningsPlugin(nuxt, vue, devErrors))
+    }
   }
 
   for (const environment of ['client', 'ssr']) {
@@ -462,6 +481,39 @@ function startWarmup (nuxt: Nuxt, server: vite.ViteDevServer, crawls: WarmupCraw
   }
 }
 
+/**
+ * Globs matching server bundles written by Nitro, which can inline private runtime config.
+ */
+function getServerOutputDeny (nuxt: Nuxt, output?: { dir?: string, serverDir?: string }) {
+  const deny: string[] = []
+  const configured = nuxt.options.nitro.output
+  const dirs = [
+    '.output',
+    configured?.dir,
+    configured?.serverDir,
+    output?.dir,
+    output?.serverDir,
+    resolve(nuxt.options.buildDir, 'prerender'),
+    'node_modules/.cache/nuxt/.nuxt/prerender',
+  ]
+  const projectDirs = [nuxt.options.rootDir, nuxt.options.srcDir, nuxt.options.buildDir]
+  for (const dir of dirs) {
+    if (!dir || dir.includes('{{')) {
+      continue
+    }
+    const resolved = resolve(nuxt.options.rootDir, dir)
+    if (!projectDirs.some(d => isPathInside(d, resolved))) {
+      deny.push(`${escapeGlob(withoutTrailingSlash(resolved))}/**`)
+    }
+  }
+  return [...new Set(deny)]
+}
+
+function isPathInside (path: string, dir: string) {
+  const rel = relative(dir, path)
+  return !rel.startsWith('..') && !isAbsolute(rel)
+}
+
 const GLOB_SPECIAL_CHARS_RE = /[\\*?[\]{}()!+@|]/g
 
 function escapeGlob (path: string) {
@@ -469,7 +521,7 @@ function escapeGlob (path: string) {
 }
 
 async function resolveDefaultFsDeny (root: string) {
-  const resolved = await resolveConfig({ root, configFile: false, envFile: false, logLevel: 'silent' }, 'serve')
+  const resolved = await resolveConfig({ root, configFile: false, envDir: false, logLevel: 'silent' }, 'serve')
   return resolved.server.fs.deny
 }
 

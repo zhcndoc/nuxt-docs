@@ -2,19 +2,21 @@ import { createUnplugin } from 'unplugin'
 import { generateTransform, rolldownString } from 'rolldown-string'
 import { hash } from 'ohash'
 
-import { isAbsolute, join, parse, relative } from 'pathe'
+import { isAbsolute, parse, relative } from 'pathe'
 import { camelCase } from 'scule'
 import escapeRE from 'escape-string-regexp'
 import { ScopeTracker, type ScopeTrackerNode, parseAndWalk, walk } from 'oxc-walker'
 import { resolveAlias } from '@nuxt/kit'
-import { buildDiagnostics } from '@nuxt/kit/internal'
+import { buildDiagnostics, isWithinDir } from '@nuxt/kit/internal'
 import type { KeyedFunction } from '@nuxt/schema'
 import type { ESTree } from 'rolldown/utils'
 import type { Import } from 'unimport'
 
-import { parseStaticImports } from '../../core/utils/static-imports.ts'
+import { vitestCacheKey } from '../../core/utils/index.ts'
+import { getStaticImports } from '../../core/utils/static-imports.ts'
 import { MACRO_QUERY_RE, NUXT_LIB_RE, STYLE_QUERY_RE, SUPPORTED_EXT_RE, isWhitespace, stripExtension } from '../../utils.ts'
 import { type FunctionCallMetadata, parseStaticExportIdentifiers, parseStaticFunctionCall, processImports } from '../../core/utils/parse-utils.ts'
+import { resolveImportPath } from '../utils.ts'
 
 interface KeyedFunctionsOptions {
   keyedFunctions: KeyedFunction[]
@@ -37,11 +39,19 @@ interface KeyedFunctionsOptions {
 }
 
 const stringTypes: Array<string | undefined> = ['Literal', 'TemplateLiteral']
-const SCRIPT_RE = /(?<=<script[^>]*>)[\s\S]*?(?=<\/script>)/i
 const NUXT_INJECTED_MARKER = '/* nuxt-injected */'
 
 // TODO: remove in Nuxt 5
 type BackwardsCompatibleKeyedFunction = Omit<KeyedFunction, 'source'> & { source?: KeyedFunction['source'] | RegExp }
+
+/** Core composables that take an explicit string key, by the position of that key */
+const explicitKeyArguments: Record<string, { index: number, source: string }> = {
+  useState: { index: 0, source: '#app/composables/state' },
+  useFetch: { index: 1, source: '#app/composables/fetch' },
+  useLazyFetch: { index: 1, source: '#app/composables/fetch' },
+  useAsyncData: { index: 0, source: '#app/composables/asyncData' },
+  useLazyAsyncData: { index: 0, source: '#app/composables/asyncData' },
+}
 
 /**
  * Builds the lookup state from a list of keyed functions.
@@ -103,18 +113,23 @@ function buildKeyedFunctionsState (keyedFunctions: KeyedFunction[]) {
   return { namesToSourcesToFunctionMeta, defaultExportSources, sources, codeIncludeRE }
 }
 
+function getImportedFunctionName (directImport: { originalName: string, source: string }) {
+  return directImport.originalName === 'default' ? camelCase(parse(directImport.source).name) : directImport.originalName
+}
+
 export const KeyedFunctionsPlugin = (options: KeyedFunctionsOptions) => createUnplugin(() => {
   // Build initial state from the static keyedFunctions list
   let state = buildKeyedFunctionsState(options.keyedFunctions)
-  let lastKeyedFunctionsLength = options.keyedFunctions.length
+  let keyedFunctionsKey = JSON.stringify(options.keyedFunctions)
 
   // In dev mode with a reactive getter, rebuild state when data changes
   function getState () {
     if (options.dev && options.getKeyedFunctions) {
       const current = options.getKeyedFunctions()
-      if (current.length !== lastKeyedFunctionsLength) {
+      const currentKey = JSON.stringify(current)
+      if (currentKey !== keyedFunctionsKey) {
         state = buildKeyedFunctionsState(current)
-        lastKeyedFunctionsLength = current.length
+        keyedFunctionsKey = currentKey
       }
     }
     return state
@@ -123,6 +138,10 @@ export const KeyedFunctionsPlugin = (options: KeyedFunctionsOptions) => createUn
   return {
     name: 'nuxt:compiler:keyed-functions',
     enforce: 'post',
+    vite: vitestCacheKey(() => {
+      getState()
+      return keyedFunctionsKey
+    }),
     transform: {
       filter: {
         id: {
@@ -142,13 +161,29 @@ export const KeyedFunctionsPlugin = (options: KeyedFunctionsOptions) => createUn
           if (!codeIncludeRE.test(code)) { return }
         }
 
-        const { 0: script = code, index: codeIndex = 0 } = code.match(SCRIPT_RE) || { 0: code, index: 0 }
         const id = stripExtension(_id)
-
-        const { directImports, namespaces } = processImports(parseStaticImports(script, _id), options.alias)
 
         // consider exports when processing a file that exports a keyed function
         const shouldConsiderExports = sources.has(id)
+
+        const scopeTracker = new ScopeTracker({
+          preserveExitedScopes: true,
+        })
+
+        // pre-pass to collect hoisted identifiers & exports
+        const exportNodes: Array<ESTree.ExportNamedDeclaration | ESTree.ExportDefaultDeclaration> = []
+        const { program, module } = parseAndWalk(code, _id, {
+          scopeTracker,
+          enter (node) {
+            if (shouldConsiderExports && (node.type === 'ExportNamedDeclaration' || node.type === 'ExportDefaultDeclaration')) {
+              exportNodes.push(node)
+            }
+          },
+        })
+
+        scopeTracker.freeze()
+
+        const { directImports, namespaces } = processImports(getStaticImports(code, module.staticImports), options.alias)
 
         // all local names that refer to a keyed function
         // mapped to their exported names
@@ -156,11 +191,7 @@ export const KeyedFunctionsPlugin = (options: KeyedFunctionsOptions) => createUn
 
         const possibleLocalFunctionNames = new Set<string>(namesToSourcesToFunctionMeta.keys())
         for (const [localName, directImport] of directImports) {
-          // add import names that refer to keyed functions
-          const functionName = directImport.originalName === 'default'
-            ? camelCase(parse(directImport.source).name)
-            : directImport.originalName
-          if (namesToSourcesToFunctionMeta.has(functionName)) {
+          if (namesToSourcesToFunctionMeta.has(getImportedFunctionName(directImport))) {
             possibleLocalFunctionNames.add(localName)
           }
         }
@@ -183,10 +214,7 @@ export const KeyedFunctionsPlugin = (options: KeyedFunctionsOptions) => createUn
           // check static direct imports
           const directImport = directImports.get(localName)
           if (directImport) {
-            const functionName = directImport.originalName === 'default'
-              ? camelCase(parse(directImport.source).name)
-              : directImport.originalName
-
+            const functionName = getImportedFunctionName(directImport)
             // TODO: remove auto-import checks in Nuxt 5
             const sourcesToMetas = namesToSourcesToFunctionMeta.get(functionName)
             if (!sourcesToMetas) { return }
@@ -195,9 +223,9 @@ export const KeyedFunctionsPlugin = (options: KeyedFunctionsOptions) => createUn
             if (fnMeta) { return fnMeta }
 
             // TODO: remove in Nuxt 5
-            if (source.startsWith(options.appDir)) {
+            if (isWithinDir(source, options.appDir)) {
               for (const [fnSource, meta] of sourcesToMetas) {
-                if (meta.name !== functionName || !fnSource.startsWith(options.appDir)) { continue }
+                if (meta.name !== functionName || !isWithinDir(fnSource, options.appDir)) { continue }
                 return meta
               }
             }
@@ -221,46 +249,24 @@ export const KeyedFunctionsPlugin = (options: KeyedFunctionsOptions) => createUn
           return namesToSourcesToFunctionMeta.get(localName)?.get(source)
         }
 
-        // TODO: use async walker or create sync version of `resolvePath` from kit
-        function _resolvePath (path: string) {
-          let p = path
-          if (isAbsolute(p)) { return p }
-          p = resolveAlias(p, options.alias)
-          if (isAbsolute(p)) { return p }
-          return join(parse(id).dir, p)
-        }
+        const _resolvePath = (path: string) => resolveImportPath(path, options.alias, id)
 
         const s = rolldownString(code, _id, meta)
         let count = 0
         const relativeID = isAbsolute(_id) ? relative(options.rootDir, _id) : _id
 
-        const scopeTracker = new ScopeTracker({
-          preserveExitedScopes: true,
-        })
-
-        // pre-pass to collect hoisted identifiers & exports
-        const { program } = parseAndWalk(code, _id, {
-          scopeTracker,
-          enter (node) {
-            if (!shouldConsiderExports) { return }
-            if (node.type !== 'ExportNamedDeclaration' && node.type !== 'ExportDefaultDeclaration') { return }
-
-            const result = parseStaticExportIdentifiers(node)
-            for (const exportMeta of result) {
-              const { localName, exportedName } = exportMeta
-              const functionName = exportedName === 'default'
-                ? camelCase(parse(id).name)
-                // the function cannot look up function meta by local names yet,
-                // so we need to use the `exportedName` instead because that is the one
-                // that's used in the keyed functions definition
-                : getFunctionMetaByLocalName(exportedName, id)?.name
-              if (!functionName) { continue }
-              localNamesToExportedName.set(localName, functionName)
-            }
-          },
-        })
-
-        scopeTracker.freeze()
+        for (const node of exportNodes) {
+          for (const { localName, exportedName } of parseStaticExportIdentifiers(node)) {
+            const functionName = exportedName === 'default'
+              ? camelCase(parse(id).name)
+              // the function cannot look up function meta by local names yet,
+              // so we need to use the `exportedName` instead because that is the one
+              // that's used in the keyed functions definition
+              : getFunctionMetaByLocalName(exportedName, id)?.name
+            if (!functionName) { continue }
+            localNamesToExportedName.set(localName, functionName)
+          }
+        }
 
         // add exported local identifiers that refer to keyed functions
         for (const localName of localNamesToExportedName.keys()) {
@@ -338,7 +344,7 @@ export const KeyedFunctionsPlugin = (options: KeyedFunctionsOptions) => createUn
                   // the function is imported from the correct source when `source` is specified
                   (typeof fnMeta.source === 'string' && (stripExtension(fnMeta.source) === importSourceResolved))
                   // or the function is from the Nuxt source (`#app` barrel export, for example)
-                  || (typeof fnMeta.source === 'string' && fnMeta.source.startsWith(options.appDir))
+                  || (typeof fnMeta.source === 'string' && isWithinDir(fnMeta.source, options.appDir))
                   // TODO: remove the checks below in Nuxt 5
                   // or the function is auto-imported when there is no source specified
                   || (!options.requireSource && !fnMeta.source && stripExtension(_resolvePath(autoImportsToSources.get(parsedCall.name) ?? '')) === importSourceResolved)
@@ -391,7 +397,7 @@ export const KeyedFunctionsPlugin = (options: KeyedFunctionsOptions) => createUn
                 let wasKeyInjected = true
                 for (let i = 0; i < NUXT_INJECTED_MARKER.length; i++) {
                   // the magic comment does not match, we have not injected a key yet
-                  if (code[codeIndex + lastArgument.end + 1 + i] !== NUXT_INJECTED_MARKER[i]) {
+                  if (code[lastArgument.end + 1 + i] !== NUXT_INJECTED_MARKER[i]) {
                     wasKeyInjected = false
                     break
                   }
@@ -400,39 +406,22 @@ export const KeyedFunctionsPlugin = (options: KeyedFunctionsOptions) => createUn
               }
 
               // skip key injection for Nuxt internal composables when they already have a key
-              switch (parsedCall.name) {
-                case 'useState':
-                  if (
-                    stringTypes.includes(parsedCall.callExpression.arguments[0]?.type)
-                    && typeof fnMeta.source === 'string' && stripExtension(fnMeta.source) === stripExtension(resolveAlias('#app/composables/state', options.alias))
-                  ) { return }
-                  break
-                case 'useFetch':
-                case 'useLazyFetch':
-                  if (
-                    stringTypes.includes(parsedCall.callExpression.arguments[1]?.type)
-                    && typeof fnMeta.source === 'string' && stripExtension(fnMeta.source) === stripExtension(resolveAlias('#app/composables/fetch', options.alias))
-                  ) { return }
-                  break
-
-                case 'useAsyncData':
-                case 'useLazyAsyncData':
-                  if (
-                    stringTypes.includes(parsedCall.callExpression.arguments[0]?.type)
-                    && typeof fnMeta.source === 'string' && stripExtension(fnMeta.source) === stripExtension(resolveAlias('#app/composables/asyncData', options.alias))
-                  ) { return }
-                  break
-              }
+              const explicitKey = explicitKeyArguments[parsedCall.name]
+              if (
+                explicitKey
+                && stringTypes.includes(parsedCall.callExpression.arguments[explicitKey.index]?.type)
+                && typeof fnMeta.source === 'string' && stripExtension(fnMeta.source) === stripExtension(resolveAlias(explicitKey.source, options.alias))
+              ) { return }
 
               // inject a key to the function call
-              let i = codeIndex + parsedCall.callExpression.end - 2 // char before the closing `)`
-              while (i >= codeIndex + parsedCall.callExpression.start && isWhitespace(code[i])) {
+              let i = parsedCall.callExpression.end - 2 // char before the closing `)`
+              while (i >= parsedCall.callExpression.start && isWhitespace(code[i])) {
                 i--
               }
               const endsWithComma = code[i] === ','
 
               s.appendLeft(
-                codeIndex + parsedCall.callExpression.end - 1,
+                parsedCall.callExpression.end - 1,
                 (parsedCall.callExpression.arguments.length && !endsWithComma ? ', ' : '') + '\'$' + hash(`${relativeID}-${++count}`).slice(0, 10) + `' ${NUXT_INJECTED_MARKER}`,
               )
             })

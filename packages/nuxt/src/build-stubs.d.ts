@@ -26,6 +26,10 @@ declare module '#build/fetch.server.mjs' {
   const $fetch: import('./app/types/fetch').TypedFetch
   export { $fetch }
 }
+declare module '#build/fetch-setup'
+declare module '#build/fetch-global'
+declare module '#build/fetch-setup.client.mjs'
+declare module '#build/fetch-setup.server.mjs'
 
 declare module '#build/global-polyfills.mjs'
 declare module '#build/island-renderer'
@@ -46,6 +50,10 @@ declare module '#build/root-component.mjs'
 declare module '#build/route-rules.mjs'
 declare module '#build/test-component-wrapper.mjs'
 declare module '#build/unhead-options.mjs'
+declare module '#build/unhead-client.mjs' {
+  export const createClientHead: () => import('@unhead/vue/types').VueHeadClient
+  export const appComponentHead: import('@unhead/vue/types').SerializableHead[]
+}
 declare module '#build/unhead.config.mjs'
 
 declare module '#components'

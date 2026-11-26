@@ -15,16 +15,18 @@ function conflictsWithin (segments: string[], name: string, index: number): bool
 /**
  * Rename dynamic segments in route rule keys, in place, so sibling segments share a single name.
  * `radix3` keys dynamic segments without their placeholder name, so `/:slug/about` and
- * `/:locale/:slug/about` collide and one silently loses its rules.
+ * `/:locale/:slug/about` collide and one silently loses its rules. Rule objects are not mutated:
+ * a rule whose `redirect` or `proxy` target is rewritten is replaced with a copy.
  *
  * @internal
  */
 export function unifyDynamicRouteRuleSegments (routeRules: Record<string, Record<string, any>>): void {
   const unifiedNames = new Map<string, string>()
   const unified: Array<[string, Record<string, any>]> = []
-  let clashed = false
+  let renamed = false
 
-  for (const [route, rules] of Object.entries(routeRules)) {
+  for (const [route, original] of Object.entries(routeRules)) {
+    let rules = original
     const segments = route.split('/')
     const renames = new Map<string, string>()
     for (let index = 1; index < segments.length; index++) {
@@ -40,7 +42,6 @@ export function unifyDynamicRouteRuleSegments (routeRules: Record<string, Record
         unifiedNames.set(group, name)
       }
       if (segment === `:${name}` || conflictsWithin(segments, name, index)) { continue }
-      clashed = true
       segments[index] = `:${name}`
       if (segment !== '*') {
         renames.set(segment.slice(1), name)
@@ -51,16 +52,17 @@ export function unifyDynamicRouteRuleSegments (routeRules: Record<string, Record
       for (const key of ['redirect', 'proxy']) {
         const target = rules[key]
         if (target?.to) {
-          target.to = target.to.replace(/\/:([$\w]+)/g, (match: string, name: string) => renames.has(name) ? `/:${renames.get(name)}` : match)
+          rules = { ...rules, [key]: { ...target, to: target.to.replace(/\/:([$\w]+)/g, (match: string, name: string) => renames.has(name) ? `/:${renames.get(name)}` : match) } }
         }
       }
     }
-    unified.push([segments.join('/'), rules])
+    const key = segments.join('/')
+    renamed ||= key !== route
+    unified.push([key, rules])
   }
 
-  if (!clashed) { return }
+  if (!renamed) { return }
 
-  // mutate in place: `runtimeConfig.nitro.routeRules` references this object
   for (const route of Object.keys(routeRules)) {
     delete routeRules[route]
   }

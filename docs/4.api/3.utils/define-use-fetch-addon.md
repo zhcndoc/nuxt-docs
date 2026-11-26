@@ -20,6 +20,8 @@ Addon 可以声明调用时的自定义选项、使用中间件包装 handler、
 下面的 addon 添加了自定义逻辑：窗口重新获得焦点时刷新数据，并通过自定义的 `refreshOnFocus` 选项控制是否启用：
 
 ```ts [app/composables/useCustomFetch.ts]
+import { useWindowFocus } from '@vueuse/core'
+
 const refreshOnFocus = defineUseFetchAddon({
   // 为自定义 useFetch 实例扩展调用选项
   setup: (options: UseFetchAddonOptions<{ refreshOnFocus?: boolean }>) => {

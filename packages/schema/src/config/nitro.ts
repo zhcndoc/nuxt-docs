@@ -70,10 +70,25 @@ export default defineResolvers({
     },
   },
   routeRules: {},
+  nitroLegacy: {
+    $resolve: async (val: unknown, get: ResolverGetter) => {
+      if (val === true || (val && typeof val === 'object')) {
+        return val
+      }
+      if (val === false) {
+        return false
+      }
+      if (await get('_nitroMajor') !== 3 || await get('future.compatibilityVersion') >= 5) {
+        return false
+      }
+      return await get('experimental.nitroAutoImports') === false ? { imports: false } : true
+    },
+  },
   prerender: {},
   serverHandlers: [],
   devServerHandlers: [],
   _serverPlugins: [],
+  _rendererPlugins: [],
   tracingChannel: {
     // Nuxt emits the `nuxt.*` diagnostics channels itself. The Nitro-level
     // channels (`srvx.request`, `h3.request`, `unstorage.*`) are only emitted

@@ -1,7 +1,6 @@
 import { resolve } from 'pathe'
 import * as vite from 'vite'
 import vuePlugin from '@vitejs/plugin-vue'
-import viteJsxPlugin from '@vitejs/plugin-vue-jsx'
 import { logger, recoverThrottledChanges } from '@nuxt/kit'
 import { joinURL } from 'ufo'
 import type { Nuxt, ViteConfig } from '@nuxt/schema'
@@ -9,14 +8,15 @@ import type { Nuxt, ViteConfig } from '@nuxt/schema'
 import type { ViteBuildContext } from './vite.ts'
 import { DevStyleSSRPlugin } from './plugins/dev-style-ssr.ts'
 import { RuntimePathsPlugin } from './plugins/runtime-paths.ts'
-import { TypeCheckPlugin } from './plugins/type-check.ts'
-import { ModulePreloadPolyfillPlugin } from './plugins/module-preload-polyfill.ts'
+import { VueJsxPlugin } from './plugins/vue-jsx.ts'
+import { ModulePreloadPolyfillPlugin } from './plugins/client-entry-import.ts'
 import { ViteNodePlugin } from './plugins/vite-node.ts'
 import { createViteLogger } from './utils/logger.ts'
-import { DevErrorsPlugin, getDevErrorReporter, reportTransformError } from './dev-errors.ts'
+import { DevErrorsDevToolsPlugin, DevErrorsPlugin, DevRequestErrorsPlugin, getDevErrorReporter, reportTransformError } from './dev-errors.ts'
 import { OptimizeDepsHintPlugin, optimizerCallbacks } from './plugins/optimize-deps-hint.ts'
 import { StableEntryPlugin } from './plugins/stable-entry.ts'
 import { CompileHintsPlugin } from './plugins/compile-hints.ts'
+import { ClientChunksPlugin } from './plugins/client-chunks.ts'
 import { AnalyzePlugin } from './plugins/analyze.ts'
 import { DevServerPlugin } from './plugins/dev-server.ts'
 import { TemplateHMRPlugin } from './plugins/template-hmr.ts'
@@ -51,12 +51,11 @@ export async function buildClient (nuxt: Nuxt, ctx: ViteBuildContext) {
       }),
       RuntimePathsPlugin(),
       ViteNodePlugin(nuxt),
-      // Type checking client panel
-      TypeCheckPlugin(nuxt),
       ModulePreloadPolyfillPlugin(),
       // ensure changes in chunks do not invalidate whole build
       StableEntryPlugin(nuxt),
       CompileHintsPlugin(nuxt),
+      ClientChunksPlugin(nuxt),
       AnalyzePlugin(nuxt),
       DevServerPlugin(nuxt),
       TemplateHMRPlugin(nuxt),
@@ -85,15 +84,21 @@ export async function buildClient (nuxt: Nuxt, ctx: ViteBuildContext) {
   clientConfig.customLogger = createViteLogger(clientConfig, { onNewDeps: callbacks?.onNewDeps, onStaleDep: callbacks?.onStaleDep, onTransformError: reportTransformError(devErrors) })
   // the overlay and the reports it shows are served from the server the browser talks to
   if (devErrors) {
-    clientConfig.plugins!.push(DevErrorsPlugin(devErrors))
+    const { CheckerBridgePlugin } = await import('./checker-bridge.ts')
+    clientConfig.plugins!.push(DevErrorsPlugin(devErrors), DevRequestErrorsPlugin(devErrors), await DevErrorsDevToolsPlugin(nuxt, devErrors), CheckerBridgePlugin(devErrors))
   }
 
   await nuxt.callHook('vite:extendConfig', clientConfig, { isClient: true, isServer: false })
 
+  const vue = vuePlugin(clientConfig.vue)
   clientConfig.plugins!.unshift(
-    vuePlugin(clientConfig.vue),
-    viteJsxPlugin(clientConfig.vueJsx),
+    vue,
+    VueJsxPlugin(clientConfig.vueJsx, nuxt.options.experimental.decorators),
   )
+  if (devErrors) {
+    const { VueCompilerWarningsPlugin } = await import('./vue-compiler-warnings.ts')
+    clientConfig.plugins!.push(VueCompilerWarningsPlugin(nuxt, vue, devErrors))
+  }
 
   await nuxt.callHook('vite:configResolved', clientConfig, { isClient: true, isServer: false })
 
@@ -109,8 +114,6 @@ export async function buildClient (nuxt: Nuxt, ctx: ViteBuildContext) {
     await nuxt.callHook('vite:serverCreated', viteServer, { isClient: true, isServer: false })
   } else {
     // Build
-    logger.info('Building client...')
-    const start = Date.now()
     logger.restoreAll()
     try {
       await vite.build(clientConfig)
@@ -118,6 +121,5 @@ export async function buildClient (nuxt: Nuxt, ctx: ViteBuildContext) {
       logger.wrapAll()
     }
     await nuxt.callHook('vite:compiled')
-    logger.success(`Client built in ${Date.now() - start}ms`)
   }
 }

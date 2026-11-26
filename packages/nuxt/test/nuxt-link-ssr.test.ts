@@ -7,16 +7,24 @@ import type { Router } from 'vue-router'
 
 const nuxtApp = {
   hooks: { callHook: () => Promise.resolve() },
-  ssrContext: {},
+  ssrContext: {} as { islandContext?: object },
   $config: { app: { baseURL: '/' }, public: {} },
   $router: undefined as Router | undefined,
 }
 
-vi.mock('#app/nuxt', () => ({
-  useRuntimeConfig: () => nuxtApp.$config,
-  useNuxtApp: () => nuxtApp,
-  tryUseNuxtApp: () => nuxtApp,
-}))
+vi.mock('#app/nuxt', async () => {
+  const { getCurrentInstance } = await import('vue')
+  return {
+    useRuntimeConfig: () => nuxtApp.$config,
+    // the app cannot be resolved during rendering
+    useNuxtApp: () => {
+      const instance = getCurrentInstance() as (ComponentInternalInstance & { render?: unknown }) | null
+      if (!instance || instance.render) { throw new Error('The Nuxt instance is not available') }
+      return nuxtApp
+    },
+    tryUseNuxtApp: () => nuxtApp,
+  }
+})
 
 const { defineNuxtLink } = await import('#app/components/nuxt-link')
 const { ssrRenderNuxtLink } = await import('#app/components/nuxt-link-ssr-render')
@@ -69,18 +77,20 @@ async function renderLink (testCase: Case, server: boolean, buffer = false) {
         setup: () => () => h('div', [h(Link as any, props, slot)]),
       }))
   app.use(router)
+  ;(app as unknown as { $nuxt: typeof nuxtApp }).$nuxt = nuxtApp
 
   return renderToString(app)
 }
 
 // Server-rendered internal links bypass `<RouterLink>`, so the two paths must produce identical
-// markup or the client would fail to hydrate the anchor.
+// markup (apart from an empty `class`) or the client would fail to hydrate the anchor.
 const cases: Case[] = [
   { name: 'renders an inactive link' },
   { name: 'renders an active parent link', props: { to: '/parent' }, at: '/parent/child/1' },
   { name: 'renders an exact active link', props: { to: '/parent' }, at: '/parent' },
   { name: 'renders an active leaf link', props: { to: '/parent/child/1' }, at: '/parent/child/1' },
   { name: 'distinguishes links differing only by params', props: { to: '/parent/child/1' }, at: '/parent/child/2' },
+  { name: 'renders a link omitting an optional param as active', props: { to: '/parent/child' }, at: '/parent/child/1' },
   { name: 'resolves an aliased route', props: { to: '/aliased/1' }, at: '/named/1' },
   { name: 'resolves a named route object', props: { to: { name: 'named', params: { id: '2' } } } },
   { name: 'resolves a route object with query and hash', props: { to: { path: '/query', query: { a: 'b c' }, hash: '#h' } } },
@@ -125,6 +135,7 @@ const customCases: Case[] = [
   { name: 'renders an exact active link', props: { to: '/parent' }, at: '/parent' },
   { name: 'renders an active leaf link', props: { to: '/parent/child/1' }, at: '/parent/child/1' },
   { name: 'distinguishes links differing only by params', props: { to: '/parent/child/1' }, at: '/parent/child/2' },
+  { name: 'renders a link omitting an optional param as active', props: { to: '/parent/child' }, at: '/parent/child/1' },
   { name: 'resolves an aliased route', props: { to: '/aliased/1' }, at: '/named/1' },
   { name: 'resolves a named route object', props: { to: { name: 'named', params: { id: '2' } } } },
   { name: 'resolves a route object with query and hash', props: { to: { path: '/query', query: { a: 'b c' }, hash: '#h' } }, at: '/query?a=b%20c#h' },
@@ -146,17 +157,76 @@ const customCases: Case[] = [
 describe('nuxt-link ssr', () => {
   for (const testCase of cases) {
     it(testCase.name, async () => {
-      const viaRouterLink = await renderLink(testCase, false)
+      const viaRouterLink = (await renderLink(testCase, false)).replaceAll(' class=""', '')
       const viaServerPath = await renderLink(testCase, true)
       expect(viaServerPath).toBe(viaRouterLink)
       expect(await renderLink(testCase, true, true)).toBe(viaRouterLink)
     })
   }
 
+  it('resolves an internal download link against the app base', async () => {
+    nuxtApp.$config.app.baseURL = '/app/'
+    try {
+      const html = await renderLink({ name: 'internal download link', props: { to: '/report.pdf', download: '' } }, true)
+      expect(html).toContain('href="/app/report.pdf"')
+      expect(html).toContain('download')
+    } finally {
+      nuxtApp.$config.app.baseURL = '/'
+    }
+  })
+
+  it('resolves a download link without the hash-history prefix', async () => {
+    nuxtApp.$config.app.baseURL = '/app/'
+    try {
+      const hashHistory = { ...createMemoryHistory(), createHref: (to: string) => '#' + to }
+      const html = await renderLink({ name: 'hash-mode download', props: { to: '/report.pdf', download: '' }, routerOptions: { history: hashHistory } }, true)
+      expect(html).toContain('href="/app/report.pdf"')
+      expect(html).not.toContain('#/report.pdf')
+    } finally {
+      nuxtApp.$config.app.baseURL = '/'
+    }
+  })
+
+  it.each([
+    { trailingSlash: 'append', to: { name: 'named', params: { id: '2' } }, href: '/named/2/' },
+    { trailingSlash: 'append', to: { path: '/query', query: { a: 'b' }, hash: '#h' }, href: '/query/?a=b#h' },
+    { trailingSlash: 'append', to: { query: { a: 'b' } }, at: '/parent', href: '/parent/?a=b' },
+    { trailingSlash: 'remove', to: { query: { a: 'b' } }, at: '/parent/', href: '/parent?a=b' },
+    { trailingSlash: undefined, to: '/parent/', href: '/parent/' },
+  ])('applies `trailingSlash: $trailingSlash` to $to', async ({ trailingSlash, to, at, href }) => {
+    const testCase = { name: 'trailing slash', options: { trailingSlash }, props: { to }, at }
+    for (const html of [await renderLink(testCase, false), await renderLink(testCase, true), await renderLink(testCase, true, true)]) {
+      expect(html).toContain(`href="${href}"`)
+    }
+  })
+
   it('renders a render-function slot once', async () => {
     const slot = vi.fn(() => 'text')
     await renderLink({ name: 'slot', props: { to: '/parent' }, slot }, true, true)
     expect(slot).toHaveBeenCalledOnce()
+  })
+
+  it('renders an internal link without the Nuxt instance during the render', async () => {
+    const testCase = { name: 'no instance at render', props: { to: '/parent' } }
+    for (const html of [await renderLink(testCase, true), await renderLink(testCase, true, true)]) {
+      expect(html).toContain('<a href="/parent">text</a>')
+    }
+  })
+
+  it('marks an internal link for island navigation', async () => {
+    nuxtApp.ssrContext.islandContext = {}
+    try {
+      const prefetched = { name: 'island link', props: { to: '/parent', prefetchOn: 'visibility' } }
+      for (const html of [
+        await renderLink(prefetched, true),
+        await renderLink(prefetched, true, true),
+        await renderLink({ ...prefetched, attrs: { id: 'x' } }, true, true),
+      ]) {
+        expect(html).toContain('data-internal="prefetch"')
+      }
+    } finally {
+      delete nuxtApp.ssrContext.islandContext
+    }
   })
 
   describe('custom', () => {

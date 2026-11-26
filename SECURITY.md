@@ -26,11 +26,11 @@ Nuxt 构建在其他项目之上，每个项目都有自己的安全处理流程
 
 有效报告应表明：Nuxt 本身破坏了合理开发者会依赖的安全保证，且应用是按照我们的文档编写的。我们曾接受并修复的问题示例：
 
-- 绕过 Nuxt 提供的服务器强制访问控制机制
-- SSR、负载缓存或共享服务器状态中的跨用户数据泄露
-- 按照文档使用 Nuxt 自身的 API 和组件（例如 `<NuxtLink>`、`navigateTo`、head 组件）时发生 XSS
-- Nuxt 自身处理请求时导致服务器端代码执行或资源耗尽（例如渲染岛屿前解析或校验请求），而非组件使用请求输入执行的工作
-- 可被*远程*攻击者利用的开发服务器问题：恶意网站访问开发服务器、局域网暴露，或向不应获得项目信息的源泄露信息
+- Bypassing server-enforced access-control mechanisms Nuxt provides
+- Cross-user data leakage in SSR, payload caching, or shared server state
+- XSS through Nuxt's own APIs and components when used as documented (e.g. `<NuxtLink>`, `navigateTo`, head components)
+- Server-side code execution or resource exhaustion in Nuxt's own handling of a request (e.g. parsing or validating an island request before rendering it), as opposed to work your components do with request input
+- Dev-server issues exploitable by a party the developer has not given access to: a malicious website reaching the dev server through the developer's browser (cross-origin reads, DNS rebinding), the dev server becoming reachable from the network without the developer exposing it (inside a container or WSL, publishing a port is how you expose it), or files served from outside the directories the dev server is configured to serve
 
 针对最简、未经修改的 `nuxt` starter 项目提供可运行的概念验证（或清楚说明无法提供的原因），有助于我们更快地验证并修复问题。
 
@@ -38,18 +38,20 @@ Nuxt 构建在其他项目之上，每个项目都有自己的安全处理流程
 
 我们希望为真正的问题留出处理空间，因此会明确说明哪些报告不会被接受：
 
-- **存在漏洞的应用代码。** Nuxt 无法防御本身就不安全的代码。如果概念验证要求应用作者做出我们的文档明确警告不要做的事情，相关报告就不属于 Nuxt 漏洞。例如：
-  - 将不可信输入传给 `v-html`、[`useHead`](https://nuxt.com/docs/4.x/api/composables/use-head) 中的 `innerHTML`（请使用 [`useHeadSafe`](https://nuxt.com/docs/4.x/api/composables/use-head-safe)），或 `<NuxtClientFallback>` 的 `placeholder`/`fallback` 属性
-  - 使用 Vue 运行时编译器编译用户输入的模板（这等同于 `eval`）
-  - 将机密信息放入 `runtimeConfig.public`，或以其他方式将私有运行时配置渲染到客户端
-  - 未经校验便将用户输入插入 `createError` 消息、重定向或动态组件解析中（`<component :is>`、多态 `as` 属性）
-  - 未校验任何由用户控制的内容，例如[传递给服务器组件的 props](https://nuxt.com/docs/4.x/guide/concepts/server-components)。这些内容来自请求，必须视为不可信输入；如果它们会驱动循环或其他随数值增长的工作，还应考虑其大小和数量级
-- **文档中说明的信任边界和限制。** 某些行为明确属于开发者的责任，重述这些行为的报告不属于漏洞。例如，[服务器组件／岛屿的 props](https://nuxt.com/docs/4.x/guide/concepts/server-components) 会作为 GET 查询参数发送（因此可能出现在访问日志、CDN 缓存和 `Referer` 标头中），并且渲染岛屿时不会运行路由中间件；[`<NuxtIsland>` 的 `source` 属性](https://nuxt.com/docs/4.x/api/components/nuxt-island) 意味着完全信任远程服务器提供的 HTML，而 `dangerouslyLoadClientComponents` 从名称到设计都表明其具有危险性。路由中间件是一项 DX 功能，而非安全边界：它也会在客户端运行，而用户可以覆盖任何在客户端运行的内容，因此“我从自己的浏览器跳过了路由中间件”不属于漏洞（应在服务器上保护数据，因为用户无法篡改服务器上的数据）。同样，岛屿端点 URL 中的哈希用于防止缓存投毒，而非作为授权机制；任何能访问该端点的人都可以渲染岛屿，因此，将哈希视为可绕过访问控制机制的报告不属于有效报告。证明 Nuxt *违反*其某项文档承诺的报告是有效的；证明文档所述限制的报告则不是。
-- **假设原型污染已经发生的攻击。** 如果概念验证一开始就污染了 `Object.prototype`（或以其他方式假设攻击者已经能在相关上下文中执行 JavaScript），那么漏洞在于允许这种情况发生的因素，而不在于 Nuxt 代码随后读取了被污染的属性。
-- **没有 Nuxt 利用路径的依赖项 CVE。** 我们某个（传递）依赖项中的漏洞公告，即使由 `npm audit` 或扫描器报告，也本身不属于 Nuxt 漏洞。我们会在日常维护中保持依赖项更新。只有当你能证明 Nuxt 对该依赖项的使用方式使漏洞可在 Nuxt 应用中被利用时，它才属于有效报告。
-- **缺少安全加固，而非安全保障失效。** 缺少安全标头、CSP、速率限制等纵深防御措施属于应用层面的问题，并非 Nuxt 漏洞。同样，Nuxt 在文档所述边界之上应用的限制（例如服务器组件中数值型 `v-for` 源的上限）属于纵深防御，而非安全保障：如果报告证明应用代码仍能利用不可信 props 执行无界工作，这不属于漏洞。
-- **需要已遭入侵的机器才能实施的攻击。** 如果概念验证一开始就要求攻击者在开发者或服务器的机器上运行任意代码或命令，那么该机器已经遭到入侵，而 Nuxt 并不是失效的安全边界。（如上所述，可远程访问的开发服务器问题属于报告范围。）
-- **自我 XSS，以及要求受害者攻击自己的问题**，例如要求受害者将有效载荷粘贴到自己的开发者工具或配置中。
-- **未经分析便提交的自动扫描器输出。** 明显由 LLM 或工具生成、在没有可运行复现的情况下声称存在漏洞，或将预期行为描述为缺陷的报告，会占用原本可用于处理真实报告的分类时间。反复提交低质量报告可能导致今后来自同一来源的报告被降低处理优先级。
+- **Vulnerable application code.** Nuxt cannot defend against code that is insecure in the first place. Reports whose proof of concept requires the app author to do something our documentation warns against are not Nuxt vulnerabilities. That includes, for example:
+  - passing untrusted input to `v-html`, `innerHTML` in [`useHead`](https://nuxt.com/docs/4.x/api/composables/use-head) (use [`useHeadSafe`](https://nuxt.com/docs/4.x/api/composables/use-head-safe)), or the `placeholder`/`fallback` props of `<NuxtClientFallback>`
+  - compiling templates from user input with the Vue runtime compiler (this is equivalent to `eval`),
+  - putting secrets in `runtimeConfig.public`, or otherwise rendering private runtime config to the client
+  - interpolating user input into `createError` messages, redirects, or dynamic component resolution (`<component :is>`, polymorphic `as` props) without validation
+  - failing to validate anything that is user-controlled, such as [props passed to a server component](https://nuxt.com/docs/4.x/guide/concepts/server-components), which come from the request and must be treated as untrusted input, including their size and magnitude when they drive loops or other proportional work
+- **Documented trust boundaries and limitations.** Some behaviours are explicitly documented as the developer's responsibility, and reports that restate them are not vulnerabilities. For example, [server component / island props](https://nuxt.com/docs/4.x/guide/concepts/server-components) are sent as GET query parameters (so they may appear in access logs, CDN caches, and `Referer` headers) and route middleware does not run when rendering islands; the [`source` prop of `<NuxtIsland>`](https://nuxt.com/docs/4.x/api/components/nuxt-island) means fully trusting the remote server's HTML, and `dangerouslyLoadClientComponents` is dangerous by name and by design. Route middleware is a DX feature, not a security boundary: it runs on the client as well, and anything running on the client can be overridden by the user, so "I skipped route middleware from my own browser" is not a vulnerability (protect data on the server, where the user cannot tamper with it). Similarly, the hash in island endpoint URLs exists to prevent cache poisoning, not to act as an authorisation mechanism; anyone who can reach the endpoint can render islands, and reports treating the hash as an access-control bypass are not valid. A report showing Nuxt *violating* one of its documented guarantees is valid; a report demonstrating a documented limitation is not.
+- **Path-scoped server middleware in front of pages.** Nitro matches the `route` of server middleware registered with `serverHandlers` or `addServerHandler` literally and case-sensitively, with encoded characters such as `%2F` left encoded. The page router can ignore case and decodes route params, so a middleware registered for a path prefix does not run for every URL that renders a page under that prefix (see [custom routing](https://nuxt.com/docs/4.x/guide/recipes/custom-routing#server-middleware-with-case-insensitive-routing)). Reports that a page rendered without such a middleware running are not vulnerabilities. Check access in the server route or API that returns the protected data. If Nuxt itself rewrites the request path, so that the page it renders differs from the path Nitro matched, that is in scope.
+- **Network clients of a dev server you have exposed.** `nuxt dev --host`, a published container port, a tunnel, or `--public` make the dev server reachable without authentication, and the CLI warns about this when it starts. Anyone who can reach it can read the app's source and other files in the project, including build output and any values inlined into it. Reports that such a client can read a particular file are not vulnerabilities. Keep secrets out of `nuxt.config` and provide them through `NUXT_*` environment variables instead (see [runtime config](https://nuxt.com/docs/4.x/guide/going-further/runtime-config#environment-variables)).
+- **Attacks that assume prototype pollution has already occurred.** If the proof of concept starts by polluting `Object.prototype` (or otherwise assumes an attacker can already execute JavaScript in the relevant context), the vulnerability lies with whatever allowed that, not with Nuxt code that subsequently reads a polluted property.
+- **Dependency CVEs without a Nuxt exploit path.** A vulnerability advisory in one of our (transitive) dependencies, reported by `npm audit` or a scanner, is not itself a Nuxt vulnerability. We keep dependencies up to date as part of normal maintenance. It becomes a valid report only if you can show that Nuxt's usage of the dependency makes the vulnerability exploitable in a Nuxt app.
+- **Missing hardening, not broken guarantees.** Absence of security headers, CSP, rate limiting, and similar defence-in-depth measures are application-level concerns, not vulnerabilities in Nuxt. Likewise, limits Nuxt applies on top of a documented boundary (such as the cap on numeric `v-for` sources in server components) are defence in depth, not security guarantees: a report showing that application code can still do unbounded work with untrusted props is not a vulnerability.
+- **Attacks that require an already-compromised machine.** If the proof of concept starts with the attacker running arbitrary code or commands on the developer's or server's machine, the machine is already compromised and Nuxt is not the boundary that failed. (Dev-server issues reachable by a party the developer has not given access to, as above, are in scope.)
+- **Self-XSS and issues requiring the victim to attack themselves**, such as pasting a payload into their own devtools or config.
+- **Automated scanner output submitted without analysis.** Reports that are clearly LLM- or tool-generated, assert a vulnerability without a working reproduction, or describe intended behaviour as a flaw consume triage time that would otherwise go to real reports. Repeated low-quality submissions may cause future reports from the same source to be deprioritised.
 
 如果你确实不确定某个问题是否符合条件，请谨慎起见，私下报告。我们宁愿对边界情况进行分类，也不愿遗漏真正的问题。

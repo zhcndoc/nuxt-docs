@@ -1,4 +1,4 @@
-// For pnpm typecheck:docs to generate correct types
+// The app for the `test/nuxt` runtime projects, and the types for `pnpm typecheck` and `pnpm typecheck:docs`
 
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
@@ -61,4 +61,6 @@ export default defineNuxtConfig({
     shim: process.env.DOCS_TYPECHECK === 'true',
     hoist: ['@vitejs/plugin-vue', 'vue-router'],
   },
+  // this workspace depends on both nitro majors
+  _nitroMajor: 2,
 })

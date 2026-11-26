@@ -3,7 +3,7 @@ import { lstat, mkdir, mkdtemp, readdir, readlink, rm, symlink, writeFile } from
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'pathe'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { getLayerNodeModulesExcludePattern, isNuxtDistId, linkStaticDist, resolveNitroCommand, toFsDriverIgnorePatterns, toTranspileNoExternal } from '../src/utils.ts'
+import { getLayerNodeModulesExcludePattern, isNuxtDistId, linkStaticDist, resolveNitroCommand, timePluginHooks, toFsDriverIgnorePatterns, toTranspileNoExternal } from '../src/utils.ts'
 
 describe('linkStaticDist', () => {
   let rootDir: string
@@ -191,10 +191,53 @@ describe('toTranspileNoExternal', () => {
     expect(re.test('/code/nuxt/image/playground/node_modules/ipx/dist/index.mjs')).toBe(false)
   })
 
+  it('does not match siblings that share a name prefix with an absolute directory', () => {
+    for (const entry of ['/x/node_modules/my-layer', '/x/node_modules/my-layer/']) {
+      const re = toTranspileNoExternal(entry) as RegExp
+      expect(re.test('/x/node_modules/my-layer/server/api/hello.ts')).toBe(true)
+      expect(re.test('/x/node_modules/my-layer-utils/dist/index.mjs')).toBe(false)
+    }
+  })
+
+  it('matches an absolute file entry', () => {
+    const re = toTranspileNoExternal('/code/nuxt/image/src/module.ts') as RegExp
+    expect(re.test('/code/nuxt/image/src/module.ts')).toBe(true)
+    expect(re.test('/code/nuxt/image/src/module.tsx')).toBe(false)
+  })
+
   it('matches windows paths with either separator', () => {
     const re = toTranspileNoExternal('C:\\code\\nuxt\\image') as RegExp
     expect(re.test('C:\\code\\nuxt\\image\\src\\runtime\\server\\routes\\_ipx.ts')).toBe(true)
     expect(re.test('C:/code/nuxt/image/src/runtime/server/routes/_ipx.ts')).toBe(true)
     expect(re.test('C:\\code\\nuxt\\image\\node_modules\\sharp\\lib\\index.js')).toBe(false)
+  })
+})
+
+describe('timePluginHooks', () => {
+  it('times function hooks and `{ filter, handler }` hooks with the plugin context', () => {
+    const recorded: unknown[] = []
+    const perf = {
+      timeBundlerHook: (name: string, hook: string, ctx: unknown, run: (ctx: unknown) => unknown) => {
+        recorded.push([name, hook, ctx])
+        return run(ctx)
+      },
+    }
+    const filter = { id: /\.ts$/ }
+    const transform = Object.freeze({ filter, order: 'pre', handler (this: { suffix: string }, code: string) { return code + this.suffix } })
+    const plugin = { name: 'a', resolveId (this: { suffix: string }, id: string) { return id + this.suffix }, transform }
+    const unnamed = { load: () => 'unnamed' }
+    const frozen = Object.freeze({ name: 'frozen', load: () => 'frozen' })
+    const { load: unnamedLoad } = unnamed
+    const { load: frozenLoad } = frozen
+
+    timePluginHooks(perf as any, [plugin, null, unnamed, frozen, { name: 'b', load: { filter } }])
+
+    const ctx = { suffix: '!' }
+    expect(plugin.resolveId.call(ctx, 'id')).toBe('id!')
+    expect(plugin.transform.handler.call(ctx, 'code')).toBe('code!')
+    expect(plugin.transform).toMatchObject({ filter, order: 'pre' })
+    expect(unnamed.load).toBe(unnamedLoad)
+    expect(frozen.load).toBe(frozenLoad)
+    expect(recorded).toEqual([['nitro:a', 'resolveId', ctx], ['nitro:a', 'transform', ctx]])
   })
 })

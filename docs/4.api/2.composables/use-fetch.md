@@ -8,7 +8,7 @@ links:
     size: xs
 ---
 
-此可组合函数为 [`useAsyncData`](/docs/api/composables/use-async-data) 和 [`$fetch`](/docs/api/utils/dollarfetch) 提供了一个方便的封装。它会自动为请求生成 key，根据服务器路由为请求 URL 提供类型提示，并推断 API 响应类型。
+此组合式函数为 [`useAsyncData`](/docs/api/composables/use-async-data) 和 [`$fetch`](/docs/api/utils/$fetch) 提供了一个方便的封装。它会自动为请求生成 key，根据服务器路由为请求 URL 提供类型提示，并推断 API 响应类型。
 
 ::note  
 `useFetch` 是一个应直接在 setup 函数、插件或路由中间件中调用的可组合函数。它返回响应式的可组合对象，并负责将响应添加到 Nuxt payload 中，以便在页面从服务器到客户端传递时，页面在水合（hydrate）时无需在客户端重新获取数据。  
@@ -202,7 +202,7 @@ interface AsyncDataExecuteOptions {
 type AsyncDataRequestStatus = 'idle' | 'pending' | 'success' | 'error'
 ```
 
-## 参数
+## 参数 {#parameters}
 
 - `URL` (`string | Request | Ref<string | Request> | () => string | Request`)：要获取的 URL 或请求。可以是字符串、Request 对象、Vue ref，或返回字符串/Request 的函数。支持响应式以实现动态端点。
 

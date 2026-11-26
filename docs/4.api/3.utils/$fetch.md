@@ -14,6 +14,10 @@ Nuxt 使用 [ofetch](https://github.com/unjs/ofetch) 在全局暴露 `$fetch` �
 在服务器端渲染期间，调用 `$fetch` 获取内部的 [API 路由](/docs/directory-structure/server)时，会直接调用相应的函数（模拟请求），**节省一次额外的 API 调用**。
 ::
 
+::note
+在生产客户端构建中，读取 `globalThis.$fetch` 的代码会负责安装该全局变量：任何未导入 `$fetch` 却直接调用它，或读取 `globalThis.$fetch`、`window.$fetch` 或 `self.$fetch` 的模块（包括 `node_modules` 中的模块）都符合此情况。客户端 bundle 若从未读取 `$fetch`，则不会包含 `ofetch`。Nuxt 在构建时无法检测到的代码（例如运行时加载的脚本或浏览器控制台）不应依赖该全局变量已设置，除非启用了 [`experimental.globalFetch`](/docs/guide/going-further/experimental-features#globalfetch)。
+::
+
 ::note{color="blue" icon="i-lucide-info"}
 在组件中使用 `$fetch`，但不将其与 [`useAsyncData`](/docs/api/composables/use-async-data) 一起使用，会导致数据被获取两次：最初在服务器上获取一次，然后在客户端水合期间再获取一次，因为 `$fetch` 不会将状态从服务器传递到客户端。因此，客户端必须重新获取数据，导致两端都会执行获取操作。
 ::
