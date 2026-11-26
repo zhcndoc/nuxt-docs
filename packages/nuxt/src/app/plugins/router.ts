@@ -5,7 +5,7 @@ import { defineNuxtPlugin, useRuntimeConfig } from '../nuxt'
 import type { ObjectPlugin, Plugin } from '../nuxt'
 import { getRouteRules } from '../composables/manifest'
 import { clearError, createError, showError } from '../composables/error'
-import { navigateTo } from '../composables/router'
+import { encodeRoutePath, navigateTo } from '../composables/router'
 import type { RouteMiddleware } from '../composables/router'
 import { navigationDiagnostics } from '../diagnostics/navigation'
 import { isAbsoluteHref, isRootedPath, sanitizeAnchorHref } from '../utils'
@@ -285,7 +285,7 @@ const plugin: Plugin<{ route: Route, router: Router }> & ObjectPlugin<{ route: R
     // Handle middleware
     nuxtApp._middleware ||= {
       global: [],
-      named: {},
+      named: Object.create(null),
     }
 
     const initialLayout = nuxtApp.payload.state._layout
@@ -375,7 +375,11 @@ const plugin: Plugin<{ route: Route, router: Router }> & ObjectPlugin<{ route: R
 
       await router.replace(initialURL)
       if (!isEqual(route.fullPath, initialURL)) {
-        await nuxtApp.runWithContext(() => navigateTo(route.fullPath))
+        if (import.meta.server) {
+          await nuxtApp.runWithContext(() => navigateTo(route.fullPath))
+        } else if (!nuxtApp._processingMiddleware) {
+          await router.push(encodeRoutePath(route.fullPath))
+        }
       }
     })
 

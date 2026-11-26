@@ -1,14 +1,14 @@
 import { toRef } from 'vue'
-import type { Ref } from 'vue'
+import type { AppConfig, ComponentPublicInstance, Ref } from 'vue'
 import { useNuxtApp } from '../nuxt'
 import type { NuxtApp, NuxtPayload } from '../nuxt'
 import { isBotUserAgent } from '../utils'
 import { useRouter } from './router'
 import { appDiagnostics } from '../diagnostics/core'
-import { NUXT_ERROR_SIGNATURE, NuxtError, THROWN_CONTEXT, THROWN_VALUE, createError, createErrorFromThrown, isNuxtError } from '../error'
+import { NUXT_ERROR_SIGNATURE, NuxtError, THROWN_CONTEXT, THROWN_VALUE, createError, createErrorFromThrown, isNuxtError, isUntrustedError } from '../error'
 import type { NuxtErrorDetails } from '../error'
 
-export { NUXT_ERROR_SIGNATURE, NuxtError, THROWN_CONTEXT, THROWN_VALUE, createError, createErrorFromThrown, isNuxtError }
+export { NUXT_ERROR_SIGNATURE, NuxtError, THROWN_CONTEXT, THROWN_VALUE, createError, createErrorFromThrown, isNuxtError, isUntrustedError }
 export type { ThrownContext } from '../error'
 export type { NuxtErrorDetails }
 
@@ -48,6 +48,23 @@ export const _notifyCrawlerError = (nuxtApp: NuxtApp, error: Error): Promise<voi
   const result = nuxtApp.callHook('app:error', createErrorFromThrown(error))
   appDiagnostics.NUXT_E1012({ userAgent: navigator.userAgent, cause: error })
   return result
+}
+
+/**
+ * Call a user-provided `app.config.errorHandler` for an error stopped by an
+ * `onErrorCaptured` hook, which prevents Vue from invoking it (#22691).
+ *
+ * @internal
+ */
+export const _invokeAppErrorHandler = (nuxtApp: NuxtApp, err: unknown, target: ComponentPublicInstance | null, info: string): void => {
+  const errorHandler = nuxtApp.vueApp.config.errorHandler as (AppConfig['errorHandler'] & { __nuxt_default?: boolean }) | undefined
+  if (errorHandler && !errorHandler.__nuxt_default) {
+    try {
+      errorHandler(err, target, info)
+    } catch (handlerError) {
+      console.error('[nuxt] Error in `app.config.errorHandler`', handlerError)
+    }
+  }
 }
 
 /**

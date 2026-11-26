@@ -6,15 +6,13 @@ import { mergeRsbuildConfig } from '@rsbuild/core'
 import { resolvePostcssPlugins } from '@nuxt/kit/internal'
 import { pluginVue } from '@rsbuild/plugin-vue'
 import { defu } from 'defu'
-import escapeRegExp from 'escape-string-regexp'
-import { basename, normalize, resolve } from 'pathe'
+import { basename, resolve } from 'pathe'
 import { joinURL, withoutLeadingSlash } from 'ufo'
 import { defineEnv } from 'unenv'
 
 import { resolveAllowedHosts } from '../../webpack/src/utils/same-origin.ts'
-import { getNuxtDefines } from '../../webpack/src/utils/defines.ts'
+import { getDevtool, getNuxtDefines, getTranspilePatterns, resolveVueRouterAlias } from '../../webpack/src/utils/options.ts'
 import { createServerExternals } from '../../webpack/src/utils/server-externals.ts'
-import { resolveVueAliases } from '../../webpack/src/utils/vue-aliases.ts'
 import { getHMRPath } from './dev-server.ts'
 import { DynamicBasePlugin } from './plugins/dynamic-base.ts'
 import { NuxtHooksPlugin } from './plugins/hooks.ts'
@@ -33,7 +31,7 @@ export async function resolveRsbuildConfig (nuxt: Nuxt): Promise<RsbuildConfig> 
 
   const entry = resolve(nuxt.options.appDir, nuxt.options.experimental.asyncEntry ? 'entry.async' : 'entry')
   const assetPrefix = joinURL(nuxt.options.app.baseURL, nuxt.options.app.buildAssetsDir)
-  const [postcssPlugins, preprocessorPlugins, typeCheckPlugin, rsdoctorPlugin] = await Promise.all([
+  const [postcssPlugins, preprocessorPlugins, typeCheck, rsdoctorPlugin] = await Promise.all([
     resolvePostcssPlugins<PostCSSPlugin>(nuxt),
     resolvePreprocessorPlugins(nuxt),
     resolveTypeCheckPlugin(nuxt),
@@ -61,14 +59,20 @@ export async function resolveRsbuildConfig (nuxt: Nuxt): Promise<RsbuildConfig> 
     rsdoctorPlugin,
   ]
 
+  // production bundles are reported through the `build:environment:*` hooks, so Rsbuild only
+  // prints warnings and errors unless the project sets a level itself
+  const reportsBuild = !nuxt.options.dev && nuxt.options.logLevel !== 'silent' && !userConfig.logLevel
+
   const config: RsbuildConfig = {
     // passed to Rspack as `context` as is; unplugin's virtual modules require the platform's path format on Windows
     root: resolvePlatformPath(nuxt.options.rootDir),
     mode: nuxt.options.dev ? 'development' : 'production',
-    logLevel: nuxt.options.logLevel === 'silent' ? 'silent' : 'info',
+    logLevel: nuxt.options.logLevel === 'silent' ? 'silent' : reportsBuild ? 'warn' : 'info',
+    performance: reportsBuild ? { printFileSize: false } : undefined,
     plugins,
     source: {
       decorators: nuxt.options.experimental.decorators ? { version: '2023-11' } : undefined,
+      tsconfigPath: typeCheck?.tsconfigPath,
     },
     resolve: {
       alias: {
@@ -144,13 +148,13 @@ export async function resolveRsbuildConfig (nuxt: Nuxt): Promise<RsbuildConfig> 
       client: {
         ...clientEnvironment(nuxt, { entry, assetPrefix }),
         // type checking runs once, in the server build when SSR is enabled
-        plugins: [!nuxt.options.ssr && typeCheckPlugin],
+        plugins: [!nuxt.options.ssr && typeCheck?.plugin],
       },
       ...nuxt.options.ssr
         ? {
             ssr: {
               ...serverEnvironment(nuxt, { entry, assetPrefix }),
-              plugins: [typeCheckPlugin],
+              plugins: [typeCheck?.plugin],
             },
           }
         : {},
@@ -179,11 +183,12 @@ function clientEnvironment (nuxt: Nuxt, { entry, assetPrefix }: EnvironmentOptio
         ...getDefines(nuxt, 'client'),
         ...nodeCompat ? { global: 'globalThis' } : {},
       },
-      include: getTranspilePatterns(nuxt, { isClient: true }),
+      // files outside of the project are only transpiled when they match `source.include`
+      include: getTranspilePatterns(nuxt, { isClient: true, isDev: nuxt.options.dev }),
     },
     resolve: {
       alias: {
-        ...resolveVueAliases(nuxt, false),
+        ...resolveVueRouterAlias(nuxt, false),
         'nitro/runtime-config': nitroClientRuntime,
         // TODO: remove in v5
         '#internal/nitro': nitroClientRuntime,
@@ -198,7 +203,7 @@ function clientEnvironment (nuxt: Nuxt, { entry, assetPrefix }: EnvironmentOptio
         ...flatDistPath,
       },
       sourceMap: {
-        js: sourcemap ? getDevtool(sourcemap, nuxt.options.dev ? 'cheap-module-source-map' : 'source-map') : false,
+        js: getDevtool(sourcemap, nuxt.options.dev ? 'cheap-module-source-map' : 'source-map'),
         css: !!sourcemap && nuxt.options.dev,
       },
     },
@@ -231,10 +236,10 @@ function serverEnvironment (nuxt: Nuxt, { entry, assetPrefix }: EnvironmentOptio
         server: { import: [entry], html: false },
       },
       define: getDefines(nuxt, 'server'),
-      include: getTranspilePatterns(nuxt, { isServer: true }),
+      include: getTranspilePatterns(nuxt, { isServer: true, isDev: nuxt.options.dev }),
     },
     resolve: {
-      alias: resolveVueAliases(nuxt, true),
+      alias: resolveVueRouterAlias(nuxt, true),
     },
     output: {
       target: 'node',
@@ -253,7 +258,7 @@ function serverEnvironment (nuxt: Nuxt, { entry, assetPrefix }: EnvironmentOptio
         js: '[name].mjs',
       },
       sourceMap: {
-        js: sourcemap ? getDevtool(sourcemap, nuxt.options.dev ? 'cheap-module-source-map' : 'source-map') : false,
+        js: getDevtool(sourcemap, nuxt.options.dev ? 'cheap-module-source-map' : 'source-map'),
       },
     },
     splitChunks: false,
@@ -274,43 +279,10 @@ const flatDistPath = {
   wasm: '',
 }
 
-function getDevtool (sourcemap: boolean | 'hidden' | 'nosource', devtool: 'cheap-module-source-map' | 'source-map') {
-  if (sourcemap === 'hidden') {
-    return `hidden-${devtool}` as const
-  }
-  return sourcemap === 'nosource' ? `nosources-${devtool}` as const : devtool
-}
-
 function getDefines (nuxt: Nuxt, name: 'client' | 'server') {
   return {
     ...getNuxtDefines(nuxt, name),
     '__VUE_OPTIONS_API__': nuxt.options.vue.optionsApi,
     '__VUE_PROD_HYDRATION_MISMATCH_DETAILS__': Boolean(nuxt.options.debug && nuxt.options.debug.hydration),
   }
-}
-/**
- * Files outside of the project (such as `node_modules`) are not transpiled by
- * Rsbuild unless they match `source.include`.
- */
-function getTranspilePatterns (nuxt: Nuxt, ctx: { isClient?: boolean, isServer?: boolean }) {
-  const patterns: RegExp[] = [
-    /consola\/src/,
-    /vue-demi/,
-    /(^|\/)nuxt\/(src\/|dist\/)?(app|[^/]+\/runtime)($|\/)/,
-  ]
-
-  for (let pattern of nuxt.options.build.transpile) {
-    if (typeof pattern === 'function') {
-      const result = pattern({ ...ctx, isDev: nuxt.options.dev })
-      if (!result) { continue }
-      pattern = result
-    }
-    if (typeof pattern === 'string') {
-      patterns.push(new RegExp(escapeRegExp(normalize(pattern))))
-    } else if (pattern instanceof RegExp) {
-      patterns.push(pattern)
-    }
-  }
-
-  return patterns
 }

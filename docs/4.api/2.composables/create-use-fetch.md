@@ -158,13 +158,15 @@ export const useAPI = createUseFetch(callerOptions => ({
 这里必须使用**函数签名**（覆盖模式），以便在设置上下文中（组合式函数调用处）调用 [`useNuxtApp()`](/docs/api/composables/use-nuxt-app)，而不是在模块作用域中调用，因为模块作用域中没有可用的 Nuxt 实例。
 ::
 
-## 扩展
+## 扩展 {#addons}
 
-除了 `useFetch` 选项外，`createUseFetch` 还接受一个 `addons` 数组。扩展是使用 [`defineUseFetchAddon`](/docs/api/utils/define-use-fetch-addon) 定义的可复用行为单元。它们可以声明自定义调用选项、在处理程序周围运行中间件、扩展返回对象，并为组合式函数附加自定义逻辑。
+除了 `useFetch` 选项外，`createUseFetch` 还接受 `addons` 数组：badge[v4.6]{color="info" size="xs" class="align-middle"}。插件是使用 [`defineUseFetchAddon`](/docs/api/utils/define-use-fetch-addon) 定义的可重用行为单元。他们可以声明自定义调用站点选项，围绕处理程序运行中间件，扩展返回的对象，并将自定义逻辑附加到可组合项。
 
 例如，一个扩展可以在窗口重新获得焦点时刷新数据，并通过自定义的 `refreshOnFocus` 选项控制是否启用，让调用方在每次调用时自行选择：
 
 ```ts [app/composables/useCustomFetch.ts]
+import { useWindowFocus } from '@vueuse/core'
+
 const refreshOnFocus = defineUseFetchAddon({
   // augment the call-site options for the custom useFetch instance 👇
   setup: (options: UseFetchAddonOptions<{ refreshOnFocus?: boolean }>) => {
@@ -199,5 +201,3 @@ const { data } = await useCustomFetch(
 :read-more{to="/docs/api/utils/define-use-fetch-addon"}
 
 :read-more{to="/docs/guide/recipes/custom-usefetch"}
-
-:read-more{to="/docs/api/composables/use-fetch"}

@@ -39,13 +39,24 @@ const { data: mountains } = await useCachedData(
 ## 类型
 
 ```ts [Signature]
-function createUseAsyncData (
-  options?: Partial<AsyncDataOptions> & { addons?: UseAsyncDataAddon[] },
-): typeof useAsyncData
+function createUseAsyncData<
+  FResT,
+  FDataT = FResT,
+  FPickKeys extends KeysOf<FDataT> = KeysOf<FDataT>,
+  FDefaultT = undefined,
+  const FAddons extends ReadonlyArray<UseAsyncDataAddon<any, any>> = [],
+> (
+  options?: Partial<AsyncDataOptions<FResT, FDataT, FPickKeys, FDefaultT>> & { addons?: FAddons },
+): UseAsyncData<FResT, FDataT, FPickKeys, FDefaultT, MergedAddonsOptions<FAddons>, MergedAddonsExtensions<FAddons>>
 
-function createUseAsyncData (
-  options: (callerOptions: AsyncDataOptions) => Partial<AsyncDataOptions>,
-): typeof useAsyncData
+function createUseAsyncData<
+  FResT,
+  FDataT = FResT,
+  FPickKeys extends KeysOf<FDataT> = KeysOf<FDataT>,
+  FDefaultT = undefined,
+> (
+  options: (callerOptions: AsyncDataOptions<unknown>) => Partial<AsyncDataOptions<FResT, FDataT, FPickKeys, FDefaultT>>,
+): UseAsyncData<FResT, FDataT, FPickKeys, FDefaultT>
 ```
 
 返回的组合式函数的签名包含由 [附加组件](#addons) 提供的任何自定义选项和返回值扩展。
@@ -88,13 +99,15 @@ export const useStrictData = createUseAsyncData(callerOptions => ({
 }))
 ```
 
-## 附加组件
+## 附加组件 {#addons}
 
-除了 `useAsyncData` 选项之外，`createUseAsyncData` 还接受一个 `addons` 数组。附加组件是使用 [`defineUseAsyncDataAddon`](/docs/api/utils/define-use-async-data-addon) 定义的可复用行为单元。它们可以声明自定义调用选项、围绕处理程序运行中间件、扩展返回对象，并为组合式函数附加自定义逻辑。
+除了 `useAsyncData` 选项外，`createUseAsyncData` 还接受 `addons` 数组：badge[v4.6]{color="info" size="xs" class="align-middle"}。插件是使用 [`defineUseAsyncDataAddon`](/docs/api/utils/define-use-async-data-addon) 定义的可重用行为单元。他们可以声明自定义调用站点选项，围绕处理程序运行中间件，扩展返回的对象，并将自定义逻辑附加到可组合项。
 
 例如，可以创建一个附加组件，在窗口重新获得焦点时刷新数据，并通过自定义的 `refreshOnFocus` 选项控制是否启用，让调用者逐次调用时选择是否启用：
 
 ```ts [app/composables/useCustomAsyncData.ts]
+import { useWindowFocus } from '@vueuse/core'
+
 const refreshOnFocus = defineUseAsyncDataAddon({
   // augment the call-site options for the custom useAsyncData instance 👇
   setup: (options: UseAsyncDataAddonOptions<{ refreshOnFocus?: boolean }>) => {
@@ -130,5 +143,3 @@ const { data } = await useCustomAsyncData(
 :read-more{to="/docs/api/utils/define-use-async-data-addon"}
 
 :read-more{to="/docs/guide/recipes/custom-usefetch"}
-
-:read-more{to="/docs/api/composables/use-async-data"}

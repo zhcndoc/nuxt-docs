@@ -20,6 +20,8 @@ links:
 此扩展会附加自定义逻辑：一个监听器，在窗口重新获得焦点时刷新数据，并通过自定义的 `refreshOnFocus` 选项控制是否启用：
 
 ```ts [app/composables/useCustomFetch.ts]
+import { useWindowFocus } from '@vueuse/core'
+
 const refreshOnFocus = defineUseFetchAddon({
   // augment the call-site options for the custom useFetch instance 👇
   setup: (options: UseFetchAddonOptions<{ refreshOnFocus?: boolean }>) => {

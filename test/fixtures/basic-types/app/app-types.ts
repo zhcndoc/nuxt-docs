@@ -402,6 +402,12 @@ describe('aliases', () => {
   })
 })
 
+describe('layers', () => {
+  it('exposes shared declarations from local layers', () => {
+    expectTypeOf<BarLayerSharedType>().toEqualTypeOf<{ layer: 'bar' }>()
+  })
+})
+
 describe('import meta', () => {
   it('types envName', () => {
     expectTypeOf(import.meta.envName).toEqualTypeOf<string>()
@@ -449,6 +455,7 @@ describe('middleware', () => {
       // @ts-expect-error Must return error or string
       abortNavigation(true)
     }, { global: true })
+    expectTypeOf(addRouteMiddleware(() => {})).toEqualTypeOf<() => void>()
   })
   it('handles return types of validate', () => {
     definePageMeta({
@@ -920,6 +927,12 @@ describe('composables', () => {
     })
     const { test } = useRequestHeaders(['test'])
     expectTypeOf(test).toEqualTypeOf<string | undefined>()
+  })
+
+  it('returns the prehydrate id from onPrehydrate', () => {
+    expectTypeOf(onPrehydrate((el) => { console.log(el) })).toEqualTypeOf<string | undefined>()
+    // @ts-expect-error string callbacks are not part of the public API
+    onPrehydrate('(()=>{})', 'key')
   })
 
   it('allows passing reactive values in useFetch', () => {

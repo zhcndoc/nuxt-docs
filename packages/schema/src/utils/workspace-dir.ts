@@ -2,27 +2,46 @@ import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { dirname, join } from 'pathe'
 
-const DECLARES_DENO_WORKSPACE_RE = /"workspace"\s*:/
+const JSONC_COMMENT_RE = /("(?:\\.|[^"\\])*")|\/\/[^\n]*|\/\*[\s\S]*?\*\//g
+const JSONC_TRAILING_COMMA_RE = /("(?:\\.|[^"\\])*")|,(\s*[}\]])/g
 
-/** Workspace files, with the pattern a file has to match to declare a workspace. */
-const WORKSPACE_FILES: Array<[file: string, declaresWorkspace?: RegExp]> = [
-  ['pnpm-workspace.yaml', /^packages\s*:/m],
+function declaresDenoWorkspace (contents: string): boolean {
+  const json = contents
+    .replace(JSONC_COMMENT_RE, (_, string = '') => string)
+    .replace(JSONC_TRAILING_COMMA_RE, (_, string, close) => string ?? close)
+  try {
+    return !!JSON.parse(json)?.workspace
+  } catch {
+    return false
+  }
+}
+
+/** Workspace files, with the check a file has to pass to declare a workspace. */
+const WORKSPACE_FILES: Array<[file: string, declaresWorkspace?: (contents: string) => boolean]> = [
+  ['pnpm-workspace.yaml', contents => /^packages\s*:/m.test(contents)],
   ['lerna.json'],
   ['turbo.json'],
   ['rush.json'],
-  ['deno.json', DECLARES_DENO_WORKSPACE_RE],
-  ['deno.jsonc', DECLARES_DENO_WORKSPACE_RE],
+  ['deno.json', declaresDenoWorkspace],
+  ['deno.jsonc', declaresDenoWorkspace],
 ]
 
 async function declaresWorkspace (dir: string): Promise<boolean> {
   for (const [file, declaresWorkspace] of WORKSPACE_FILES) {
     const path = join(dir, file)
     if (!existsSync(path)) { continue }
-    if (!declaresWorkspace || declaresWorkspace.test(await readFile(path, 'utf8').catch(() => ''))) {
+    if (!declaresWorkspace || declaresWorkspace(await readFile(path, 'utf8').catch(() => ''))) {
       return true
     }
   }
   return false
+}
+
+/** Whether `dir` is the root of a git repository, worktree or submodule. */
+async function isGitRoot (dir: string): Promise<boolean> {
+  if (existsSync(join(dir, '.git/config'))) { return true }
+  const gitFile = await readFile(join(dir, '.git'), 'utf8').catch(() => '')
+  return gitFile.startsWith('gitdir:')
 }
 
 async function declaresPackageWorkspaces (path: string): Promise<boolean> {
@@ -49,8 +68,9 @@ export async function findWorkspaceDir (rootDir: string): Promise<string> {
     if (await declaresWorkspace(dir)) { return dir }
   }
 
-  const gitDir = dirs.find(dir => existsSync(join(dir, '.git/config')))
-  if (gitDir) { return gitDir }
+  for (const dir of dirs) {
+    if (await isGitRoot(dir)) { return dir }
+  }
 
   for (const dir of dirs) {
     const path = join(dir, 'package.json')

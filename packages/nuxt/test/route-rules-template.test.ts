@@ -32,21 +32,26 @@ async function getRouteRulesTemplate (sensitive: boolean, baseURL?: string, rout
 
 describe('route rules template', () => {
   it('matches with the build-time `sensitive` setting', async () => {
-    const { defu } = await import('defu')
     for (const sensitive of [true, false]) {
       const contents = await getRouteRulesTemplate(sensitive)
       expect(contents).not.toContain('router.options.mjs')
       expect(contents.includes('foldRouteCase')).toBe(!sensitive)
-      const matcher = new Function('defu', contents.replace(/^import \{ defu \} from .*$/m, '').replace('export default', 'return'))(defu) as (path: string) => Record<string, any>
+      const matcher = await evaluateMatcher(contents)
       expect(matcher('/protected/secret')).toMatchObject({ redirect: '/login' })
       expect(matcher('/Protected/secret').redirect).toBe(sensitive ? undefined : '/login')
     }
   })
 
   it('emits a constant when only a catch-all rule applies', async () => {
-    expect(await getRouteRulesTemplate(false, undefined, {})).toBe('export default () => ({ssr: true})')
+    expect(await getRouteRulesTemplate(false, undefined, {})).toBe('export const hasRedirects = false\nexport default () => ({ssr: true})')
     expect(await getRouteRulesTemplate(false, undefined, { '/**': { appLayout: 'a' }, 'GET /**': { appLayout: 'b' }, 'POST /admin/**': { ssr: false } }))
-      .toBe('export default () => ({ssr: true,appLayout: "b"})')
+      .toBe('export const hasRedirects = false\nexport default () => ({ssr: true,appLayout: "b"})')
+  })
+
+  it('reports whether any rule redirects', async () => {
+    expect(await getRouteRulesTemplate(false, undefined, { '/admin/**': { prerender: true } })).toContain('export const hasRedirects = false')
+    expect(await getRouteRulesTemplate(false, undefined, { '/admin/**': { redirect: '/login' } })).toContain('export const hasRedirects = true')
+    expect(await getRouteRulesTemplate(false, undefined, { '/**': { redirect: '/login' } })).toContain('export const hasRedirects = true')
   })
 
   it('merges `appMiddleware` names from overlapping catch-all rules without a nitro server', async () => {
@@ -66,10 +71,7 @@ describe('route rules template', () => {
   })
 
   it('matches base-relative paths when app.baseURL is set', async () => {
-    const contents = await getRouteRulesTemplate(false, '/sub/')
-    const code = contents.replace(/^import \{ defu \} from .*$/m, '').replace('export default', 'return')
-    const { defu } = await import('defu')
-    const matcher = new Function('defu', code)(defu) as (path: string) => Record<string, any>
+    const matcher = await evaluateMatcher(await getRouteRulesTemplate(false, '/sub/'))
     expect(matcher('/protected/secret')).toMatchObject({ redirect: '/login' })
     expect(matcher('/sub/protected/secret')).not.toHaveProperty('redirect')
   })
@@ -80,9 +82,7 @@ describe('route rules template', () => {
       '/array': { appMiddleware: ['auth', 'admin'] },
       '/object': { appMiddleware: { auth: false } },
     })
-    const code = contents.replace(/^import \{ defu \} from .*$/m, '').replace('export default', 'return')
-    const { defu } = await import('defu')
-    const matcher = new Function('defu', code)(defu) as (path: string) => Record<string, any>
+    const matcher = await evaluateMatcher(contents)
     expect(matcher('/string').appMiddleware).toEqual({ auth: true })
     expect(matcher('/array').appMiddleware).toEqual({ auth: true, admin: true })
     expect(matcher('/object').appMiddleware).toEqual({ auth: false })
@@ -96,11 +96,7 @@ describe('route rules template', () => {
       'POST /admin/**': { ssr: true, appMiddleware: { auth: false } },
       'HEAD /admin/**': { noScripts: true },
     })
-    const code = contents
-      .replace(/^import \{ defu \} from .*$/m, '')
-      .replace('export default', 'return')
-    const { defu } = await import('defu')
-    const matcher = new Function('defu', code)(defu) as (path: string) => Record<string, any>
+    const matcher = await evaluateMatcher(contents)
     expect(matcher('/admin/users')).toEqual({ appMiddleware: { auth: true, admin: true }, ssr: false })
     expect(matcher('/lower/page')).toEqual({ ssr: false })
   })
@@ -114,6 +110,13 @@ describe('route rules template', () => {
       expect(to.matched, path).toHaveLength(1)
       expect(matcher(to.path).appMiddleware, path).toEqual({ auth: true })
       expect(matcher(encodeURI(path)).appMiddleware, path).toEqual({ auth: true })
+    }
+  })
+
+  it('folds a non-ASCII rule key against any request casing or encoding when case-insensitive', async () => {
+    const matcher = await evaluateMatcher(await getRouteRulesTemplate(false, undefined, { '/cafÉ': { redirect: '/target' } }))
+    for (const path of ['/cafÉ', '/café', `/caf${encodeURIComponent('É')}`, `/caf${encodeURIComponent('é')}`]) {
+      expect(matcher(path).redirect, path).toBe('/target')
     }
   })
 
@@ -167,7 +170,7 @@ describe('route rules template', () => {
 
 async function evaluateMatcher (contents: string) {
   const { defu } = await import('defu')
-  return new Function('defu', contents.replace(/^import \{ defu \} from .*$/m, '').replace('export default', 'return'))(defu) as (path: string) => Record<string, any>
+  return new Function('defu', contents.replace(/^import \{ defu \} from .*$/m, '').replace(/^export const hasRedirects = .*$/m, '').replace('export default', 'return'))(defu) as (path: string) => Record<string, any>
 }
 
 describe('wildcard route rule redirects', () => {
@@ -190,6 +193,11 @@ describe('wildcard route rule redirects', () => {
     expect(matcher('/param/Some-ID/A/b').redirect).toBe('/new/A/b')
     expect(matcher('/caf%C3%A9/A/b').redirect).toBe('/new/A/b')
     expect(matcher('/exact').redirect).toBe('/new/exact')
+    for (const path of ['//old/A/b', '/old//A/b', '/%2Fold/A/b', '/old%2FA/b']) {
+      expect(matcher(path).redirect, path).toBe('/new/A/b')
+    }
+    expect(matcher('/old%2F%2FA%2Fb').redirect).toBe('/new/A%2Fb')
+    expect(matcher('//old/sub/A').redirect).toBe('/sub/A')
   })
 
   it('moves the tail of the path onto the target from a lone catch-all rule', async () => {

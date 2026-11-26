@@ -203,8 +203,8 @@ await navigateTo({ name: 'product', params: { id: 1 } })
 
 - `open`
 
-  - **类型**: `OpenOptions`
-  - 允许使用窗口的 [open()](https://developer.mozilla.org/en-US/docs/Web/API/Window/open) 方法导航到 URL。此选项仅在客户端适用，在服务器端会被忽略。
+  - **类型**：`OpenOptions`
+  - 允许使用窗口的 [打开（）](https://developer.mozilla.org/en-US/docs/Web/API/Window/open) 方法导航到 URL。仅客户端支持；在服务器上，`navigateTo` 和 `open` 是无操作，但脚本协议 URL 仍被拒绝。
 
     一个接受以下属性的对象：
 
@@ -231,4 +231,17 @@ await navigateTo({ name: 'product', params: { id: 1 } })
       | `noopener` | `boolean` | 防止新窗口通过 `window.opener` 访问来源窗口。 |
       | `noreferrer` | `boolean` | 阻止发送 Referer 头部，并隐式启用 `noopener`。 |
 
-      有关 **windowFeatures** 属性的更详细信息，请参阅[文档](https://developer.mozilla.org/en-US/docs/Web/API/Window/open#windowfeatures)。
+      有关 **windowFeatures** 属性的更多详细信息，请参阅 [文档](https://developer.mozilla.org/en-US/docs/Web/API/Window/open#windowfeatures)。
+
+      ::note
+      默认情况下启用 `noopener`，因此打开的页面无法通过 `window.opener` 访问您的应用程序，除非您在该调用或应用程序范围内禁用它。然后，除 `_self`、`_parent` 和 `_top` 之外的命名 `target` 始终会打开一个新窗口，而不是重用现有窗口。对于需要 `window.opener` 的页面，将其设置为 `false`，例如将结果发回的 OAuth 弹出窗口，或者重用命名窗口：
+
+      ```ts
+      await navigateTo('https://auth.example.com/authorize', {
+        external: true,
+        open: { target: '_blank', windowFeatures: { popup: true, noopener: false } },
+      })
+      ```
+
+      要更改整个应用程序的默认值，请设置 [`experimental.defaults.navigateTo.noopener`](/docs/guide/going-further/experimental-features#defaults)。
+      ::

@@ -4,7 +4,7 @@ title: Nuxt 性能
 description: 提升 Nuxt 应用性能的最佳实践。
 ---
 
-Nuxt 提供了内置功能来提升你的应用性能并有助于改善 [Core Web Vitals](https://web.dev/articles/vitals)。此外，Nuxt 团队也维护了多个核心模块，用于在特定领域进一步提升性能。本指南概述了优化 Nuxt 应用性能的最佳实践。
+Nuxt 提供了内置功能来提升你的应用性能并有助于改善 [核心网络生命力](https://web.dev/articles/vitals)。此外，Nuxt 团队也维护了多个核心模块，用于在特定领域进一步提升性能。本指南概述了优化 Nuxt 应用性能的最佳实践。
 
 ## 内置功能
 
@@ -42,13 +42,13 @@ export default defineNuxtConfig({
 })
 ```
 
-:read-more{title="NuxtLink" to="/docs/api/components/nuxt-link"}
+:read-more{title="努克斯链接" to="/docs/api/components/nuxt-link"}
 
 ### 资源提示
 
 为加快客户端导航，Nuxt 会为请求所解析的 JavaScript 和 CSS 分块添加资源提示。`<link rel="preload">`（或 `modulepreload`）标记页面自身需要的分块；`<link rel="prefetch">` 则标记入口和已渲染组件延迟导入的分块，以便用户之后导航到相关页面时，这些分块已准备就绪。
 
-HTML 一经解析，预加载提示就会生效。预取提示会以 `data-href` 替代 `href` 输出，因此浏览器会忽略它们，直到 Nuxt 在应用就绪后将其激活（参见 [`onNuxtReady`](/docs/api/utils/on-nuxt-ready)）。这样，在页面加载期间它们就不会与页面自身的资源竞争。你可以通过 [`experimental.deferPrefetchHints`](/docs/guide/going-further/experimental-features#deferprefetchhints) 关闭此行为。如果连接启用了流量节省模式，或使用 2G 网络，则不会激活这些提示。由 [`noScripts`](/docs/guide/going-further/features#noscripts) 提供的路由没有客户端来激活它们，因此其非脚本预取提示会以 `href` 输出。
+解析 HTML 后，预加载提示就会生效。预取提示在 `<template>` 元素内呈现，因此浏览器会忽略它们，直到应用程序准备好后 Nuxt 激活它们（请参阅 [`onNuxtReady`](/docs/api/utils/on-nuxt-ready)）。它们也被排除在 `Link` 响应标头和 103 早期提示之外。这样它们在加载时就不会与页面自己的资源竞争。您可以使用 [`experimental.deferPrefetchHints`](/docs/guide/going-further/experimental-features#deferprefetchhints) 关闭此功能。在启用数据保护程序的连接或 2G 连接上，它们根本不会激活。使用 [`noScripts`](/docs/guide/going-further/features#noscripts) 提供的路由没有客户端来激活它们，因此它们的非脚本预取提示不会延迟。
 
 大型应用的预取集合可能会超过页面实际所需的范围。公开页面和登录后的应用通常会共用一个入口分块，因此预渲染的公开页面可能会预取只有登录后应用才会使用的分块，浪费带宽加载访客永远不会用到的分块。
 
@@ -155,9 +155,9 @@ const show = ref(false)
 
 ### 图像
 
-未经优化的图像会对网站性能产生显著负面影响，特别是对 [Largest Contentful Paint (LCP)](https://web.dev/articles/lcp) 分数。
+未经优化的图像会对网站性能产生显著负面影响，特别是对 [最大内容涂料 (LCP)](https://web.dev/articles/lcp) 分数。
 
-在 Nuxt 中我们可以使用 [Nuxt Image](https://image.nuxt.com/) 模块，它是面向 Nuxt 应用的即插即用图像优化方案。它允许使用内置优化器或你喜欢的图像 CDN 来调整大小和转换图像。
+在 Nuxt 中我们可以使用 [下图](https://image.nuxt.com/) 模块，它是面向 Nuxt 应用的即插即用图像优化方案。它允许使用内置优化器或你喜欢的图像 CDN 来调整大小和转换图像。
 
 :video-accordion{title="观看 LearnVue 关于 Nuxt Image 的视频" videoId="_UBff2eqGY0"}
 
@@ -195,13 +195,13 @@ const show = ref(false)
 </template>
 ```
 
-:read-more{title="Nuxt Image" to="https://image.nuxt.com/usage/nuxt-img"}
+:read-more{title="下图" to="https://image.nuxt.com/usage/nuxt-img"}
 
 ### 字体
 
-[Nuxt Fonts](https://fonts.nuxt.com/) 会自动优化你的字体（包括自定义字体）并移除外部网络请求，以提升隐私性和性能。
+[Nuxt 字体](https://fonts.nuxt.com/) 会自动优化你的字体（包括自定义字体）并移除外部网络请求，以提升隐私性和性能。
 
-它包含对任意字体文件的内置自动自托管，这意味着你可以以更优的方式加载网页字体并减少布局偏移，得益于底层包 [fontaine](https://github.com/unjs/fontaine)。
+它包含对任意字体文件的内置自动自托管，这意味着你可以以更优的方式加载网页字体并减少布局偏移，得益于底层包 [方丹](https://github.com/unjs/fontaine)。
 
 :video-accordion{title="观看 Daniel Roe 关于 Nuxt Fonts 背后理念的演讲" videoId="D3F683UViBY"}
 
@@ -217,9 +217,9 @@ Nuxt Fonts 会处理你的所有 CSS，并在遇到 font-family 声明时自动�
 
 ### 脚本
 
-第三方资源如分析工具、视频嵌入、地图和社交媒体集成可以增强网站功能，但也可能显著降低用户体验，并对 [Interaction to Next Paint (INP)](https://web.dev/articles/inp) 和 Largest Contentful Paint (LCP) 分数产生负面影响。
+第三方资源如分析工具、视频嵌入、地图和社交媒体集成可以增强网站功能，但也可能显著降低用户体验，并对 [与下一个油漆的相互作用 (INP)](https://web.dev/articles/inp) 和 Largest Contentful Paint (LCP) 分数产生负面影响。
 
-[Nuxt Scripts](https://scripts.nuxt.com/) 让你以更好的性能、隐私、安全性和开发者体验来加载第三方脚本。
+[Nuxt脚本](https://scripts.nuxt.com/) 让你以更好的性能、隐私、安全性和开发者体验来加载第三方脚本。
 
 :video-accordion{title="观看 Alex Lichter 关于 Nuxt Scripts 的视频" videoId="sjMqUUvH9AE"}
 
@@ -242,23 +242,23 @@ onLoaded((gtag) => {
 })
 ```
 
-:read-more{title="Nuxt Scripts" to="https://scripts.nuxt.com/scripts"}
+:read-more{title="Nuxt脚本" to="https://scripts.nuxt.com/scripts"}
 
 ## 分析工具
 
 要提升性能，我们首先需要了解如何衡量性能，从在本地开发环境测量性能开始，然后对已部署到生产的应用进行审计。
 
-### Nuxi Analyze
+### 努西分析
 
-`nuxt` 的 [analyze](/docs/api/commands/analyze) 命令允许你分析 Nuxt 应用的生产构建包。它利用 `vite-bundle-visualizer`（类似于 `webpack-bundle-analyzer`）生成应用构建包的可视化表示，让你更容易识别哪些组件占用了最多空间。
+`nuxt` 的 [分析](/docs/api/commands/analyze) 命令允许你分析 Nuxt 应用的生产构建包。它利用 `vite-bundle-visualizer`（类似于 `webpack-bundle-analyzer`）生成应用构建包的可视化表示，让你更容易识别哪些组件占用了最多空间。
 
 当你在可视化中看到一个较大的块时，通常表示存在优化机会——无论是将其拆分为更小的部分、实现懒加载，还是用更高效的替代方案替换，尤其是对于第三方库。
 
 包含多个元素的大块通常可以通过只导入必要组件而不是整个模块来缩小，而大型独立块则更适合通过懒加载而不是包含在主包中。
 
-### Nuxt DevTools
+### Nuxt开发工具
 
-通过 [Nuxt DevTools](/modules/devtools)，你可以深入了解 Nuxt 应用，发现性能问题并轻松管理应用配置。
+通过 [Nuxt开发工具](/modules/devtools)，你可以深入了解 Nuxt 应用，发现性能问题并轻松管理应用配置。
 
 ![Nuxt DevTools 示例](https://user-images.githubusercontent.com/11247099/217670806-fb39aeff-3881-44e5-b9c8-6c757f5925fc.png)
 
@@ -272,27 +272,27 @@ onLoaded((gtag) => {
 
 Chrome 开发者工具提供两个用于衡量性能的有用选项卡：`Performance` 和 `Lighthouse`。
 
-打开 [Performance](https://developer.chrome.com/docs/devtools/performance/overview) 面板时，它会立即显示本地的 **Largest Contentful Paint (LCP)** 和 **Cumulative Layout Shift (CLS)** 分数（良好、需要改进或糟糕）。  
+打开 [Performance](https://developer.chrome.com/docs/devtools/performance/overview) 面板时，它会立即显示本地的 **最大内容绘制（LCP）** 和 **累积布局偏移（CLS）** 分数（良好、需要改进或较差）。
 
 如果你与页面交互，它还会捕获 **Interaction to Next Paint (INP)**，基于你的设备和网络情况给出一套完整的 Core Web Vitals 视图。
 
-![Chrome DevTools Performance Panel](https://developer.chrome.com/static/docs/devtools/performance/image/cpu-throttling_856.png)
+![Chrome DevTools 性能面板](https://developer.chrome.com/static/docs/devtools/performance/image/cpu-throttling_856.png)
 
-[Lighthouse](https://developer.chrome.com/docs/devtools/lighthouse) 对性能、无障碍、SEO、渐进式 Web 应用和最佳实践进行审计。它会对你的页面运行测试并生成报告。使用未通过的审计作为改进网站的指南。
+[灯塔](https://developer.chrome.com/docs/devtools/lighthouse) 对性能、无障碍、SEO、渐进式 Web 应用和最佳实践进行审计。它会对你的页面运行测试并生成报告。使用未通过的审计作为改进网站的指南。
 
-![Lighthouse](https://developer.chrome.com/static/docs/lighthouse/images/lighthouse-overview_720.png)
+![灯塔](https://developer.chrome.com/static/docs/lighthouse/images/lighthouse-overview_720.png)
 
 每个审计都有参考文档，解释为何该审计重要以及如何修复问题。
 
-### PageSpeed Insights
+### PageSpeed 见解
 
-[PageSpeed Insights (PSI)](https://developers.google.com/speed/docs/insights/v5/about) 报告页面在移动端和桌面设备上的用户体验，并提供改进该页面的建议。
+[页面速度洞察 (PSI)](https://developers.google.com/speed/docs/insights/v5/about) 报告页面在移动端和桌面设备上的用户体验，并提供改进该页面的建议。
 
 它提供页面的实验室数据和现场数据。实验室数据在受控环境中收集，适合调试问题；现场数据用于捕获真实的、真实世界的用户体验。
 
-### Web Page Test
+### 网页测试
 
-[WebPageTest](https://www.webpagetest.org/) 是一个网页性能工具，提供有关页面在各种条件下表现的深度诊断信息。
+[网页测试](https://www.webpagetest.org/) 是一个网页性能工具，提供有关页面在各种条件下表现的深度诊断信息。
 
 每个测试可以从世界不同位置运行，在真实浏览器上，并可覆盖任意数量的可定制网络条件。
 

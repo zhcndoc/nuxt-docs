@@ -19,6 +19,10 @@ links:
 `transfer-encoding`, `connection`, `keep-alive`, `upgrade`, `expect`, `host`, `accept`
 ::
 
+::important
+标头仅转发到以 `/` 开头的路径（例如 `/api/cookies`）。对绝对 URL 的请求（包括指向您自己的应用程序的请求）将在没有它们的情况下发送。
+::
+
 ::tip
 [`useFetch`](/docs/api/composables/use-fetch) 组合式函数在内部使用 `useRequestFetch`，自动转发请求上下文和头信息。
 ::
@@ -49,5 +53,5 @@ export default defineEventHandler((event) => {
 ::
 
 ::tip
-在浏览器中进行客户端导航时，`useRequestFetch` 的行为与常规的 [`$fetch`](/docs/api/utils/dollarfetch) 一样。
+在客户端导航期间的浏览器中，`useRequestFetch` 的行为就像常规 [`$fetch`](/docs/api/utils/$fetch)。
 ::

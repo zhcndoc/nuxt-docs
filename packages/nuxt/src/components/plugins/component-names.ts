@@ -1,8 +1,8 @@
 import { createUnplugin } from 'unplugin'
 import { generateTransform, rolldownString } from 'rolldown-string'
-import { parseAndWalk } from 'oxc-walker'
 
-import { SX_RE, VUE_ID_FILTER } from '../../core/utils/index.ts'
+import { SX_RE, VUE_FILE_RE } from '../../core/utils/index.ts'
+import { assignDefaultExportName } from '../utils.ts'
 import type { Component } from 'nuxt/schema'
 
 interface NameDevPluginOptions {
@@ -19,7 +19,7 @@ export const ComponentNamePlugin = (options: NameDevPluginOptions) => createUnpl
     enforce: 'post',
     transform: {
       filter: {
-        id: { include: [...VUE_ID_FILTER, SX_RE] },
+        id: { include: [VUE_FILE_RE, SX_RE] },
       },
       handler (code, id, meta?: unknown) {
         const filename = id.match(FILENAME_RE)?.[1]
@@ -49,19 +49,9 @@ export const ComponentNamePlugin = (options: NameDevPluginOptions) => createUnpl
         const nameMatch = NAME_RE.exec(code)
         if (nameMatch) {
           s.overwrite(nameMatch.index, nameMatch.index + nameMatch[0].length, `__name: ${JSON.stringify(component.pascalName)}`)
-        }
-
-        // Without setup function, vue compiler does not generate __name
-        if (!nameMatch) {
-          parseAndWalk(code, id, function (node) {
-            if (node.type !== 'ExportDefaultDeclaration') {
-              return
-            }
-
-            const { start, end } = node.declaration
-            s.overwrite(start, end, `Object.assign(${code.slice(start, end)}, { __name: ${JSON.stringify(component.pascalName)} })`)
-            this.skip()
-          })
+        } else {
+          // Without setup function, vue compiler does not generate __name
+          assignDefaultExportName(code, id, s, component.pascalName)
         }
 
         return generateTransform(s, id)
